@@ -1,74 +1,62 @@
-"""A minimal REINFORCE agent with a linear-Gaussian policy.
+"""Gaussian policy agents built on PyTorch autograd.
 
-The action mean is an affine function of the state, squashed into the
-domain with a logistic map; the log-std is a learned per-dimension
-parameter. This is intentionally simple -- enough to show
-policy-gradient self-play move toward the analytical stage-game Nash
-equilibrium (see doggame.nash) without pulling in a deep-learning
-dependency.
+A single joint module produces both players' action means, via one of
+the doggame.networks architectures, plus a learned per-player log-std.
+Training goes through torch.optim rather than a hand-derived gradient:
+the meeting was explicit that once a network-training package is in
+play, no one should be hand-writing gradient-descent math.
 """
 
 import numpy as np
+import torch
+from torch import nn
+from torch.distributions import Normal
+
+from doggame.networks import make_policy_network
 
 
-def sigmoid(x):
-    return 1.0 / (1.0 + np.exp(-x))
-
-
-class LinearGaussianPolicy:
-    def __init__(self, domain, seed=None):
+class TwoPlayerPolicy(nn.Module):
+    def __init__(self, domain, architecture="separate", seed=None, **network_kwargs):
+        super().__init__()
+        if seed is not None:
+            torch.manual_seed(seed)
         self.domain = domain
-        rng = np.random.default_rng(seed)
-        self.W = rng.normal(scale=0.1, size=(2, 2))
-        self.b = rng.normal(scale=0.1, size=2)
-        self.log_std = np.full(2, -0.5)
+        self.network = make_policy_network(architecture, **network_kwargs)
+        self.log_std_red = nn.Parameter(torch.full((2,), -0.5))
+        self.log_std_blue = nn.Parameter(torch.full((2,), -0.5))
 
-    def mean(self, state):
-        raw = self.W @ np.asarray(state, dtype=float) + self.b
-        unit = sigmoid(raw)
+    def means(self, state):
+        raw_red, raw_blue = self.network(state)
         span = self.domain.high - self.domain.low
-        return self.domain.low + unit * span
+        mean_red = self.domain.low + torch.sigmoid(raw_red) * span
+        mean_blue = self.domain.low + torch.sigmoid(raw_blue) * span
+        return mean_red, mean_blue
 
-    def act(self, state, rng):
-        mean = self.mean(state)
-        std = np.exp(self.log_std)
-        action = mean + std * rng.normal(size=2)
-        return self.domain.clip(action), mean, std
+    def act(self, state):
+        """Sample one action per player for a single state.
 
-    def apply_gradients(self, grad_W, grad_b, grad_log_std, lr):
-        self.W += lr * grad_W
-        self.b += lr * grad_b
-        self.log_std += lr * grad_log_std
+        Returns numpy actions, clipped to the domain and ready for
+        env.step.
+        """
+        with torch.no_grad():
+            state_t = torch.as_tensor(
+                np.asarray(state, dtype=np.float32)
+            ).unsqueeze(0)
+            mean_red, mean_blue = self.means(state_t)
+            action_red = Normal(mean_red, torch.exp(self.log_std_red)).sample()
+            action_blue = Normal(mean_blue, torch.exp(self.log_std_blue)).sample()
+        return (
+            self.domain.clip(action_red.squeeze(0).numpy()),
+            self.domain.clip(action_blue.squeeze(0).numpy()),
+        )
 
-
-def reinforce_update(policy, states, actions, means, stds, returns, lr, baseline=0.0):
-    """One REINFORCE update from a batch of (state, action, mean, std,
-    return) tuples collected under the current policy."""
-    states = np.asarray(states, dtype=float)
-    actions = np.asarray(actions, dtype=float)
-    means = np.asarray(means, dtype=float)
-    stds = np.asarray(stds, dtype=float)
-    advantages = np.asarray(returns, dtype=float) - baseline
-
-    span = policy.domain.high - policy.domain.low
-    grad_W = np.zeros_like(policy.W)
-    grad_b = np.zeros_like(policy.b)
-    grad_log_std = np.zeros_like(policy.log_std)
-
-    for state, action, mean, std, advantage in zip(
-        states, actions, means, stds, advantages
-    ):
-        raw = policy.W @ state + policy.b
-        unit = sigmoid(raw)
-        dmean_draw = span * unit * (1 - unit)
-
-        dlogp_dmean = (action - mean) / std**2
-        dlogp_draw = dlogp_dmean * dmean_draw
-        dlogp_dlogstd = (action - mean) ** 2 / std**2 - 1
-
-        grad_W += advantage * np.outer(dlogp_draw, state)
-        grad_b += advantage * dlogp_draw
-        grad_log_std += advantage * dlogp_dlogstd
-
-    n = len(states)
-    policy.apply_gradients(grad_W / n, grad_b / n, grad_log_std / n, lr)
+    def log_prob(self, states, actions_red, actions_blue):
+        """Batched log-probabilities, for a REINFORCE loss."""
+        mean_red, mean_blue = self.means(states)
+        logp_red = Normal(mean_red, torch.exp(self.log_std_red)).log_prob(
+            actions_red
+        ).sum(-1)
+        logp_blue = Normal(mean_blue, torch.exp(self.log_std_blue)).log_prob(
+            actions_blue
+        ).sum(-1)
+        return logp_red, logp_blue

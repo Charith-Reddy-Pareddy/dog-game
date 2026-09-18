@@ -1,14 +1,17 @@
 """Self-play training loop.
 
-Two REINFORCE agents (one per house) learn against each other on the
-repeated dog game. We compare the resulting policy against the
+A single TwoPlayerPolicy (see doggame.agents) is trained against
+itself with REINFORCE: rounds are played out under the current
+policy, discounted returns are computed per player, and torch.optim
+takes the gradient step. We compare the resulting policy against the
 analytical stage-game Nash equilibrium from doggame.nash as a sanity
 check that the learning dynamics are heading the right way.
 """
 
 import numpy as np
+import torch
 
-from doggame.agents import LinearGaussianPolicy, reinforce_update
+from doggame.agents import TwoPlayerPolicy
 from doggame.env import DogGameEnv
 from doggame.nash import solve_stage_nash
 
@@ -22,92 +25,78 @@ def discounted_returns(rewards, discount):
     return returns
 
 
-def run_episode(env, policy_red, policy_blue, steps, rng):
+def run_episode(env, policy, steps):
     state = env.reset()
-    red_log = ([], [], [], [], [])
-    blue_log = ([], [], [], [], [])
+    states, actions_red, actions_blue, rewards_red, rewards_blue = [], [], [], [], []
 
     for _ in range(steps):
-        action_red, mean_red, std_red = policy_red.act(state, rng)
-        action_blue, mean_blue, std_blue = policy_blue.act(state, rng)
+        action_red, action_blue = policy.act(state)
         next_state, (r_red, r_blue), _, _ = env.step(action_red, action_blue)
 
-        for log, value in zip(
-            red_log, (state, action_red, mean_red, std_red, r_red)
-        ):
-            log.append(value)
-        for log, value in zip(
-            blue_log, (state, action_blue, mean_blue, std_blue, r_blue)
-        ):
-            log.append(value)
+        states.append(state)
+        actions_red.append(action_red)
+        actions_blue.append(action_blue)
+        rewards_red.append(r_red)
+        rewards_blue.append(r_blue)
 
         state = next_state
 
-    return red_log, blue_log
+    return states, actions_red, actions_blue, rewards_red, rewards_blue
 
 
-def train_self_play(
-    env,
-    policy_red,
-    policy_blue,
-    episodes=500,
-    steps_per_episode=20,
-    lr=0.05,
-    seed=0,
-):
-    rng = np.random.default_rng(seed)
+def train_self_play(env, policy, episodes=500, steps_per_episode=20, lr=0.01, seed=0):
+    torch.manual_seed(seed)
+    optimizer = torch.optim.Adam(policy.parameters(), lr=lr)
     history = []
 
     for _ in range(episodes):
-        red_log, blue_log = run_episode(env, policy_red, policy_blue, steps_per_episode, rng)
-
-        red_states, red_actions, red_means, red_stds, red_rewards = red_log
-        blue_states, blue_actions, blue_means, blue_stds, blue_rewards = blue_log
-
-        red_returns = discounted_returns(red_rewards, env.discount)
-        blue_returns = discounted_returns(blue_rewards, env.discount)
-
-        reinforce_update(
-            policy_red,
-            red_states,
-            red_actions,
-            red_means,
-            red_stds,
-            red_returns,
-            lr,
-            baseline=red_returns.mean(),
-        )
-        reinforce_update(
-            policy_blue,
-            blue_states,
-            blue_actions,
-            blue_means,
-            blue_stds,
-            blue_returns,
-            lr,
-            baseline=blue_returns.mean(),
+        states, actions_red, actions_blue, rewards_red, rewards_blue = run_episode(
+            env, policy, steps_per_episode
         )
 
-        history.append((np.mean(red_rewards), np.mean(blue_rewards)))
+        returns_red = discounted_returns(rewards_red, env.discount)
+        returns_blue = discounted_returns(rewards_blue, env.discount)
+        advantage_red = returns_red - returns_red.mean()
+        advantage_blue = returns_blue - returns_blue.mean()
+
+        states_t = torch.as_tensor(np.array(states), dtype=torch.float32)
+        actions_red_t = torch.as_tensor(np.array(actions_red), dtype=torch.float32)
+        actions_blue_t = torch.as_tensor(np.array(actions_blue), dtype=torch.float32)
+        advantage_red_t = torch.as_tensor(advantage_red, dtype=torch.float32)
+        advantage_blue_t = torch.as_tensor(advantage_blue, dtype=torch.float32)
+
+        logp_red, logp_blue = policy.log_prob(states_t, actions_red_t, actions_blue_t)
+        loss = -(logp_red * advantage_red_t + logp_blue * advantage_blue_t).mean()
+
+        optimizer.zero_grad()
+        loss.backward()
+        optimizer.step()
+
+        history.append((np.mean(rewards_red), np.mean(rewards_blue)))
 
     return history
 
 
 if __name__ == "__main__":
     env = DogGameEnv(house_red=(0.9, 0.2), house_blue=(0.1, 0.8), w=0.5)
-    policy_red = LinearGaussianPolicy(env.domain, seed=1)
-    policy_blue = LinearGaussianPolicy(env.domain, seed=2)
+    policy = TwoPlayerPolicy(env.domain, architecture="separate", seed=1)
 
-    history = train_self_play(env, policy_red, policy_blue, episodes=2000)
+    history = train_self_play(env, policy, episodes=2000, lr=0.01, seed=0)
 
     nash_red, nash_blue, nash_dog = solve_stage_nash(
         env.house_red, env.house_blue, env.w, env.domain
     )
 
     test_state = env.reset()
-    print("Learned red action mean: ", policy_red.mean(test_state))
+    with torch.no_grad():
+        state_t = torch.as_tensor(
+            np.asarray(test_state, dtype=np.float32)
+        ).unsqueeze(0)
+        mean_red, mean_blue = policy.means(state_t)
+
+    print("Learned red action mean: ", mean_red.squeeze(0).numpy())
     print("Nash red action:         ", nash_red)
-    print("Learned blue action mean:", policy_blue.mean(test_state))
+    print("Learned blue action mean:", mean_blue.squeeze(0).numpy())
     print("Nash blue action:        ", nash_blue)
     print("Average reward, first 10 episodes:", np.mean(history[:10], axis=0))
     print("Average reward, last 10 episodes: ", np.mean(history[-10:], axis=0))
