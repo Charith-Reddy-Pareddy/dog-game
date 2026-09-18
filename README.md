@@ -49,6 +49,16 @@ solver to check both against, and a browser visualization.
   backup `Q = R + discount * NashV(Q)` to a fixed point. See the
   module docstring for why that backup doesn't need to loop over
   states in this particular game.
+- `doggame/verify.py` -- the check described in the meeting for
+  whether a solved or learned policy is actually a Nash equilibrium:
+  `exploitability` (grid-search for a unilateral improvement, for
+  continuous actions) and `mixed_strategy_indifference_gap` (the
+  "actions played with positive probability should all have equal
+  value" check, for a discrete mixed strategy).
+- `doggame/experiments.py` -- runs policy-gradient self-play across
+  several house/weight configurations and reports exploitability for
+  each, to actually answer "can this converge?" instead of trusting
+  one demo run. See Findings below.
 - `visualize/index.html` -- a self-contained, no-build browser page.
   Drag the houses, tune `w`, and step through best-response play.
 
@@ -86,6 +96,9 @@ payoff_red, payoff_blue = payoff_matrices(
 q_red, q_blue, strategy_red, strategy_blue = solve_discretized_nash_q(payoff_red, payoff_blue, discount=0.9)
 ```
 
+Run the convergence study (`python3 -m doggame.experiments`) to see
+exploitability across configurations and architectures.
+
 Open `visualize/index.html` directly in a browser (no server needed).
 
 ## The game
@@ -104,6 +117,44 @@ bounded, a player who wants the dog to land exactly on their house has
 to overshoot their own pick to counteract the other player's pull --
 the same logic behind two influencers each staking out an exaggerated
 opinion to drag a shared audience toward their true position.
+
+## Findings
+
+Running `doggame.experiments` (5 house/weight configurations x 3
+network architectures, 1500 self-play episodes each) gives an actual
+answer to "can policy-gradient self-play converge to Nash on the dog
+game?": **usually, but the number of episodes needed isn't fixed --
+it depends on the configuration and architecture.** 14 of the 15
+(config, architecture) runs reached exploitability below 0.004 within
+1500 episodes. The 15th (the `separate` architecture on
+`house_red=(0.8, 0.8)`, `house_blue=(0.2, 0.3)`, `w=0.3`) was still at
+0.183 at that point -- clearly not converged. Training that exact run
+3000 episodes further brought it down to 0.004, so it wasn't stuck in
+a bad equilibrium, it was just slower: one action dimension took
+longer to get pushed out to the domain boundary than the others. That
+answers the meeting's question honestly rather than optimistically --
+this does converge, but "1500 episodes" isn't a number you can quote
+without also naming the configuration and architecture it was
+measured on.
+
+Distance to the *specific* equilibrium `doggame.nash` reports is a
+different story: one configuration (`house_red=(0.95, 0.5)`,
+`house_blue=(0.05, 0.5)` -- both houses at the same y-coordinate)
+consistently converged to a policy roughly 0.49 away from the
+solver's answer, in every architecture. That is not a training
+failure. It's the exact phenomenon the meeting flagged: a unique Nash
+equilibrium is only guaranteed when the two houses differ in *both*
+coordinates. Here they share a y-coordinate, so the y-axis of the
+stage game is degenerate -- any pair of y-actions that averages back
+to that shared value is equally optimal. `doggame.nash`'s iterated
+best response happens to land on the "obvious" solution (both players
+picking y = 0.5 exactly); policy-gradient training instead found a
+boundary-cancellation solution (red near y = 1, blue near y = 0,
+`0.5*1 + 0.5*0 = 0.5`). Checking both with `exploitability` confirms
+they're both genuinely unexploitable (< 0.0002 for either) -- two
+different, equally valid equilibria, not one right answer and one
+bug. This is why `doggame.verify` checks optimality directly rather
+than distance to a single precomputed candidate.
 
 ## Status
 
