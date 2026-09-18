@@ -27,6 +27,18 @@ def test_symmetric_setup_gives_symmetric_equilibrium():
     assert np.allclose(dog, dog[::-1], atol=1e-6)
 
 
+def test_identical_houses_need_no_exaggeration():
+    # If both houses are at the same point, neither player needs to
+    # overshoot to counteract the other -- the equilibrium should sit
+    # exactly on that shared point, not get pushed to a domain corner.
+    domain = Square(0.0, 1.0)
+    house = (0.5, 0.5)
+    action_red, action_blue, dog = solve_stage_nash(house, house, w=0.4, domain=domain)
+    assert np.allclose(action_red, house, atol=1e-6)
+    assert np.allclose(action_blue, house, atol=1e-6)
+    assert np.allclose(dog, house, atol=1e-6)
+
+
 def test_no_unilateral_deviation_improves_payoff():
     domain = Square(0.0, 1.0)
     house_red = np.array([0.9, 0.3])
