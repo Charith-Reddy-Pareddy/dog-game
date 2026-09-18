@@ -17,7 +17,7 @@ def discounted_returns(rewards, discount):
     returns = np.zeros(len(rewards))
     running = 0.0
     for t in reversed(range(len(rewards))):
-        running = rewards[t] + discount * running
+        running = (rewards[t] + running) * discount
         returns[t] = running
     return returns
 
