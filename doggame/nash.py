@@ -20,7 +20,7 @@ def best_response_red(action_blue, house_red, w, domain):
 
 
 def best_response_blue(action_red, house_blue, w, domain):
-    unconstrained = (house_blue - w * np.asarray(action_red, dtype=float)) / (1 - w)
+    unconstrained = (house_blue - w * np.asarray(action_red, dtype=float)) / w
     return domain.clip(unconstrained)
 
 
