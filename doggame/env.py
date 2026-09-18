@@ -41,8 +41,8 @@ def weighted_average_transition(dog, action_red, action_blue, w):
 def negative_squared_distance_reward(next_dog, house_red, house_blue):
     """Default reward: each player is penalized by squared distance
     from the dog to their own house."""
-    r_red = -float(np.sum((next_dog - house_blue) ** 2))
-    r_blue = -float(np.sum((next_dog - house_red) ** 2))
+    r_red = -float(np.sum((next_dog - house_red) ** 2))
+    r_blue = -float(np.sum((next_dog - house_blue) ** 2))
     return r_red, r_blue
 
 
