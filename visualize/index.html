@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Dog Game</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<style>
+  :root {
+    --red: #d8555f;
+    --red-dark: #b23a44;
+    --blue: #3f7d9e;
+    --blue-dark: #2c5c76;
+    --bg: #f4f1ec;
+    --card: #fffdf9;
+    --ink: #2a2622;
+    --muted: #7a7369;
+    --line: #e4ddd0;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: radial-gradient(circle at 20% 10%, #fbf8f2, var(--bg) 60%);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    color: var(--ink);
+    padding: 24px;
+  }
+  .card {
+    background: var(--card);
+    border-radius: 20px;
+    box-shadow: 0 20px 60px rgba(40, 30, 20, 0.12);
+    padding: 28px 32px 24px;
+    max-width: 920px;
+    width: 100%;
+  }
+  h1 {
+    margin: 0 0 2px;
+    font-size: 1.5rem;
+    letter-spacing: -0.01em;
+  }
+  p.sub {
+    margin: 0 0 18px;
+    color: var(--muted);
+    font-size: 0.92rem;
+    max-width: 60ch;
+  }
+  .layout {
+    display: flex;
+    gap: 28px;
+    flex-wrap: wrap;
+  }
+  .stage-wrap {
+    position: relative;
+    flex: 0 0 auto;
+  }
+  canvas {
+    background: #fbf9f4;
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    touch-action: none;
+    cursor: grab;
+  }
+  .panel {
+    flex: 1 1 220px;
+    min-width: 220px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+  .field label {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.85rem;
+    color: var(--muted);
+    margin-bottom: 6px;
+  }
+  .field label span.val {
+    color: var(--ink);
+    font-variant-numeric: tabular-nums;
+    font-weight: 600;
+  }
+  input[type="range"] {
+    width: 100%;
+    accent-color: var(--ink);
+  }
+  .btn-row { display: flex; gap: 10px; }
+  button {
+    flex: 1;
+    border: none;
+    border-radius: 10px;
+    padding: 10px 14px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.08s ease, box-shadow 0.15s ease;
+  }
+  button:active { transform: scale(0.97); }
+  button.primary {
+    background: linear-gradient(135deg, var(--ink), #4a443c);
+    color: #fdfbf7;
+  }
+  button.ghost {
+    background: transparent;
+    border: 1px solid var(--line);
+    color: var(--ink);
+  }
+  .legend {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    font-size: 0.85rem;
+    border-top: 1px solid var(--line);
+    padding-top: 14px;
+  }
+  .legend .row { display: flex; justify-content: space-between; align-items: center; }
+  .swatch { width: 10px; height: 10px; border-radius: 50%; display: inline-block; margin-right: 8px; }
+  .metric { font-variant-numeric: tabular-nums; font-weight: 600; }
+  .hint {
+    font-size: 0.78rem;
+    color: var(--muted);
+    line-height: 1.4;
+  }
+</style>
+</head>
+<body>
+  <div class="card">
+    <h1>Dog Game</h1>
+    <p class="sub">
+      Two houses each want the dog as close as possible. Every round each side
+      picks a point to pull toward; the dog lands on the <em>w / (1&minus;w)</em>
+      blend of those two points. Drag the houses, tune <em>w</em>, and watch
+      best-response play converge to the corner-exaggeration equilibrium.
+    </p>
+
+    <div class="layout">
+      <div class="stage-wrap">
+        <canvas id="stage" width="480" height="480"></canvas>
+      </div>
+
+      <div class="panel">
+        <div class="field">
+          <label>w (pull toward red) <span class="val" id="wVal">0.50</span></label>
+          <input type="range" id="w" min="0.05" max="0.95" step="0.01" value="0.5" />
+        </div>
+
+        <div class="btn-row">
+          <button class="primary" id="stepBtn">Play one round</button>
+          <button class="ghost" id="resetBtn">Reset</button>
+        </div>
+        <div class="btn-row">
+          <button class="ghost" id="runBtn">Run to equilibrium</button>
+        </div>
+
+        <div class="legend">
+          <div class="row"><span><span class="swatch" style="background:var(--red)"></span>Red pick / house</span><span class="metric" id="redDist">&mdash;</span></div>
+          <div class="row"><span><span class="swatch" style="background:var(--blue)"></span>Blue pick / house</span><span class="metric" id="blueDist">&mdash;</span></div>
+          <div class="row"><span>Round</span><span class="metric" id="round">0</span></div>
+        </div>
+
+        <p class="hint">
+          Distances shown are squared distance from the dog to each house
+          after the round. Drag the solid house markers anywhere in the
+          square to re-pose the game.
+        </p>
+      </div>
+    </div>
+  </div>
+
+<script>
+(function () {
+  const DOMAIN = { low: 0, high: 1 };
+  const canvas = document.getElementById("stage");
+  const ctx = canvas.getContext("2d");
+  const PAD = 30;
+  const SIZE = canvas.width - PAD * 2;
+
+  const wSlider = document.getElementById("w");
+  const wVal = document.getElementById("wVal");
+  const stepBtn = document.getElementById("stepBtn");
+  const runBtn = document.getElementById("runBtn");
+  const resetBtn = document.getElementById("resetBtn");
+  const redDistEl = document.getElementById("redDist");
+  const blueDistEl = document.getElementById("blueDist");
+  const roundEl = document.getElementById("round");
+
+  let state = {
+    houseRed: { x: 0.85, y: 0.2 },
+    houseBlue: { x: 0.15, y: 0.8 },
+    actionRed: { x: 0.85, y: 0.2 },
+    actionBlue: { x: 0.15, y: 0.8 },
+    dog: { x: 0.5, y: 0.5 },
+    round: 0,
+  };
+
+  function clip(v) {
+    return Math.min(DOMAIN.high, Math.max(DOMAIN.low, v));
+  }
+
+  function w() {
+    return parseFloat(wSlider.value);
+  }
+
+  function bestResponseRed(actionBlue, houseRed, wVal) {
+    return {
+      x: clip((houseRed.x - (1 - wVal) * actionBlue.x) / wVal),
+      y: clip((houseRed.y - (1 - wVal) * actionBlue.y) / wVal),
+    };
+  }
+
+  function bestResponseBlue(actionRed, houseBlue, wVal) {
+    return {
+      x: clip((houseBlue.x - wVal * actionRed.x) / (1 - wVal)),
+      y: clip((houseBlue.y - wVal * actionRed.y) / (1 - wVal)),
+    };
+  }
+
+  function blend(a, b, wVal) {
+    return { x: wVal * a.x + (1 - wVal) * b.x, y: wVal * a.y + (1 - wVal) * b.y };
+  }
+
+  function sqDist(a, b) {
+    return (a.x - b.x) ** 2 + (a.y - b.y) ** 2;
+  }
+
+  function toCanvas(p) {
+    return { x: PAD + p.x * SIZE, y: PAD + (1 - p.y) * SIZE };
+  }
+
+  function drawHouse(p, color, dark) {
+    const c = toCanvas(p);
+    ctx.fillStyle = color;
+    ctx.beginPath();
+    ctx.arc(c.x, c.y, 9, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = dark;
+    ctx.lineWidth = 2;
+    ctx.stroke();
+  }
+
+  function drawAction(p, color) {
+    const c = toCanvas(p);
+    ctx.fillStyle = color;
+    ctx.globalAlpha = 0.55;
+    ctx.beginPath();
+    ctx.arc(c.x, c.y, 5, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.globalAlpha = 1;
+  }
+
+  function drawDog(p) {
+    const c = toCanvas(p);
+    ctx.fillStyle = "#3a352d";
+    ctx.beginPath();
+    ctx.arc(c.x, c.y, 7, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = "#fdfbf7";
+    ctx.font = "12px sans-serif";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText("d", c.x, c.y);
+  }
+
+  function render() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // domain border
+    ctx.strokeStyle = "#e4ddd0";
+    ctx.lineWidth = 1;
+    ctx.strokeRect(PAD, PAD, SIZE, SIZE);
+
+    // lines from actions to dog
+    const dogC = toCanvas(state.dog);
+    const redC = toCanvas(state.actionRed);
+    const blueC = toCanvas(state.actionBlue);
+    ctx.setLineDash([4, 4]);
+    ctx.strokeStyle = "#d8555f88";
+    ctx.beginPath();
+    ctx.moveTo(redC.x, redC.y);
+    ctx.lineTo(dogC.x, dogC.y);
+    ctx.stroke();
+    ctx.strokeStyle = "#3f7d9e88";
+    ctx.beginPath();
+    ctx.moveTo(blueC.x, blueC.y);
+    ctx.lineTo(dogC.x, dogC.y);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    drawAction(state.actionRed, "#d8555f");
+    drawAction(state.actionBlue, "#3f7d9e");
+    drawHouse(state.houseRed, "#d8555f", "#b23a44");
+    drawHouse(state.houseBlue, "#3f7d9e", "#2c5c76");
+    drawDog(state.dog);
+
+    const rd = sqDist(state.dog, state.houseRed);
+    const bd = sqDist(state.dog, state.houseBlue);
+    redDistEl.textContent = rd.toFixed(4);
+    blueDistEl.textContent = bd.toFixed(4);
+    roundEl.textContent = state.round;
+  }
+
+  function step() {
+    const wv = w();
+    const newRed = bestResponseRed(state.actionBlue, state.houseRed, wv);
+    const newBlue = bestResponseBlue(newRed, state.houseBlue, wv);
+    state.actionRed = newRed;
+    state.actionBlue = newBlue;
+    state.dog = blend(state.actionRed, state.actionBlue, wv);
+    state.round += 1;
+    render();
+  }
+
+  function reset() {
+    state.actionRed = { ...state.houseRed };
+    state.actionBlue = { ...state.houseBlue };
+    state.dog = blend(state.actionRed, state.actionBlue, w());
+    state.round = 0;
+    render();
+  }
+
+  function runToEquilibrium() {
+    let i = 0;
+    const id = setInterval(() => {
+      step();
+      i += 1;
+      if (i >= 30) clearInterval(id);
+    }, 90);
+  }
+
+  // dragging houses
+  let dragging = null;
+  function fromCanvas(cx, cy) {
+    return { x: clip((cx - PAD) / SIZE), y: clip(1 - (cy - PAD) / SIZE) };
+  }
+  function pointerPos(evt) {
+    const rect = canvas.getBoundingClientRect();
+    const clientX = evt.touches ? evt.touches[0].clientX : evt.clientX;
+    const clientY = evt.touches ? evt.touches[0].clientY : evt.clientY;
+    return {
+      x: ((clientX - rect.left) / rect.width) * canvas.width,
+      y: ((clientY - rect.top) / rect.height) * canvas.height,
+    };
+  }
+  function nearest(p) {
+    const rC = toCanvas(state.houseRed);
+    const bC = toCanvas(state.houseBlue);
+    const dr = Math.hypot(p.x - rC.x, p.y - rC.y);
+    const db = Math.hypot(p.x - bC.x, p.y - bC.y);
+    if (dr < 16 && dr < db) return "red";
+    if (db < 16) return "blue";
+    return null;
+  }
+
+  canvas.addEventListener("mousedown", (e) => {
+    dragging = nearest(pointerPos(e));
+  });
+  canvas.addEventListener("mousemove", (e) => {
+    if (!dragging) return;
+    const p = fromCanvas(pointerPos(e).x, pointerPos(e).y);
+    if (dragging === "red") state.houseRed = p;
+    else state.houseBlue = p;
+    reset();
+  });
+  window.addEventListener("mouseup", () => (dragging = null));
+
+  wSlider.addEventListener("input", () => {
+    wVal.textContent = w().toFixed(2);
+    reset();
+  });
+  stepBtn.addEventListener("click", step);
+  runBtn.addEventListener("click", runToEquilibrium);
+  resetBtn.addEventListener("click", reset);
+
+  reset();
+})();
+</script>
+</body>
+</html>
