@@ -1,5 +1,9 @@
 # Dog Game
 
+**Live demo:** https://charith-reddy-pareddy.github.io/dog-game/
+**Research questions:** [RESEARCH_QUESTIONS.md](RESEARCH_QUESTIONS.md)
+**Research report:** [RESEARCH_REPORT.md](RESEARCH_REPORT.md)
+
 A two-player, general-sum game: a red house and a blue house each want a
 shared "dog" to end up as close as possible to their own doorstep. Each
 player picks a point in a bounded domain every round; the dog's next
@@ -61,6 +65,10 @@ solver to check both against, and a browser visualization.
   one demo run. See Findings below.
 - `visualize/index.html` -- a self-contained, no-build browser page.
   Drag the houses, tune `w`, and step through best-response play.
+- `docs/index.html` -- the GitHub Pages version of the same live
+  simulator, plus the real training results from `doggame.experiments`
+  and the write-up in Findings below. Deployed at
+  https://charith-reddy-pareddy.github.io/dog-game/.
 
 ## Usage
 
