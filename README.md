@@ -2,7 +2,7 @@
 
 **Live demo:** https://charith-reddy-pareddy.github.io/dog-game/
 **Research questions:** [RESEARCH_QUESTIONS.md](RESEARCH_QUESTIONS.md)
-**Research report:** [RESEARCH_REPORT.md](RESEARCH_REPORT.md)
+**Research report:** [RESEARCH_REPORT.md](RESEARCH_REPORT.md) ([PDF version](research_report.pdf), with direct answers to each research question)
 
 A two-player, general-sum game: a red house and a blue house each want a
 shared "dog" to end up as close as possible to their own doorstep. Each
