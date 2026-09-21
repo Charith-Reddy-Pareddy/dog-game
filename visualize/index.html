@@ -229,42 +229,205 @@
     return { x: PAD + p.x * SIZE, y: PAD + (1 - p.y) * SIZE };
   }
 
-  function drawHouse(p, color, dark) {
-    const c = toCanvas(p);
-    ctx.fillStyle = color;
+  function shadow(cx, cy, rx, ry) {
     ctx.beginPath();
-    ctx.arc(c.x, c.y, 9, 0, Math.PI * 2);
+    ctx.ellipse(cx, cy, rx, ry, 0, 0, Math.PI * 2);
+    ctx.fillStyle = "rgba(58, 45, 30, 0.14)";
     ctx.fill();
-    ctx.strokeStyle = dark;
-    ctx.lineWidth = 2;
+  }
+
+  // A small cottage: rounded walls, a triangular roof, chimney, door and
+  // a window, in the player's own color -- fixed at the house position.
+  function drawHouse(p, roofColor, wallColor, doorColor) {
+    const c = toCanvas(p);
+    const s = 30;
+    shadow(c.x, c.y + s * 0.58, s * 0.62, s * 0.15);
+
+    const top = c.y - s * 0.02;
+    const bottom = c.y + s * 0.56;
+    const left = c.x - s * 0.44;
+    const right = c.x + s * 0.44;
+    const r = 4;
+
+    ctx.beginPath();
+    ctx.moveTo(left + r, top);
+    ctx.lineTo(right - r, top);
+    ctx.quadraticCurveTo(right, top, right, top + r);
+    ctx.lineTo(right, bottom - r);
+    ctx.quadraticCurveTo(right, bottom, right - r, bottom);
+    ctx.lineTo(left + r, bottom);
+    ctx.quadraticCurveTo(left, bottom, left, bottom - r);
+    ctx.lineTo(left, top + r);
+    ctx.quadraticCurveTo(left, top, left + r, top);
+    ctx.closePath();
+    ctx.fillStyle = wallColor;
+    ctx.fill();
+
+    // roof, with a little overhang past the walls
+    ctx.beginPath();
+    ctx.moveTo(c.x - s * 0.58, top + 2);
+    ctx.lineTo(c.x, c.y - s * 0.66);
+    ctx.lineTo(c.x + s * 0.58, top + 2);
+    ctx.closePath();
+    ctx.fillStyle = roofColor;
+    ctx.fill();
+
+    // chimney
+    ctx.fillStyle = roofColor;
+    ctx.fillRect(c.x + s * 0.2, c.y - s * 0.56, s * 0.1, s * 0.2);
+
+    // window
+    const winSize = s * 0.16;
+    const winX = c.x - s * 0.3;
+    const winY = c.y + s * 0.06;
+    ctx.fillStyle = "#fdfbf7";
+    ctx.fillRect(winX, winY, winSize, winSize);
+    ctx.strokeStyle = doorColor;
+    ctx.lineWidth = 1.2;
+    ctx.strokeRect(winX, winY, winSize, winSize);
+    ctx.beginPath();
+    ctx.moveTo(winX + winSize / 2, winY);
+    ctx.lineTo(winX + winSize / 2, winY + winSize);
+    ctx.moveTo(winX, winY + winSize / 2);
+    ctx.lineTo(winX + winSize, winY + winSize / 2);
     ctx.stroke();
-  }
 
-  function drawAction(p, color) {
-    const c = toCanvas(p);
-    ctx.fillStyle = color;
-    ctx.globalAlpha = 0.55;
+    // arched door
     ctx.beginPath();
-    ctx.arc(c.x, c.y, 5, 0, Math.PI * 2);
+    ctx.moveTo(c.x - s * 0.1, bottom);
+    ctx.lineTo(c.x - s * 0.1, c.y + s * 0.14);
+    ctx.quadraticCurveTo(c.x - s * 0.1, c.y + s * 0.02, c.x, c.y + s * 0.02);
+    ctx.quadraticCurveTo(c.x + s * 0.1, c.y + s * 0.02, c.x + s * 0.1, c.y + s * 0.14);
+    ctx.lineTo(c.x + s * 0.1, bottom);
+    ctx.closePath();
+    ctx.fillStyle = doorColor;
     ctx.fill();
-    ctx.globalAlpha = 1;
   }
 
-  function drawDog(p) {
+  // A small "peg doll" person standing at the player's current pick for
+  // this round -- a rounded body in the player's color, plain head, and
+  // a little tuft of hair so it reads as a person rather than a pin.
+  function drawPerson(p, bodyColor, darkColor) {
     const c = toCanvas(p);
+    const s = 21;
+    shadow(c.x, c.y + s * 0.56, s * 0.34, s * 0.09);
+
+    // body (rounded capsule, slightly flared at the base)
+    ctx.beginPath();
+    ctx.moveTo(c.x - s * 0.3, c.y + s * 0.52);
+    ctx.lineTo(c.x - s * 0.36, c.y + s * 0.02);
+    ctx.quadraticCurveTo(c.x - s * 0.36, c.y - s * 0.24, c.x, c.y - s * 0.24);
+    ctx.quadraticCurveTo(c.x + s * 0.36, c.y - s * 0.24, c.x + s * 0.36, c.y + s * 0.02);
+    ctx.lineTo(c.x + s * 0.3, c.y + s * 0.52);
+    ctx.closePath();
+    ctx.fillStyle = bodyColor;
+    ctx.fill();
+
+    // arms
+    ctx.strokeStyle = bodyColor;
+    ctx.lineWidth = s * 0.16;
+    ctx.lineCap = "round";
+    ctx.beginPath();
+    ctx.moveTo(c.x - s * 0.32, c.y - s * 0.1);
+    ctx.lineTo(c.x - s * 0.48, c.y + s * 0.2);
+    ctx.moveTo(c.x + s * 0.32, c.y - s * 0.1);
+    ctx.lineTo(c.x + s * 0.48, c.y + s * 0.2);
+    ctx.stroke();
+
+    // head
+    ctx.beginPath();
+    ctx.arc(c.x, c.y - s * 0.48, s * 0.26, 0, Math.PI * 2);
+    ctx.fillStyle = "#f4cfa3";
+    ctx.fill();
+    ctx.lineWidth = 1.3;
+    ctx.strokeStyle = darkColor;
+    ctx.stroke();
+
+    // hair
+    ctx.beginPath();
+    ctx.arc(c.x, c.y - s * 0.56, s * 0.27, Math.PI, Math.PI * 2);
+    ctx.fillStyle = darkColor;
+    ctx.fill();
+
+    // eyes
     ctx.fillStyle = "#3a352d";
     ctx.beginPath();
-    ctx.arc(c.x, c.y, 7, 0, Math.PI * 2);
+    ctx.arc(c.x - s * 0.08, c.y - s * 0.46, s * 0.03, 0, Math.PI * 2);
+    ctx.arc(c.x + s * 0.08, c.y - s * 0.46, s * 0.03, 0, Math.PI * 2);
     ctx.fill();
-    ctx.fillStyle = "#fdfbf7";
-    ctx.font = "12px sans-serif";
-    ctx.textAlign = "center";
-    ctx.textBaseline = "middle";
-    ctx.fillText("d", c.x, c.y);
+  }
+
+  // A cute sitting puppy, viewed from the side, built from a handful of
+  // overlapping ellipses -- floppy ears, a pale snout, and a curled tail.
+  function drawDog(p) {
+    const c = toCanvas(p);
+    const s = 24;
+    const fur = "#caa06e";
+    const furDark = "#a97f4f";
+    const cream = "#f6ead4";
+    shadow(c.x + s * 0.04, c.y + s * 0.46, s * 0.62, s * 0.13);
+
+    // tail, curled up behind the body
+    ctx.beginPath();
+    ctx.arc(c.x + s * 0.56, c.y - s * 0.06, s * 0.15, 0, Math.PI * 2);
+    ctx.fillStyle = furDark;
+    ctx.fill();
+
+    // body (sitting "loaf")
+    ctx.beginPath();
+    ctx.ellipse(c.x + s * 0.06, c.y + s * 0.14, s * 0.5, s * 0.32, 0, 0, Math.PI * 2);
+    ctx.fillStyle = fur;
+    ctx.fill();
+
+    // far ear
+    ctx.beginPath();
+    ctx.ellipse(c.x - s * 0.3, c.y - s * 0.4, s * 0.14, s * 0.23, -0.5, 0, Math.PI * 2);
+    ctx.fillStyle = furDark;
+    ctx.fill();
+
+    // head
+    ctx.beginPath();
+    ctx.arc(c.x - s * 0.18, c.y - s * 0.26, s * 0.3, 0, Math.PI * 2);
+    ctx.fillStyle = fur;
+    ctx.fill();
+
+    // near ear
+    ctx.beginPath();
+    ctx.ellipse(c.x - s * 0.02, c.y - s * 0.46, s * 0.13, s * 0.21, 0.4, 0, Math.PI * 2);
+    ctx.fillStyle = furDark;
+    ctx.fill();
+
+    // snout
+    ctx.beginPath();
+    ctx.ellipse(c.x - s * 0.44, c.y - s * 0.16, s * 0.17, s * 0.12, 0, 0, Math.PI * 2);
+    ctx.fillStyle = cream;
+    ctx.fill();
+
+    // nose + eye
+    ctx.fillStyle = "#3a352d";
+    ctx.beginPath();
+    ctx.arc(c.x - s * 0.58, c.y - s * 0.16, s * 0.055, 0, Math.PI * 2);
+    ctx.arc(c.x - s * 0.25, c.y - s * 0.32, s * 0.045, 0, Math.PI * 2);
+    ctx.fill();
+
+    // collar
+    ctx.beginPath();
+    ctx.arc(c.x - s * 0.06, c.y - s * 0.02, s * 0.32, 0.15, Math.PI - 0.15);
+    ctx.strokeStyle = "#b8862e";
+    ctx.lineWidth = s * 0.08;
+    ctx.lineCap = "round";
+    ctx.stroke();
   }
 
   function render() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // a soft yard: pale sky fading into a hint of grass at the bottom
+    const yard = ctx.createLinearGradient(0, PAD, 0, PAD + SIZE);
+    yard.addColorStop(0, "#fdfbf6");
+    yard.addColorStop(1, "#eef3e6");
+    ctx.fillStyle = yard;
+    ctx.fillRect(PAD, PAD, SIZE, SIZE);
 
     // domain border
     ctx.strokeStyle = "#e4ddd0";
@@ -288,10 +451,10 @@
     ctx.stroke();
     ctx.setLineDash([]);
 
-    drawAction(state.actionRed, "#d8555f");
-    drawAction(state.actionBlue, "#3f7d9e");
-    drawHouse(state.houseRed, "#d8555f", "#b23a44");
-    drawHouse(state.houseBlue, "#3f7d9e", "#2c5c76");
+    drawHouse(state.houseRed, "#b23a44", "#d8555f", "#8f2e37");
+    drawHouse(state.houseBlue, "#2c5c76", "#3f7d9e", "#234a5e");
+    drawPerson(state.actionRed, "#d8555f", "#8f2e37");
+    drawPerson(state.actionBlue, "#3f7d9e", "#234a5e");
     drawDog(state.dog);
 
     const rd = sqDist(state.dog, state.houseRed);
@@ -348,8 +511,8 @@
     const bC = toCanvas(state.houseBlue);
     const dr = Math.hypot(p.x - rC.x, p.y - rC.y);
     const db = Math.hypot(p.x - bC.x, p.y - bC.y);
-    if (dr < 16 && dr < db) return "red";
-    if (db < 16) return "blue";
+    if (dr < 22 && dr < db) return "red";
+    if (db < 22) return "blue";
     return null;
   }
 
