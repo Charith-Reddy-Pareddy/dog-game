@@ -65,16 +65,22 @@ def mixed_strategy_indifference_gap(payoff, strategy_row, strategy_opponent, tol
     action that isn't a real equilibrium violation. The default is
     tuned to that noise floor, not to genuine mixed strategies (whose
     components are typically far above 1%).
+
+    On a fine enough action grid (more than 1/tol actions), a
+    genuinely uniform mixed strategy spreads every action's
+    probability below the floor, so nothing clears it. Falling back
+    to the action(s) holding the strategy's actual maximum probability
+    keeps `played` non-empty in that case, instead of leaving
+    `best_response_gap` at +inf.
     """
     expected_payoffs = payoff @ strategy_opponent
     played = strategy_row > tol
+    if not played.any():
+        played = strategy_row == strategy_row.max()
     played_values = expected_payoffs[played]
 
-    indifference_spread = (
-        float(played_values.max() - played_values.min()) if len(played_values) else 0.0
-    )
+    indifference_spread = float(played_values.max() - played_values.min())
     best_available = float(expected_payoffs.max())
-    best_played = float(played_values.max()) if len(played_values) else -np.inf
-    best_response_gap = max(0.0, best_available - best_played)
+    best_response_gap = max(0.0, best_available - float(played_values.max()))
 
     return indifference_spread, best_response_gap
