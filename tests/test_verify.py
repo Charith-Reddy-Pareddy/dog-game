@@ -86,3 +86,20 @@ def test_indifference_gap_flags_a_dominated_pure_strategy():
     _, gap = mixed_strategy_indifference_gap(payoff_red, dominated, opponent)
 
     assert gap > 0.4
+
+
+def test_indifference_gap_stays_finite_for_a_uniform_strategy_on_a_fine_grid():
+    # On a grid finer than 1/tol actions, a genuinely uniform mixed
+    # strategy puts every action below the "played" probability floor.
+    # The gap must still come back finite (and ~0, since a uniform
+    # strategy against a matching-pennies-style payoff is indifferent
+    # across every action) rather than +inf.
+    n = 1500
+    payoff_red = np.array([[1.0 if i == j else 0.0 for j in range(n)] for i in range(n)])
+    strategy_row = np.full(n, 1.0 / n)
+    strategy_opponent = np.full(n, 1.0 / n)
+
+    spread, gap = mixed_strategy_indifference_gap(payoff_red, strategy_row, strategy_opponent)
+
+    assert np.isfinite(spread)
+    assert np.isfinite(gap)
