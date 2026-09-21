@@ -230,7 +230,19 @@
   const canvas = document.getElementById("stage");
   const ctx = canvas.getContext("2d");
   const PAD = 28;
-  const SIZE = canvas.width - PAD * 2;
+  // The canvas's width/height attributes are its CSS (logical) size.
+  // Read them before resizing the backing store, then scale the backing
+  // store up by devicePixelRatio and scale the context to match, so
+  // drawing code below can keep working entirely in logical pixels
+  // while text and shape edges stay crisp on high-DPI (retina) screens.
+  const CSS_SIZE = canvas.width;
+  const SIZE = CSS_SIZE - PAD * 2;
+  const DPR = window.devicePixelRatio || 1;
+  canvas.style.width = CSS_SIZE + "px";
+  canvas.style.height = CSS_SIZE + "px";
+  canvas.width = CSS_SIZE * DPR;
+  canvas.height = CSS_SIZE * DPR;
+  ctx.scale(DPR, DPR);
 
   const wSlider = document.getElementById("w");
   const wVal = document.getElementById("wVal");
@@ -243,6 +255,13 @@
   const exploitEl = document.getElementById("exploit");
   const spark = document.getElementById("sparkline");
   const sctx = spark.getContext("2d");
+  const SPARK_W = spark.width;
+  const SPARK_H = spark.height;
+  spark.style.width = SPARK_W + "px";
+  spark.style.height = SPARK_H + "px";
+  spark.width = SPARK_W * DPR;
+  spark.height = SPARK_H * DPR;
+  sctx.scale(DPR, DPR);
 
   let state = {
     houseRed: { x: 0.85, y: 0.2 },
@@ -429,70 +448,96 @@
     ctx.fill();
   }
 
-  // A cute sitting puppy, viewed from the side, built from a handful of
-  // overlapping ellipses -- floppy ears, a pale snout, and a curled tail.
+  // A cute puppy face, seen head-on: big round head, two floppy ears,
+  // a pale snout patch, sparkly eyes, and a little collar with a tag.
   function drawDog(p) {
     const c = toCanvas(p);
-    const s = 24;
-    const fur = "#caa06e";
-    const furDark = "#a97f4f";
-    const cream = "#f6ead4";
-    shadow(c.x + s * 0.04, c.y + s * 0.46, s * 0.62, s * 0.13);
+    const s = 30;
+    const fur = "#dda15e";
+    const furDark = "#b9793e";
+    const cream = "#fbeed9";
+    const ink = "#3a352d";
+    shadow(c.x, c.y + s * 0.62, s * 0.5, s * 0.11);
 
-    // tail, curled up behind the body
+    // shoulders/body, a soft rounded shape behind the head
     ctx.beginPath();
-    ctx.arc(c.x + s * 0.56, c.y - s * 0.06, s * 0.15, 0, Math.PI * 2);
-    ctx.fillStyle = furDark;
-    ctx.fill();
-
-    // body (sitting "loaf")
-    ctx.beginPath();
-    ctx.ellipse(c.x + s * 0.06, c.y + s * 0.14, s * 0.5, s * 0.32, 0, 0, Math.PI * 2);
+    ctx.ellipse(c.x, c.y + s * 0.46, s * 0.4, s * 0.26, 0, 0, Math.PI * 2);
     ctx.fillStyle = fur;
     ctx.fill();
 
-    // far ear
+    // ears, hanging down either side of the head
     ctx.beginPath();
-    ctx.ellipse(c.x - s * 0.3, c.y - s * 0.4, s * 0.14, s * 0.23, -0.5, 0, Math.PI * 2);
+    ctx.ellipse(c.x - s * 0.34, c.y - s * 0.02, s * 0.15, s * 0.27, -0.22, 0, Math.PI * 2);
+    ctx.fillStyle = furDark;
+    ctx.fill();
+    ctx.beginPath();
+    ctx.ellipse(c.x + s * 0.34, c.y - s * 0.02, s * 0.15, s * 0.27, 0.22, 0, Math.PI * 2);
     ctx.fillStyle = furDark;
     ctx.fill();
 
-    // head
+    // head, the main event
     ctx.beginPath();
-    ctx.arc(c.x - s * 0.18, c.y - s * 0.26, s * 0.3, 0, Math.PI * 2);
+    ctx.arc(c.x, c.y - s * 0.1, s * 0.4, 0, Math.PI * 2);
     ctx.fillStyle = fur;
     ctx.fill();
 
-    // near ear
+    // pale snout patch
     ctx.beginPath();
-    ctx.ellipse(c.x - s * 0.02, c.y - s * 0.46, s * 0.13, s * 0.21, 0.4, 0, Math.PI * 2);
-    ctx.fillStyle = furDark;
-    ctx.fill();
-
-    // snout
-    ctx.beginPath();
-    ctx.ellipse(c.x - s * 0.44, c.y - s * 0.16, s * 0.17, s * 0.12, 0, 0, Math.PI * 2);
+    ctx.ellipse(c.x, c.y + s * 0.1, s * 0.24, s * 0.17, 0, 0, Math.PI * 2);
     ctx.fillStyle = cream;
     ctx.fill();
 
-    // nose + eye
-    ctx.fillStyle = "#3a352d";
+    // nose
     ctx.beginPath();
-    ctx.arc(c.x - s * 0.58, c.y - s * 0.16, s * 0.055, 0, Math.PI * 2);
-    ctx.arc(c.x - s * 0.25, c.y - s * 0.32, s * 0.045, 0, Math.PI * 2);
+    ctx.ellipse(c.x, c.y + s * 0.02, s * 0.075, s * 0.05, 0, 0, Math.PI * 2);
+    ctx.fillStyle = ink;
     ctx.fill();
 
-    // collar, a little dash of color where the two players' pulls meet
+    // smiling mouth
     ctx.beginPath();
-    ctx.arc(c.x - s * 0.06, c.y - s * 0.02, s * 0.32, 0.15, Math.PI - 0.15);
-    ctx.strokeStyle = "#b8862e";
-    ctx.lineWidth = s * 0.08;
+    ctx.arc(c.x, c.y + s * 0.1, s * 0.1, 0.12 * Math.PI, 0.88 * Math.PI);
+    ctx.strokeStyle = ink;
+    ctx.lineWidth = s * 0.035;
     ctx.lineCap = "round";
     ctx.stroke();
+
+    // big round eyes with a tiny sparkle in each
+    [-1, 1].forEach((side) => {
+      ctx.beginPath();
+      ctx.arc(c.x + side * s * 0.17, c.y - s * 0.18, s * 0.065, 0, Math.PI * 2);
+      ctx.fillStyle = ink;
+      ctx.fill();
+      ctx.beginPath();
+      ctx.arc(c.x + side * s * 0.17 + s * 0.02, c.y - s * 0.2, s * 0.02, 0, Math.PI * 2);
+      ctx.fillStyle = "#fdfbf7";
+      ctx.fill();
+    });
+
+    // eyebrow flecks, for a little personality
+    ctx.strokeStyle = furDark;
+    ctx.lineWidth = s * 0.035;
+    ctx.beginPath();
+    ctx.moveTo(c.x - s * 0.24, c.y - s * 0.3);
+    ctx.lineTo(c.x - s * 0.12, c.y - s * 0.33);
+    ctx.moveTo(c.x + s * 0.24, c.y - s * 0.3);
+    ctx.lineTo(c.x + s * 0.12, c.y - s * 0.33);
+    ctx.stroke();
+
+    // collar and tag
+    ctx.beginPath();
+    ctx.arc(c.x, c.y + s * 0.34, s * 0.4, 0.15 * Math.PI, 0.85 * Math.PI);
+    ctx.strokeStyle = "#c0392b";
+    ctx.lineWidth = s * 0.09;
+    ctx.lineCap = "round";
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.arc(c.x, c.y + s * 0.5, s * 0.06, 0, Math.PI * 2);
+    ctx.fillStyle = "#e9c24d";
+    ctx.fill();
   }
 
   function drawSpark() {
-    sctx.clearRect(0, 0, spark.width, spark.height);
+    sctx.clearRect(0, 0, SPARK_W, SPARK_H);
     const hist = state.exploitHistory;
     if (hist.length < 2) return;
     const max = Math.max(...hist, 1e-6);
@@ -500,8 +545,8 @@
     sctx.lineWidth = 1.5;
     sctx.beginPath();
     hist.forEach((v, i) => {
-      const x = (i / (hist.length - 1)) * spark.width;
-      const y = spark.height - 4 - (v / max) * (spark.height - 8);
+      const x = (i / (hist.length - 1)) * SPARK_W;
+      const y = SPARK_H - 4 - (v / max) * (SPARK_H - 8);
       if (i === 0) sctx.moveTo(x, y);
       else sctx.lineTo(x, y);
     });
@@ -509,7 +554,7 @@
   }
 
   function render() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.clearRect(0, 0, CSS_SIZE, CSS_SIZE);
 
     // a soft yard: pale sky fading into a hint of grass at the bottom
     const yard = ctx.createLinearGradient(0, PAD, 0, PAD + SIZE);
@@ -594,7 +639,7 @@
     const rect = canvas.getBoundingClientRect();
     const clientX = evt.touches ? evt.touches[0].clientX : evt.clientX;
     const clientY = evt.touches ? evt.touches[0].clientY : evt.clientY;
-    return { x: ((clientX - rect.left) / rect.width) * canvas.width, y: ((clientY - rect.top) / rect.height) * canvas.height };
+    return { x: ((clientX - rect.left) / rect.width) * CSS_SIZE, y: ((clientY - rect.top) / rect.height) * CSS_SIZE };
   }
   function nearest(p) {
     const rC = toCanvas(state.houseRed);
