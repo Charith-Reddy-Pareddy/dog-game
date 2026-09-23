@@ -1,3 +1,5 @@
 numpy>=1.24
 pytest>=7.0
 torch>=2.0
+scipy>=1.10
+nashpy>=0.0.35
