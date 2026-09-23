@@ -25,6 +25,9 @@ solver to check both against, and a browser visualization.
 - `doggame/env.py` -- `DogGameEnv`: the repeated game. Transition and
   reward functions are injected rather than hardcoded, so the same
   loop can drive a different game later without touching this class.
+  `make_inertial_transition(w0)` builds the more general three-weight
+  transition (`w0 * dog + w1 * pick_red + w2 * pick_blue`) for a dog
+  with some momentum instead of fully re-targeting every round.
 - `doggame/nash.py` -- closed-form-style continuous stage-game Nash
   solver via iterated best response. Because the unconstrained best
   response has no fixed point unless both houses share a coordinate,
@@ -48,11 +51,20 @@ solver to check both against, and a browser visualization.
   game's Nash equilibrium via iterated best response against the
   opponent's running-average strategy -- the "best response dynamics"
   approach discussed as the practical alternative to an LP solver.
+- `doggame/exact_nash.py` -- exact (not approximate) bimatrix Nash
+  solvers: `lemke_howson_nash` (NashPy, general-sum) and
+  `zero_sum_lp_nash` (an LP via scipy, for the zero-sum case a future
+  soccer-game stage game would actually need -- LP duality doesn't
+  apply to general-sum games, so this isn't a substitute for the
+  Lemke-Howson path on the dog game itself).
 - `doggame/dqn.py` -- the DQN subgroup's task: solves the discretized
-  stage game with fictitious play, then iterates the Nash-Q Bellman
-  backup `Q = R + discount * NashV(Q)` to a fixed point. See the
-  module docstring for why that backup doesn't need to loop over
-  states in this particular game.
+  stage game with fictitious play by default, or exactly via
+  `solver="exact"`, then iterates the Nash-Q Bellman backup
+  `Q = R + discount * NashV(Q)` to a fixed point. `resync_every`
+  freezes the stage-game strategy for several outer iterations between
+  re-solves instead of re-solving every time. See the module docstring
+  for why the backup doesn't need to loop over states in this
+  particular game.
 - `doggame/verify.py` -- the check described in the meeting for
   whether a solved or learned policy is actually a Nash equilibrium:
   `exploitability` (grid-search for a unilateral improvement, for
@@ -64,7 +76,8 @@ solver to check both against, and a browser visualization.
   each, to actually answer "can this converge?" instead of trusting
   one demo run. See Findings below.
 - `visualize/index.html` -- a self-contained, no-build browser page.
-  Drag the houses, tune `w`, and step through best-response play.
+  Drag the houses, tune `w`, raise `w0` to give the dog inertia, and
+  step through best-response play.
 - `docs/index.html` -- the GitHub Pages version of the same live
   simulator, plus the real training results from `doggame.experiments`
   and the write-up in Findings below. Deployed at
@@ -102,6 +115,23 @@ payoff_red, payoff_blue = payoff_matrices(
     transition_fn=weighted_average_transition, reward_fn=negative_squared_distance_reward,
 )
 q_red, q_blue, strategy_red, strategy_blue = solve_discretized_nash_q(payoff_red, payoff_blue, discount=0.9)
+
+# exact instead of approximate, resolving the stage game every 5th
+# outer iteration instead of every iteration:
+q_red, q_blue, strategy_red, strategy_blue = solve_discretized_nash_q(
+    payoff_red, payoff_blue, discount=0.9, solver="exact", resync_every=5,
+)
+```
+
+```python
+from doggame.env import DogGameEnv, make_inertial_transition
+
+# the dog only closes 30% of the gap to each round's target, instead
+# of fully re-targeting every round
+env = DogGameEnv(
+    house_red=(0.9, 0.2), house_blue=(0.1, 0.8), w=0.5,
+    transition_fn=make_inertial_transition(w0=0.7),
+)
 ```
 
 Run the convergence study (`python3 -m doggame.experiments`) to see
