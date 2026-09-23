@@ -25,17 +25,34 @@ import numpy as np
 from scipy.optimize import linprog
 
 
-def lemke_howson_nash(payoff_red, payoff_blue, initial_dropped_label=0):
+def lemke_howson_nash(payoff_red, payoff_blue, initial_dropped_label=0, epsilon=0.0, seed=0):
     """An exact Nash equilibrium of a general-sum bimatrix game via
     NashPy's Lemke-Howson algorithm.
 
     Returns (strategy_red, strategy_blue). A bimatrix game can have
     multiple equilibria; Lemke-Howson returns whichever one the pivot
     path starting from `initial_dropped_label` finds, not all of them.
+
+    `epsilon` matches the planning notes' "[payoff matrix] + epsilon"
+    shorthand for breaking exact payoff ties before solving: a tied
+    (degenerate) game can have infinitely many equilibria sharing the
+    same support, which is a harder case for pivoting methods in
+    general, even though NashPy's implementation has not been observed
+    to fail on the degenerate cases this project actually exercises.
+    `epsilon = 0` (the default) solves the payoff matrices exactly as
+    given; `epsilon > 0` adds a small uniform-random perturbation
+    (seeded, so it is reproducible) to both matrices first.
     """
     import nashpy as nash
 
-    game = nash.Game(np.asarray(payoff_red, dtype=float), np.asarray(payoff_blue, dtype=float))
+    payoff_red = np.asarray(payoff_red, dtype=float)
+    payoff_blue = np.asarray(payoff_blue, dtype=float)
+    if epsilon:
+        rng = np.random.default_rng(seed)
+        payoff_red = payoff_red + rng.uniform(-epsilon, epsilon, size=payoff_red.shape)
+        payoff_blue = payoff_blue + rng.uniform(-epsilon, epsilon, size=payoff_blue.shape)
+
+    game = nash.Game(payoff_red, payoff_blue)
     strategy_red, strategy_blue = game.lemke_howson(initial_dropped_label=initial_dropped_label)
     return np.asarray(strategy_red, dtype=float), np.asarray(strategy_blue, dtype=float)
 

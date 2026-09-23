@@ -13,7 +13,33 @@ def test_lemke_howson_matches_matching_pennies():
     strategy_red, strategy_blue = lemke_howson_nash(payoff_red, payoff_blue)
 
     assert np.allclose(strategy_red, [0.5, 0.5])
+
+
+def test_lemke_howson_epsilon_zero_matches_exact_solve():
+    # epsilon=0 (the default) must solve the payoff matrices exactly as
+    # given -- no perturbation applied
+    payoff_red = np.array([[1.0, -1.0], [-1.0, 1.0]])
+    payoff_blue = -payoff_red
+
+    strategy_red, strategy_blue = lemke_howson_nash(payoff_red, payoff_blue, epsilon=0.0)
+
+    assert np.allclose(strategy_red, [0.5, 0.5])
     assert np.allclose(strategy_blue, [0.5, 0.5])
+
+
+def test_lemke_howson_epsilon_breaks_ties_on_a_degenerate_game():
+    # two tied rows (and tied columns) make this game degenerate --
+    # a small epsilon perturbation should still resolve it to a valid,
+    # nearby equilibrium rather than failing or erroring out
+    payoff_red = np.array([[1.0, 1.0, 1.0], [1.0, 1.0, 1.0], [0.0, 0.0, 0.0]])
+    payoff_blue = payoff_red.copy()
+
+    strategy_red, strategy_blue = lemke_howson_nash(payoff_red, payoff_blue, epsilon=1e-6, seed=1)
+
+    assert np.isclose(strategy_red.sum(), 1.0)
+    assert np.isclose(strategy_blue.sum(), 1.0)
+    assert np.all(strategy_red >= -1e-9)
+    assert np.all(strategy_blue >= -1e-9)
 
 
 def test_lemke_howson_on_the_planning_notes_example_matrix():

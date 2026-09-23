@@ -24,6 +24,17 @@ particular (state-independent) transition, not a general shortcut: it
 disappears as soon as the transition depends on the incoming state
 (e.g. a soccer game with ball possession).
 
+The planning notes' first optimization -- compute Nash(Q(s')) "at most
+once for every s'" -- is about a *multi-state* game, where naively
+re-solving the same next-state's stage game every time some other
+(s, a, b) transitions into it would be wasteful. That situation cannot
+arise here, precisely because of the collapse above: there is only
+ever one effective "s'" for this game, so this module already solves
+it at most once per outer iteration by construction (and, with
+`resync_every`, often less than that). A genuine per-state cache would
+only become meaningful once this module is extended to a game whose
+transition actually depends on the incoming state.
+
 Re-solving the stage game's Nash equilibrium on *every* outer Bellman
 iteration is wasteful once Q is close to converged, since the
 equilibrium strategy barely moves between iterations near the fixed
