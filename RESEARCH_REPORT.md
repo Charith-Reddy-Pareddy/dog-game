@@ -93,6 +93,37 @@ general shortcut (documented in the module's docstring, verified in
 implies: discounted value equals one-shot Nash value divided by
 `1 - discount`).
 
+### 4.3 Dog inertia and an exact stage-game solver
+
+A follow-up planning session raised two further refinements, both
+implemented since the findings below were first written:
+
+- **Dog inertia.** The transition above has the dog fully re-target
+  every round. `doggame.env.make_inertial_transition(w0)` generalizes
+  it to `w0 * dog + w1 * pick_red + w2 * pick_blue` (with
+  `w1 = (1-w0)*w`, `w2 = (1-w0)*(1-w)`), so the dog only partially
+  closes the gap each round instead of teleporting to the target. Because
+  `w0, w1, w2` are a fixed convex combination every round, holding
+  both players' actions fixed still pulls the dog toward the *same*
+  steady state the two-weight version reaches in one step — inertia
+  only slows the approach (geometrically, at rate `w0` per round), it
+  does not change where the dog ends up (`tests/test_env.py`
+  confirms this by running 200 rounds with and without inertia from
+  the same start and checking they land within `1e-6` of each other).
+  The live simulator's `w0` slider demonstrates this directly.
+- **Exact stage-game solving.** `doggame/exact_nash.py` adds
+  `lemke_howson_nash` (NashPy's Lemke-Howson algorithm, exact for any
+  general-sum bimatrix game) as an alternative to fictitious play's
+  approximation, plus `zero_sum_lp_nash` (an LP via `scipy.optimize.linprog`)
+  for the zero-sum case specifically — included because it is the
+  textbook-correct exact method there, even though the dog game itself
+  never needs it (it is general-sum). `doggame.dqn.solve_discretized_nash_q`
+  now takes `solver="exact"` to use it, and a `resync_every` parameter
+  that freezes a stage-game solution across several outer Bellman
+  iterations instead of re-solving on every one — cheaper per
+  iteration, and it still converges to the same closed-form fixed
+  point (`tests/test_dqn.py`).
+
 ## 5. Verification methodology
 
 The meeting specified the actual check to use: for a mixed strategy,
@@ -187,20 +218,57 @@ answered by this repository:
   non-obvious equilibrium is selected across seeds, or only across
   architectures, is untested.
 - **Stage-game solution quality vs. outer convergence** (question 5b):
-  `doggame.dqn` uses fictitious play with a fixed iteration count; how
-  the outer Bellman iteration's fixed point degrades as the inner
-  fictitious-play solution gets coarser has not been measured.
+  `doggame.dqn` now offers an *exact* stage-game solver
+  (`solver="exact"`) as well as fictitious play, and can freeze either
+  one across several outer iterations (`resync_every`), but the
+  general question — how much stage-game solution error the outer
+  Bellman iteration tolerates before it stops converging correctly —
+  is still open. What exists now is the tooling to actually measure
+  it (compare `solver="fictitious_play"` at various
+  `fictitious_play_iterations`, or `resync_every > 1`, against
+  `solver="exact"`, `resync_every=1` as ground truth), not the
+  measurement itself.
 - **Resolution vs. solution quality trade-off** (question 6):
   `tests/test_dqn.py` checks two resolutions (5 and 9); no systematic
   sweep exists yet, though the fix in Section 5 specifically removes a
-  correctness blocker for testing much finer grids.
-- **Clean vs. noisy mixed probabilities** (question 10): the
-  fictitious-play noise floor is documented and accounted for in
-  `mixed_strategy_indifference_gap`'s `tol`, but no rounding/cleanup
-  pass exists to recover exact fractions (50/50, 1/3-2/3) the way the
-  meeting's soccer-game discussion called for.
+  correctness blocker for testing much finer grids, and
+  `lemke_howson_nash` was spot-checked up to a 289-action grid without
+  trouble.
+- **Clean vs. noisy mixed probabilities** (question 10): partially
+  addressed from a different angle than originally planned —
+  `lemke_howson_nash` is *exact*, so it has no fictitious-play-style
+  noise floor to clean up in the first place. The fictitious-play path
+  still has it, and no rounding/cleanup pass exists for that path.
 - **Transfer to the soccer game** (question 11): entirely open. The
   dog game's state-independent transition is explicitly called out in
   `doggame/dqn.py` as a simplification that a soccer game (state
   depends on ball possession) would not have, so the Nash-Q backup
   collapse this repo relies on would not directly apply there.
+  `zero_sum_lp_nash` (Section 4.3) is a first concrete piece of
+  transfer-ready groundwork, since soccer's stage games are zero-sum
+  and an LP is the textbook-exact method there — but it has not been
+  exercised against anything but toy examples (matching pennies,
+  rock-paper-scissors) in this repo.
+- **Dog inertia's effect on training, not just analysis** (question
+  12): Section 4.3 shows inertia does not change the analytical
+  fixed point, and the live simulator demonstrates it does not change
+  where best-response iteration ends up either. Whether it changes
+  anything for the *policy-gradient* side — e.g. whether self-play
+  converges faster or slower, or finds a different equilibrium in the
+  degenerate case from Finding 2, when the dog has momentum — is
+  untested; `doggame.train` and `doggame.experiments` do not yet
+  accept an inertial transition.
+- **Vertex-Nash equilibrium selection for multi-state games**
+  (question 13): open, and not really answerable within the dog game
+  as implemented, since its Nash-Q backup collapses to a single
+  stage game with (empirically) one equilibrium — there is no
+  multi-equilibrium, multi-state setting here to select *among* yet.
+- **LLM-as-bounded-rational-player and inverse-RL-style reward
+  recovery** (question 14): out of scope for this repository — it
+  belongs to a separate research thread about LLMs playing repeated
+  games, not the dog game's code.
+- **Continuous soccer action space** (question 15): out of scope for
+  this repository specifically because it is about the soccer game,
+  which this codebase does not implement; noted here as the concrete
+  next design question for whichever codebase takes on that
+  extension.

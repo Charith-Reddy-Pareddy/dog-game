@@ -69,23 +69,62 @@ the questions common to both.
     to transfer to the soccer game, and which are artifacts of the dog
     game's simpler structure?
 
+## From the follow-up planning notes
+
+A second planning session raised further questions, some specific to
+this repo and some about the surrounding research program:
+
+12. Should the dog have some momentum instead of fully re-targeting
+    every round — i.e. should the transition be a three-weight
+    `w0 * dog + w1 * pick_red + w2 * pick_blue` instead of the
+    two-weight `w * pick_red + (1-w) * pick_blue`? Does adding inertia
+    change anything besides how many rounds convergence takes?
+13. Can improving Nash-Q's per-state solve (a "vertex Nash" picking the
+    equilibrium with the largest sum of both players' values, when a
+    stage game has more than one) give a more useful notion of
+    equilibrium selection for a multi-*state* Markov game than
+    checking optimality alone does?
+14. (From an adjacent research thread, not this repo's game.) Can an
+    LLM's behavior in a repeated game be modeled the same way — as
+    bounded-rationality play over a structured, continuous action
+    space — and does "inverting" an LLM's observed choices recover an
+    implied reward function the way inverse RL would for a human
+    player?
+15. (Also adjacent, and soccer-specific.) For a continuous-action
+    soccer player, is the natural action space a disk (move up to
+    radius `r`, any heading — polar coordinates `[0, r) x [0, 2*pi]`)
+    with a separate heading-only action (`[0, 2*pi)`) for something
+    like a kick direction? Centralized vs. decentralized control over
+    that combined action space was flagged as an open question too.
+
 ## Status of these questions in this repository
 
 - Questions 1-2 and 7 are addressed empirically in
   [`doggame/experiments.py`](doggame/experiments.py) and summarized in
   the [README](README.md#findings) and on the
   [live results page](https://charith-reddy-pareddy.github.io/dog-game/#findings).
-- Questions 5 and 6 are addressed by
-  [`doggame/fictitious_play.py`](doggame/fictitious_play.py) and
-  [`doggame/dqn.py`](doggame/dqn.py), which solve the discretized stage
-  game by best-response dynamics rather than an LP solver, then check
-  the resulting fixed point against the closed-form value the
-  state-independent transition permits (see `doggame/dqn.py`'s module
-  docstring).
+- Question 5 now has a partial answer: [`doggame/exact_nash.py`](doggame/exact_nash.py)
+  adds an *exact* stage-game solver (NashPy's Lemke-Howson algorithm)
+  as an alternative to fictitious play's approximation, and
+  [`doggame/dqn.py`](doggame/dqn.py)'s `resync_every` lets the outer
+  Bellman loop freeze a stage-game solution across several iterations
+  instead of re-solving every time — but the general question of how
+  much stage-game solution error the outer loop tolerates before it
+  stops converging correctly is still open (see 5b).
+- Question 6 is addressed by [`doggame/discretize.py`](doggame/discretize.py)
+  and [`doggame/dqn.py`](doggame/dqn.py); the resolution/scaling
+  concern it raises is concretely what the fix documented under
+  "A defect found and fixed" in [RESEARCH_REPORT.md](RESEARCH_REPORT.md)
+  was about.
 - Question 8 has a direct, reproducible example in the README and the
   live page's "Finding 2".
 - Question 9 is implemented directly in
   [`doggame/verify.py`](doggame/verify.py).
-- Questions 3, 4, 10, and 11 are open; see
+- Question 12 is implemented in [`doggame/env.py`](doggame/env.py)
+  (`make_inertial_transition`) and on the
+  [live simulator](https://charith-reddy-pareddy.github.io/dog-game/)'s
+  w0 slider; see `RESEARCH_REPORT.md` for why inertia only changes the
+  transient, not the eventual fixed point.
+- Questions 3, 4, 5b, 10, 11, 13, 14, and 15 are open; see
   [RESEARCH_REPORT.md](RESEARCH_REPORT.md#open-questions) for where
   this repo's results leave them.
