@@ -68,3 +68,76 @@ def test_q_values_match_the_closed_form_fixed_point():
 
     assert np.isclose(actual_discounted_red, expected_discounted_red, rtol=1e-3)
     assert np.isclose(actual_discounted_blue, expected_discounted_blue, rtol=1e-3)
+
+
+def test_exact_solver_reaches_the_same_corner_solution_as_fictitious_play():
+    domain, house_red, house_blue, w, grid, payoff_red, payoff_blue = build_game(resolution=5)
+
+    _, _, strategy_red, strategy_blue = solve_discretized_nash_q(
+        payoff_red, payoff_blue, discount=0.9, solver="exact"
+    )
+
+    nash_red, nash_blue, _ = solve_stage_nash(house_red, house_blue, w, domain)
+    picked_red = grid[np.argmax(strategy_red)]
+    picked_blue = grid[np.argmax(strategy_blue)]
+
+    assert np.allclose(picked_red, nash_red, atol=1e-6)
+    assert np.allclose(picked_blue, nash_blue, atol=1e-6)
+
+
+def test_unknown_solver_raises():
+    import pytest
+
+    with pytest.raises(ValueError):
+        solve_discretized_nash_q(
+            np.zeros((2, 2)), np.zeros((2, 2)), discount=0.9, solver="nonsense"
+        )
+
+
+def test_resync_every_one_matches_resolving_every_iteration():
+    # resync_every=1 is the documented default behavior (resolve the
+    # stage game on every outer iteration) -- passing it explicitly
+    # should reproduce the same fixed point as leaving it unset.
+    _, _, _, _, _, payoff_red, payoff_blue = build_game(resolution=5)
+
+    q_red_default, q_blue_default, _, _ = solve_discretized_nash_q(
+        payoff_red, payoff_blue, discount=0.8, seed=0
+    )
+    q_red_explicit, q_blue_explicit, _, _ = solve_discretized_nash_q(
+        payoff_red, payoff_blue, discount=0.8, seed=0, resync_every=1
+    )
+
+    assert np.allclose(q_red_default, q_red_explicit)
+    assert np.allclose(q_blue_default, q_blue_explicit)
+
+
+def test_freezing_the_strategy_between_resyncs_still_converges():
+    # solving the stage game only every few outer iterations (instead
+    # of every iteration) should still reach the same closed-form fixed
+    # point -- it just does cheaper work per iteration to get there.
+    _, _, _, _, _, payoff_red, payoff_blue = build_game(resolution=5)
+    discount = 0.8
+
+    q_red, q_blue, strategy_red, strategy_blue = solve_discretized_nash_q(
+        payoff_red, payoff_blue, discount=discount, resync_every=5, max_outer_iter=400
+    )
+
+    stage_value_red = expected_value(payoff_red, strategy_red, strategy_blue)
+    stage_value_blue = expected_value(payoff_blue, strategy_red, strategy_blue)
+    expected_discounted_red = stage_value_red / (1 - discount)
+    expected_discounted_blue = stage_value_blue / (1 - discount)
+
+    actual_discounted_red = expected_value(q_red, strategy_red, strategy_blue)
+    actual_discounted_blue = expected_value(q_blue, strategy_red, strategy_blue)
+
+    assert np.isclose(actual_discounted_red, expected_discounted_red, rtol=1e-3)
+    assert np.isclose(actual_discounted_blue, expected_discounted_blue, rtol=1e-3)
+
+
+def test_invalid_resync_every_raises():
+    import pytest
+
+    with pytest.raises(ValueError):
+        solve_discretized_nash_q(
+            np.zeros((2, 2)), np.zeros((2, 2)), discount=0.9, resync_every=0
+        )
