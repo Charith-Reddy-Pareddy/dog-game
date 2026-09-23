@@ -117,11 +117,16 @@
     <p class="sub">
       A two-player, general-sum game: a red house and a blue house each want a shared
       "dog" as close as possible to their own doorstep. Each round both sides pick a
-      point to pull toward; the dog lands on the <em>w&nbsp;/&nbsp;(1&minus;w)</em> blend
-      of those two points. Because the domain is bounded, players are pushed to
-      exaggerate toward the edge to counteract each other &mdash; the same logic behind
-      two influencers each staking out an exaggerated opinion to drag a shared audience
-      toward them. Source, tests, and training code:
+      point to pull toward; the dog moves to
+      <em>w&#8320;&middot;dog&nbsp;+&nbsp;w&#8321;&middot;pick<sub>red</sub>&nbsp;+&nbsp;w&#8322;&middot;pick<sub>blue</sub></em>,
+      where <em>w&#8321;&nbsp;=&nbsp;(1&minus;w&#8320;)w</em> and
+      <em>w&#8322;&nbsp;=&nbsp;(1&minus;w&#8320;)(1&minus;w)</em> &mdash; with
+      <em>w&#8320;&nbsp;=&nbsp;0</em> the dog fully re-targets every round; above that it
+      only partially closes the gap, giving it some inertia. Because the domain is
+      bounded, players are pushed to exaggerate toward the edge to counteract each
+      other &mdash; the same logic behind two influencers each staking out an
+      exaggerated opinion to drag a shared audience toward them. Source, tests, and
+      training code:
       <a href="https://github.com/Charith-Reddy-Pareddy/dog-game" target="_blank" rel="noopener">github.com/Charith-Reddy-Pareddy/dog-game</a>.
     </p>
   </header>
@@ -137,6 +142,11 @@
         <div class="field">
           <label>w (pull toward red) <span class="val" id="wVal">0.50</span></label>
           <input type="range" id="w" min="0.05" max="0.95" step="0.01" value="0.5" />
+        </div>
+
+        <div class="field">
+          <label>w&#8320; (dog inertia) <span class="val" id="inertiaVal">0.00</span></label>
+          <input type="range" id="inertia" min="0" max="0.9" step="0.01" value="0" />
         </div>
 
         <div class="btn-row">
@@ -157,10 +167,14 @@
 
         <p class="hint">
           Drag the solid house markers anywhere in the square to re-pose the game.
-          Exploitability is computed live, in the browser, by grid-searching for
-          the best unilateral deviation from the current pair of picks &mdash; it's
-          ~0 exactly when neither player can do better alone, which is the
-          definition of a Nash equilibrium.
+          Raise w&#8320; to give the dog inertia &mdash; it then only partially closes
+          the gap to each round's target instead of teleporting there, so
+          "Run to equilibrium" takes more rounds but still settles on the same
+          point. Exploitability is computed live, in the browser, by grid-searching
+          for the best unilateral deviation from the current pair of picks
+          (against the full re-target, independent of w&#8320;) &mdash; it's ~0
+          exactly when neither player can do better alone, which is the definition
+          of a Nash equilibrium.
         </p>
       </div>
     </div>
@@ -246,6 +260,8 @@
 
   const wSlider = document.getElementById("w");
   const wVal = document.getElementById("wVal");
+  const inertiaSlider = document.getElementById("inertia");
+  const inertiaVal = document.getElementById("inertiaVal");
   const stepBtn = document.getElementById("stepBtn");
   const runBtn = document.getElementById("runBtn");
   const resetBtn = document.getElementById("resetBtn");
@@ -264,10 +280,10 @@
   sctx.scale(DPR, DPR);
 
   let state = {
-    houseRed: { x: 0.85, y: 0.2 },
-    houseBlue: { x: 0.15, y: 0.8 },
-    actionRed: { x: 0.85, y: 0.2 },
-    actionBlue: { x: 0.15, y: 0.8 },
+    houseRed: { x: 0.88, y: 0.12 },
+    houseBlue: { x: 0.3, y: 0.65 },
+    actionRed: { x: 0.88, y: 0.12 },
+    actionBlue: { x: 0.3, y: 0.65 },
     dog: { x: 0.5, y: 0.5 },
     round: 0,
     exploitHistory: [],
@@ -275,6 +291,7 @@
 
   function clip(v) { return Math.min(DOMAIN.high, Math.max(DOMAIN.low, v)); }
   function w() { return parseFloat(wSlider.value); }
+  function inertia() { return parseFloat(inertiaSlider.value); }
 
   function bestResponseRed(actionBlue, houseRed, wVal) {
     return {
@@ -290,6 +307,13 @@
   }
   function blend(a, b, wVal) {
     return { x: wVal * a.x + (1 - wVal) * b.x, y: wVal * a.y + (1 - wVal) * b.y };
+  }
+  // w0 * dog + w1 * actionRed + w2 * actionBlue, with w1 = (1-w0)*w and
+  // w2 = (1-w0)*(1-w) -- the dog only partially closes the gap to the
+  // full blend each round instead of fully re-targeting.
+  function inertialBlend(dog, a, b, wVal, w0Val) {
+    const target = blend(a, b, wVal);
+    return { x: w0Val * dog.x + (1 - w0Val) * target.x, y: w0Val * dog.y + (1 - w0Val) * target.y };
   }
   function sqDist(a, b) { return (a.x - b.x) ** 2 + (a.y - b.y) ** 2; }
   function toCanvas(p) { return { x: PAD + p.x * SIZE, y: PAD + (1 - p.y) * SIZE }; }
@@ -608,7 +632,7 @@
     const newBlue = bestResponseBlue(newRed, state.houseBlue, wv);
     state.actionRed = newRed;
     state.actionBlue = newBlue;
-    state.dog = blend(state.actionRed, state.actionBlue, wv);
+    state.dog = inertialBlend(state.dog, state.actionRed, state.actionBlue, wv, inertia());
     state.round += 1;
     const gaps = exploitability(state.actionRed, state.actionBlue, state.houseRed, state.houseBlue, wv);
     state.exploitHistory.push(Math.max(gaps.red, gaps.blue));
@@ -625,12 +649,18 @@
   }
 
   function runToEquilibrium() {
+    // the actions themselves settle within ~2 rounds regardless of
+    // inertia, but a laggy dog (high w0) needs more rounds before its
+    // position visibly catches up to the target -- scale the run length
+    // (and speed it up correspondingly) so it still finishes promptly.
+    const maxSteps = 30 + Math.round(inertia() * 120);
+    const intervalMs = Math.max(15, Math.round(3600 / maxSteps));
     let i = 0;
     const id = setInterval(() => {
       step();
       i += 1;
-      if (i >= 30) clearInterval(id);
-    }, 90);
+      if (i >= maxSteps) clearInterval(id);
+    }, intervalMs);
   }
 
   let dragging = null;
@@ -670,6 +700,7 @@
   window.addEventListener("touchend", () => (dragging = null));
 
   wSlider.addEventListener("input", () => { wVal.textContent = w().toFixed(2); reset(); });
+  inertiaSlider.addEventListener("input", () => { inertiaVal.textContent = inertia().toFixed(2); reset(); });
   stepBtn.addEventListener("click", step);
   runBtn.addEventListener("click", runToEquilibrium);
   resetBtn.addEventListener("click", reset);
