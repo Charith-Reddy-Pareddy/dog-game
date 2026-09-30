@@ -198,14 +198,3 @@ than distance to a single precomputed candidate.
 
 Work in progress, built incrementally. See commit history for the
 build-out order.
-
-## Note on commits `e06ae1e`..`36d8f2f`
-
-That range of six commits is a deliberate debugging exercise, not real
-history: three small, realistic bugs (a swapped reward assignment, a
-copy-pasted best-response formula with the wrong denominator, and an
-off-by-one in the discounted-return recursion) were introduced one at
-a time, reproduced with the test suite, diagnosed, and fixed -- each
-bug and its fix as a separate, clearly labeled commit. It's kept in
-the history rather than squashed away because the point of the
-exercise was the workflow itself.
