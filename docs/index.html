@@ -272,7 +272,8 @@
     <h3>Solvers and evidence</h3>
     <ul>
       <li>Only REINFORCE is implemented, with a mean-return baseline. There is no A2C or PPO.</li>
-      <li>The "DQN" is tabular Nash-Q on a single state, with no neural network, target network or replay buffer.</li>
+      <li>The original dog-game "DQN" is tabular Nash-Q on a single state, with no neural network. The angle-radius game has a real deep Nash-Q: 10 compass directions, a target network and a replay buffer.</li>
+      <li>Each Nash-Q stage game is solved exactly, but the solver can cycle on some games, so answers are checked and retried from another starting point.</li>
       <li>The analytic solver returns one pure equilibrium. When equilibria aren't unique, which one it returns is arbitrary.</li>
       <li>Every run in the results table uses one seed, so the claim about architecture and convergence speed rests on a single data point.</li>
     </ul>
@@ -284,7 +285,7 @@
       <li>Where is the soccer environment, and which rules does it use? This repo has no soccer code.</li>
       <li>What counts as replicating the exact soccer solver: matching Q* at every state, matching selected states, or win rates?</li>
       <li>Is fictitious play meant for the stage game inside Nash-Q, or at the policy level (a best response to the opponent's average policy)?</li>
-      <li>Must the DQN be a real deep Q-network?</li>
+      <li>The angle-radius game now has a deep Nash-Q. Should the original dog game have one too?</li>
       <li>How are win rates measured: which opponents, how many games, which start states, sampled or greedy actions?</li>
       <li>How should the angle's wraparound and the board edge be handled?</li>
     </ol>
