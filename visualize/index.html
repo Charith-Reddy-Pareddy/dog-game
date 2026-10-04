@@ -54,7 +54,9 @@
   }
   .stage-wrap {
     position: relative;
-    flex: 0 0 auto;
+    flex: 1 1 280px;
+    max-width: 480px;
+    min-width: 0;
   }
   canvas {
     background: #fbf9f4;
@@ -199,8 +201,9 @@
   const CSS_SIZE = canvas.width;
   const SIZE = CSS_SIZE - PAD * 2;
   const DPR = window.devicePixelRatio || 1;
-  canvas.style.width = CSS_SIZE + "px";
-  canvas.style.height = CSS_SIZE + "px";
+  canvas.style.width = "100%";
+  canvas.style.maxWidth = CSS_SIZE + "px";
+  canvas.style.height = "auto";
   canvas.width = CSS_SIZE * DPR;
   canvas.height = CSS_SIZE * DPR;
   ctx.scale(DPR, DPR);

@@ -46,7 +46,7 @@
   p.sub { margin: 0; color: var(--muted); font-size: 0.95rem; max-width: 68ch; line-height: 1.5; }
   a { color: var(--blue-dark); }
   .layout { display: flex; gap: 28px; flex-wrap: wrap; }
-  .stage-wrap { position: relative; flex: 0 0 auto; }
+  .stage-wrap { position: relative; flex: 1 1 280px; max-width: 440px; min-width: 0; }
   canvas { background: #fbf9f4; border: 1px solid var(--line); border-radius: 14px; touch-action: none; cursor: grab; }
   .panel { flex: 1 1 240px; min-width: 240px; display: flex; flex-direction: column; gap: 16px; }
   .field label { display: flex; justify-content: space-between; font-size: 0.85rem; color: var(--muted); margin-bottom: 6px; }
@@ -63,7 +63,7 @@
   button.primary { background: linear-gradient(135deg, var(--ink), #4a443c); color: #fdfbf7; }
   button.ghost { background: transparent; border: 1px solid var(--line); color: var(--ink); }
   .legend { display: flex; flex-direction: column; gap: 8px; font-size: 0.85rem; border-top: 1px solid var(--line); padding-top: 14px; }
-  .legend .row { display: flex; justify-content: space-between; align-items: center; }
+  .legend .row { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
   .swatch { width: 10px; height: 10px; border-radius: 50%; display: inline-block; margin-right: 8px; }
   .metric { font-variant-numeric: tabular-nums; font-weight: 600; }
   .metric.good { color: var(--good); }
@@ -78,6 +78,8 @@
   .stat .num { font-size: 1.5rem; font-weight: 700; font-variant-numeric: tabular-nums; letter-spacing: -0.02em; }
   .stat .lbl { font-size: 0.78rem; color: var(--muted); margin-top: 2px; }
 
+  .table-scroll { overflow-x: auto; }
+  .scroll-hint { display: none; margin: 0 0 6px; }
   table { width: 100%; border-collapse: collapse; font-size: 0.83rem; }
   th, td { text-align: left; padding: 7px 8px; border-bottom: 1px solid var(--line); white-space: nowrap; }
   th { color: var(--muted); font-weight: 600; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.03em; }
@@ -106,6 +108,7 @@
   footer { text-align: center; color: var(--muted); font-size: 0.82rem; padding: 8px 0 0; }
 
   @media (max-width: 640px) {
+    .scroll-hint { display: block; }
     .card { padding: 20px; }
     table { font-size: 0.75rem; }
     th, td { padding: 6px 5px; }
@@ -200,6 +203,8 @@
 
     <div class="stat-grid" id="statGrid"></div>
 
+    <p class="hint scroll-hint">Swipe the table sideways to see every column.</p>
+    <div class="table-scroll">
     <table id="resultsTable">
       <thead>
         <tr>
@@ -212,6 +217,7 @@
       </thead>
       <tbody></tbody>
     </table>
+    </div>
 
     <div class="callout episodes">
       <b>Finding 1 &mdash; "can this converge?" needs a number attached to it.</b>
@@ -304,8 +310,9 @@
   const CSS_SIZE = canvas.width;
   const SIZE = CSS_SIZE - PAD * 2;
   const DPR = window.devicePixelRatio || 1;
-  canvas.style.width = CSS_SIZE + "px";
-  canvas.style.height = CSS_SIZE + "px";
+  canvas.style.width = "100%";
+  canvas.style.maxWidth = CSS_SIZE + "px";
+  canvas.style.height = "auto";
   canvas.width = CSS_SIZE * DPR;
   canvas.height = CSS_SIZE * DPR;
   ctx.scale(DPR, DPR);
@@ -327,8 +334,6 @@
   const sctx = spark.getContext("2d");
   const SPARK_W = spark.width;
   const SPARK_H = spark.height;
-  spark.style.width = SPARK_W + "px";
-  spark.style.height = SPARK_H + "px";
   spark.width = SPARK_W * DPR;
   spark.height = SPARK_H * DPR;
   sctx.scale(DPR, DPR);
