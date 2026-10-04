@@ -18,6 +18,25 @@ def best_response(payoff_row_player, opponent_strategy):
     return response
 
 
+def best_response_dynamics(payoff_red, payoff_blue, steps=300, start=(0, 0)):
+    """Both players best-respond to the other's *latest* pure action.
+
+    Returns the list of (red_action, blue_action) pairs. In a game like
+    rock-paper-scissors this never settles: it cycles. Fictitious play
+    below best-responds to the opponent's running average instead,
+    which does settle on the equilibrium mix.
+    """
+    red, blue = start
+    history = [(red, blue)]
+    for _ in range(steps):
+        red, blue = (
+            int(np.argmax(payoff_red[:, blue])),
+            int(np.argmax(payoff_blue[red, :])),
+        )
+        history.append((red, blue))
+    return history
+
+
 def fictitious_play(payoff_red, payoff_blue, iterations=2000, seed=0):
     """Iterated best response against the opponent's running average
     strategy. payoff_red[i, j] / payoff_blue[i, j] are red's / blue's
