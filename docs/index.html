@@ -149,6 +149,11 @@
           <input type="range" id="inertia" min="0" max="0.9" step="0.01" value="0" />
         </div>
 
+        <div class="field">
+          <label>max step &delta; (0 = jump to target) <span class="val" id="stepSizeVal">0.00</span></label>
+          <input type="range" id="stepSize" min="0" max="0.5" step="0.01" value="0" />
+        </div>
+
         <div class="btn-row">
           <button class="primary" id="stepBtn">Play one round</button>
           <button class="ghost" id="resetBtn">Reset</button>
@@ -167,7 +172,7 @@
 
         <p class="hint">
           Drag the solid house markers anywhere in the square to re-pose the game.
-          Raise w&#8320; to give the dog inertia &mdash; it then only partially closes
+          Set a max step &delta; and each player walks toward their pick by an angle and a distance of at most &delta; per round instead of jumping there. Raise w&#8320; to give the dog inertia &mdash; it then only partially closes
           the gap to each round's target instead of teleporting there, so
           "Run to equilibrium" takes more rounds but still settles on the same
           point. Exploitability is computed live, in the browser, by grid-searching
@@ -261,6 +266,8 @@
   const wVal = document.getElementById("wVal");
   const inertiaSlider = document.getElementById("inertia");
   const inertiaVal = document.getElementById("inertiaVal");
+  const stepSizeSlider = document.getElementById("stepSize");
+  const stepSizeVal = document.getElementById("stepSizeVal");
   const stepBtn = document.getElementById("stepBtn");
   const runBtn = document.getElementById("runBtn");
   const resetBtn = document.getElementById("resetBtn");
@@ -290,6 +297,7 @@
 
   function clip(v) { return Math.min(DOMAIN.high, Math.max(DOMAIN.low, v)); }
   function w() { return parseFloat(wSlider.value); }
+  function stepSize() { return parseFloat(stepSizeSlider.value); }
   function inertia() { return parseFloat(inertiaSlider.value); }
 
   function bestResponseRed(actionBlue, houseRed, wVal) {
@@ -313,6 +321,17 @@
   function inertialBlend(dog, a, b, wVal, w0Val) {
     const target = blend(a, b, wVal);
     return { x: w0Val * dog.x + (1 - w0Val) * target.x, y: w0Val * dog.y + (1 - w0Val) * target.y };
+  }
+  // Move from `from` toward `target`, at most `maxStep` along the straight
+  // line there (an angle theta and a distance r <= maxStep). maxStep = 0
+  // means no limit: jump straight to the target.
+  function walkToward(from, target, maxStep) {
+    const dx = target.x - from.x;
+    const dy = target.y - from.y;
+    const dist = Math.hypot(dx, dy);
+    if (maxStep <= 0 || dist <= maxStep) return target;
+    const theta = Math.atan2(dy, dx);
+    return { x: from.x + maxStep * Math.cos(theta), y: from.y + maxStep * Math.sin(theta) };
   }
   function sqDist(a, b) { return (a.x - b.x) ** 2 + (a.y - b.y) ** 2; }
   function toCanvas(p) { return { x: PAD + p.x * SIZE, y: PAD + (1 - p.y) * SIZE }; }
@@ -627,8 +646,8 @@
 
   function step() {
     const wv = w();
-    const newRed = bestResponseRed(state.actionBlue, state.houseRed, wv);
-    const newBlue = bestResponseBlue(newRed, state.houseBlue, wv);
+    const newRed = walkToward(state.actionRed, bestResponseRed(state.actionBlue, state.houseRed, wv), stepSize());
+    const newBlue = walkToward(state.actionBlue, bestResponseBlue(newRed, state.houseBlue, wv), stepSize());
     state.actionRed = newRed;
     state.actionBlue = newBlue;
     state.dog = inertialBlend(state.dog, state.actionRed, state.actionBlue, wv, inertia());
@@ -652,7 +671,8 @@
     // inertia, but a laggy dog (high w0) needs more rounds before its
     // position visibly catches up to the target -- scale the run length
     // (and speed it up correspondingly) so it still finishes promptly.
-    const maxSteps = 30 + Math.round(inertia() * 120);
+    const crossing = stepSize() > 0 ? Math.ceil(1.5 / stepSize()) + 10 : 0;
+    const maxSteps = Math.min(250, Math.max(30 + Math.round(inertia() * 120), crossing));
     const intervalMs = Math.max(15, Math.round(3600 / maxSteps));
     let i = 0;
     const id = setInterval(() => {
@@ -700,6 +720,10 @@
 
   wSlider.addEventListener("input", () => { wVal.textContent = w().toFixed(2); reset(); });
   inertiaSlider.addEventListener("input", () => { inertiaVal.textContent = inertia().toFixed(2); reset(); });
+  stepSizeSlider.addEventListener("input", () => {
+    stepSizeVal.textContent = stepSize().toFixed(2);
+    reset();
+  });
   stepBtn.addEventListener("click", step);
   runBtn.addEventListener("click", runToEquilibrium);
   resetBtn.addEventListener("click", reset);
