@@ -57,54 +57,35 @@ def lemke_howson_nash(payoff_red, payoff_blue, initial_dropped_label=0, epsilon=
     return np.asarray(strategy_red, dtype=float), np.asarray(strategy_blue, dtype=float)
 
 
-def zero_sum_lp_nash(payoff_red):
-    """An exact Nash equilibrium (and game value) of a zero-sum
-    bimatrix game, via the standard minimax-as-linear-program
-    reduction (row player maximizes their guaranteed value; column
-    player's payoff is `-payoff_red`).
+def _maximin_strategy(payoff):
+    """The row player's maximin mixed strategy and value for a payoff
+    matrix, solved as a linear program over [strategy, value]."""
+    n_rows, n_cols = payoff.shape
+    cost = np.zeros(n_rows + 1)
+    cost[-1] = -1.0  # linprog minimizes, so minimize -value
 
-    Returns (strategy_red, strategy_blue, value), the game's value
-    from the row player's (red's) perspective.
-    """
-    payoff_red = np.asarray(payoff_red, dtype=float)
-    n_red, n_blue = payoff_red.shape
+    # for every column j: value - sum_i strategy[i] * payoff[i, j] <= 0
+    A_ub = np.hstack([-payoff.T, np.ones((n_cols, 1))])
+    A_eq = np.append(np.ones(n_rows), 0.0).reshape(1, -1)
+    bounds = [(0.0, None)] * n_rows + [(None, None)]
 
-    # Row player (red): maximize v subject to
-    #   sum_i strategy_red[i] * payoff_red[i, j] >= v  for every column j
-    #   sum_i strategy_red[i] == 1, strategy_red >= 0
-    # linprog minimizes, so maximize v by minimizing -v; variables are
-    # [strategy_red (n_red), v].
-    c = np.zeros(n_red + 1)
-    c[-1] = -1.0
-
-    # -sum_i strategy_red[i] * payoff_red[i, j] + v <= 0  for every j
-    A_ub = np.hstack([-payoff_red.T, np.ones((n_blue, 1))])
-    b_ub = np.zeros(n_blue)
-
-    A_eq = np.zeros((1, n_red + 1))
-    A_eq[0, :n_red] = 1.0
-    b_eq = np.array([1.0])
-
-    bounds = [(0.0, None)] * n_red + [(None, None)]
-    result = linprog(c, A_ub=A_ub, b_ub=b_ub, A_eq=A_eq, b_eq=b_eq, bounds=bounds, method="highs")
+    result = linprog(
+        cost, A_ub=A_ub, b_ub=np.zeros(n_cols), A_eq=A_eq, b_eq=[1.0],
+        bounds=bounds, method="highs",
+    )
     if not result.success:
         raise RuntimeError(f"zero-sum LP failed to solve: {result.message}")
-    strategy_red = result.x[:n_red]
-    value = result.x[-1]
+    return result.x[:n_rows], result.x[-1]
 
-    # Column player (blue): the dual, solved the same way on -payoff_red.T
-    payoff_blue = -payoff_red.T
-    c2 = np.zeros(n_blue + 1)
-    c2[-1] = -1.0
-    A_ub2 = np.hstack([-payoff_blue.T, np.ones((n_red, 1))])
-    b_ub2 = np.zeros(n_red)
-    A_eq2 = np.zeros((1, n_blue + 1))
-    A_eq2[0, :n_blue] = 1.0
-    b_eq2 = np.array([1.0])
-    bounds2 = [(0.0, None)] * n_blue + [(None, None)]
-    result2 = linprog(c2, A_ub=A_ub2, b_ub=b_ub2, A_eq=A_eq2, b_eq=b_eq2, bounds=bounds2, method="highs")
-    if not result2.success:
-        raise RuntimeError(f"zero-sum LP failed to solve: {result2.message}")
-    strategy_blue = result2.x[:n_blue]
 
+def zero_sum_lp_nash(payoff_red):
+    """An exact Nash equilibrium of a zero-sum game via the standard
+    minimax linear program. Blue's payoff is `-payoff_red`.
+
+    Returns (strategy_red, strategy_blue, value), with the value from
+    red's point of view.
+    """
+    payoff_red = np.asarray(payoff_red, dtype=float)
+    strategy_red, value = _maximin_strategy(payoff_red)
+    strategy_blue, _ = _maximin_strategy(-payoff_red.T)
     return strategy_red, strategy_blue, value

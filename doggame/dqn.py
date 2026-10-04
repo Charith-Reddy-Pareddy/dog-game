@@ -51,12 +51,12 @@ import numpy as np
 from doggame.exact_nash import lemke_howson_nash
 from doggame.fictitious_play import expected_value, fictitious_play
 
-SOLVERS = {
-    "fictitious_play": lambda q_red, q_blue, fictitious_play_iterations, seed: fictitious_play(
-        q_red, q_blue, iterations=fictitious_play_iterations, seed=seed
-    ),
-    "exact": lambda q_red, q_blue, fictitious_play_iterations, seed: lemke_howson_nash(q_red, q_blue),
-}
+def _solve_stage(solver, q_red, q_blue, iterations, seed):
+    if solver == "fictitious_play":
+        return fictitious_play(q_red, q_blue, iterations=iterations, seed=seed)
+    if solver == "exact":
+        return lemke_howson_nash(q_red, q_blue)
+    raise ValueError(f"unknown solver {solver!r}, choose 'fictitious_play' or 'exact'")
 
 
 def solve_discretized_nash_q(
@@ -80,11 +80,10 @@ def solve_discretized_nash_q(
 
     Returns (q_red, q_blue, strategy_red, strategy_blue).
     """
-    if solver not in SOLVERS:
-        raise ValueError(f"unknown solver {solver!r}, choose from {list(SOLVERS)}")
+    if solver not in ("fictitious_play", "exact"):
+        raise ValueError(f"unknown solver {solver!r}, choose 'fictitious_play' or 'exact'")
     if resync_every < 1:
         raise ValueError("resync_every must be >= 1")
-    solve_stage = SOLVERS[solver]
 
     q_red = payoff_red.copy()
     q_blue = payoff_blue.copy()
@@ -92,8 +91,8 @@ def solve_discretized_nash_q(
 
     for i in range(max_outer_iter):
         if i % resync_every == 0 or strategy_red is None:
-            strategy_red, strategy_blue = solve_stage(
-                q_red, q_blue, fictitious_play_iterations, seed
+            strategy_red, strategy_blue = _solve_stage(
+                solver, q_red, q_blue, fictitious_play_iterations, seed
             )
 
         value_red = expected_value(q_red, strategy_red, strategy_blue)
