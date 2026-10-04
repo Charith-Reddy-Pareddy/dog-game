@@ -100,6 +100,9 @@
   .callout.equilibria { border-left-color: var(--blue-dark); }
   .callout.episodes { border-left-color: var(--red-dark); }
 
+  .notes ul, .notes ol { margin: 0 0 14px; padding-left: 20px; font-size: 0.88rem; line-height: 1.6; }
+  .notes li { margin-bottom: 4px; }
+  .notes h3 { margin: 18px 0 6px; font-size: 0.95rem; }
   footer { text-align: center; color: var(--muted); font-size: 0.82rem; padding: 8px 0 0; }
 
   @media (max-width: 640px) {
@@ -234,6 +237,51 @@
       exactly the non-uniqueness the source research predicts once houses
       share a coordinate.
     </div>
+  </section>
+
+  <section class="card notes" id="assumptions">
+    <h2>Assumptions and open questions</h2>
+    <p class="sub" style="margin-bottom:8px">
+      Where the instructions left something open, I picked the simplest
+      reasonable option. These are the choices to check, and the questions
+      that would settle them. The full list is in
+      <a href="https://github.com/Charith-Reddy-Pareddy/dog-game/blob/main/ASSUMPTIONS.md" target="_blank" rel="noopener">ASSUMPTIONS.md</a>.
+    </p>
+
+    <h3>The game</h3>
+    <ul>
+      <li>The domain is the unit square, the houses are fixed, and the reward is the negative squared distance from the dog to a player's own house.</li>
+      <li>By default the dog goes to <em>w&middot;red + (1&minus;w)&middot;blue</em> and ignores where it was before.</li>
+      <li>The w&#8320; slider reads <em>w&#8320;&middot;dog</em> as the dog's own previous position, with the three weights summing to 1. The Battling Influencers paper (arXiv 2502.01127) instead defines x&#8320; as a fixed background point and doesn't normalize the weights, so this reading may be wrong.</li>
+      <li>The simulator updates players one after the other (red responds, then blue responds to the new red), not at the same time.</li>
+    </ul>
+
+    <h3>Angle-radius version</h3>
+    <ul>
+      <li>I read (&theta;, r) as a move from the player's current position, with r capped at the max step. This is a guess at what the notes mean.</li>
+      <li>The angle comes from a von Mises distribution and the step fraction from a Beta, so the angle wraps cleanly and nothing is clipped.</li>
+      <li>The simulator's walking mode isn't learned: it moves each player toward their best-response pick by at most the max step.</li>
+    </ul>
+
+    <h3>Solvers and evidence</h3>
+    <ul>
+      <li>Only REINFORCE is implemented, with a mean-return baseline. There is no A2C or PPO.</li>
+      <li>The "DQN" is tabular Nash-Q on a single state, with no neural network, target network or replay buffer.</li>
+      <li>The analytic solver returns one pure equilibrium. When equilibria aren't unique, which one it returns is arbitrary.</li>
+      <li>Every run in the results table uses one seed, so the claim about architecture and convergence speed rests on a single data point.</li>
+    </ul>
+
+    <h3>Open questions</h3>
+    <ol>
+      <li>Is the angle-radius action a per-step move of the player's own position, or an absolute polar point?</li>
+      <li>In <em>w&#8320;&middot;dog + w&#8321;&middot;x<sub>red</sub> + w&#8322;&middot;x<sub>blue</sub></em>, are x<sub>red</sub> and x<sub>blue</sub> the players' positions? Is w&#8320;&middot;dog the dog's current position or the paper's fixed x&#8320;? Must the weights sum to 1?</li>
+      <li>Where is the soccer environment, and which rules does it use? This repo has no soccer code.</li>
+      <li>What counts as replicating the exact soccer solver: matching Q* at every state, matching selected states, or win rates?</li>
+      <li>Is fictitious play meant for the stage game inside Nash-Q, or at the policy level (a best response to the opponent's average policy)?</li>
+      <li>Must the DQN be a real deep Q-network?</li>
+      <li>How are win rates measured: which opponents, how many games, which start states, sampled or greedy actions?</li>
+      <li>How should the angle's wraparound and the board edge be handled?</li>
+    </ol>
   </section>
 
   <footer>
