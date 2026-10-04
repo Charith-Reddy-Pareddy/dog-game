@@ -52,6 +52,19 @@ against what was actually intended.
 - The reference answer is the one-shot Nash corners from `nash.py`. Walking
   there is only checked on the default house setup; other setups were
   only checked for NaNs.
+- The 10-direction deep Nash-Q (`polar_dqn.py`) lets each player walk one
+  of 10 evenly spaced compass directions, always a full `max_step`.
+  One network outputs both players' 10x10 Q-values. The target is
+  `r + discount * Nash value` of the target network's Q at the next
+  state, with a replay buffer and a frozen target network. Each player
+  explores with a random move at a decaying rate, and otherwise samples
+  the Nash strategy of its Q.
+- Each stage game is solved exactly, with up to 0.03 s per attempt. A game
+  that cycles is retried from another starting label (see below).
+- `continuous_br.py` has the three continuous best-response methods from
+  the notes (bisection, finite-difference gradient, quadratic fit). They
+  assume a single peak and are standalone: the deep Nash-Q uses discrete
+  directions and does not call them.
 - The simulator's walking mode is not learned. It moves each player toward
   their best-response pick by at most `max_step`.
 
@@ -60,9 +73,11 @@ against what was actually intended.
 - The analytic solver finds one pure Nash equilibrium by iterated best
   response. When equilibria are not unique it returns an arbitrary one.
 - Fictitious play runs 1000 iterations from a random start (seed 0).
-  Lemke-Howson returns the first equilibrium it finds.
-- The "DQN" is tabular Nash-Q on a single state. It has no neural network,
-  target network or replay buffer.
+  Lemke-Howson returns the first valid equilibrium it finds. NashPy
+  overflows or cycles on a few games, so each answer is checked and a
+  failed attempt is retried from the next starting label.
+- The original dog-game "DQN" is tabular Nash-Q on a single state, with
+  no neural network. The angle-radius game has a real one (below).
 - Exploitability is searched on a 101x101 grid, and "converged" means
   below 0.004 (my threshold).
 
@@ -91,7 +106,7 @@ choices above.
    every state, matching selected states, or win rates?
 5. Is fictitious play meant for the stage game inside Nash-Q, or at the
    policy level (best response to the opponent's average policy)?
-6. Must the DQN be a real deep Q-network?
+6. The angle-radius game now has a deep Nash-Q. Should the original dog game have one too?
 7. How are win rates measured (opponents, number of games, start states,
    sampled or greedy actions)?
 8. How should the angle's wraparound and the board edge be handled?

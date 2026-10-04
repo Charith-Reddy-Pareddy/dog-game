@@ -76,6 +76,11 @@ solver to check both against, and a browser visualization.
   players walk: each picks an angle and a step length (up to `max_step`)
   and moves from where it stands. The policy uses a von Mises for the
   angle and a Beta for the step, trained with REINFORCE.
+- `doggame/polar_dqn.py` -- a deep Nash-Q for that game: 10 compass
+  directions, one network for both players' Q-values, a target network,
+  a replay buffer, and an exact Nash solve at every target.
+- `doggame/continuous_br.py` -- best response over a continuous action
+  by bisection, finite-difference gradient, or a quadratic fit.
 - `doggame/experiments.py` -- runs policy-gradient self-play across
   several house/weight configurations and reports exploitability for
   each, to actually answer "can this converge?" instead of trusting
