@@ -21,11 +21,56 @@ project's planning notes call out two exact alternatives instead:
   `lemke_howson_nash`.
 """
 
+import signal
+import threading
+import warnings
+from contextlib import contextmanager
+
 import numpy as np
 from scipy.optimize import linprog
 
 
-def lemke_howson_nash(payoff_red, payoff_blue, initial_dropped_label=0, epsilon=0.0, seed=0):
+class _TimedOut(Exception):
+    pass
+
+
+@contextmanager
+def _time_limit(seconds):
+    """Interrupt a call that runs too long. Needs SIGALRM on the main
+    thread; anywhere else it quietly applies no limit."""
+    if not hasattr(signal, "SIGALRM") or threading.current_thread() is not threading.main_thread():
+        yield
+        return
+
+    def stop(*_):
+        raise _TimedOut()
+
+    previous = signal.signal(signal.SIGALRM, stop)
+    signal.setitimer(signal.ITIMER_REAL, seconds)
+    try:
+        yield
+    finally:
+        signal.setitimer(signal.ITIMER_REAL, 0)
+        signal.signal(signal.SIGALRM, previous)
+
+
+def _is_equilibrium(strategy_red, strategy_blue, payoff_red, payoff_blue, tol=1e-6):
+    """True if both strategies are valid and neither player gains from a
+    one-sided switch to any single action."""
+    shapes_ok = strategy_red.shape == (payoff_red.shape[0],) and strategy_blue.shape == (payoff_red.shape[1],)
+    if not shapes_ok or not (np.isfinite(strategy_red).all() and np.isfinite(strategy_blue).all()):
+        return False
+    if abs(strategy_red.sum() - 1) > tol or abs(strategy_blue.sum() - 1) > tol:
+        return False
+    value_red = strategy_red @ payoff_red @ strategy_blue
+    value_blue = strategy_red @ payoff_blue @ strategy_blue
+    return (
+        (payoff_red @ strategy_blue).max() <= value_red + tol
+        and (strategy_red @ payoff_blue).max() <= value_blue + tol
+    )
+
+
+def lemke_howson_nash(payoff_red, payoff_blue, initial_dropped_label=0, epsilon=0.0, seed=0, time_limit=0.25):
     """An exact Nash equilibrium of a general-sum bimatrix game via
     NashPy's Lemke-Howson algorithm.
 
@@ -42,6 +87,11 @@ def lemke_howson_nash(payoff_red, payoff_blue, initial_dropped_label=0, epsilon=
     `epsilon = 0` (the default) solves the payoff matrices exactly as
     given; `epsilon > 0` adds a small uniform-random perturbation
     (seeded, so it is reproducible) to both matrices first.
+
+    NashPy's pivoting can overflow or cycle forever on some games, so
+    each answer is checked to be a real equilibrium. If it isn't (or the
+    attempt takes over `time_limit` seconds), the next starting label is
+    tried, and a RuntimeError is raised if none of them work.
     """
     import nashpy as nash
 
@@ -53,8 +103,20 @@ def lemke_howson_nash(payoff_red, payoff_blue, initial_dropped_label=0, epsilon=
         payoff_blue = payoff_blue + rng.uniform(-epsilon, epsilon, size=payoff_blue.shape)
 
     game = nash.Game(payoff_red, payoff_blue)
-    strategy_red, strategy_blue = game.lemke_howson(initial_dropped_label=initial_dropped_label)
-    return np.asarray(strategy_red, dtype=float), np.asarray(strategy_blue, dtype=float)
+    n_labels = sum(payoff_red.shape)
+    for offset in range(n_labels):
+        label = (initial_dropped_label + offset) % n_labels
+        try:
+            with _time_limit(time_limit), warnings.catch_warnings():
+                warnings.simplefilter("ignore", RuntimeWarning)  # overflow noise from failed pivots
+                strategy_red, strategy_blue = game.lemke_howson(initial_dropped_label=label)
+        except _TimedOut:
+            continue
+        strategy_red = np.asarray(strategy_red, dtype=float)
+        strategy_blue = np.asarray(strategy_blue, dtype=float)
+        if _is_equilibrium(strategy_red, strategy_blue, payoff_red, payoff_blue):
+            return strategy_red, strategy_blue
+    raise RuntimeError("Lemke-Howson found no valid equilibrium from any starting label")
 
 
 def _maximin_strategy(payoff):

@@ -134,3 +134,21 @@ def test_zero_sum_lp_finds_a_pure_dominant_strategy():
 
     assert np.isclose(strategy_red[0], 1.0, atol=1e-6)
     assert value > 0.0
+
+
+def test_lemke_howson_always_returns_a_real_equilibrium_on_random_games():
+    # NashPy on its own overflows or cycles on a share of random 10x10
+    # games; every answer here must still be a genuine equilibrium.
+    rng = np.random.default_rng(0)
+    for _ in range(40):
+        payoff_red = rng.normal(size=(10, 10))
+        payoff_blue = rng.normal(size=(10, 10))
+
+        strategy_red, strategy_blue = lemke_howson_nash(payoff_red, payoff_blue)
+
+        assert np.isclose(strategy_red.sum(), 1.0)
+        assert np.isclose(strategy_blue.sum(), 1.0)
+        value_red = strategy_red @ payoff_red @ strategy_blue
+        value_blue = strategy_red @ payoff_blue @ strategy_blue
+        assert (payoff_red @ strategy_blue).max() <= value_red + 1e-6
+        assert (strategy_red @ payoff_blue).max() <= value_blue + 1e-6
