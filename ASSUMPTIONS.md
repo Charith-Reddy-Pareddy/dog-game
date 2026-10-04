@@ -35,6 +35,26 @@ against what was actually intended.
 - The state is only the dog's position, and a new policy is trained for
   each house configuration.
 
+## Angle-radius version (`polar.py`, `polar_agent.py`)
+
+- I read (theta, r) as a move from the player's current position, with
+  r capped at `max_step`. Players start on their houses. This is a guess
+  at what the notes mean.
+- The dog is `w0 * dog + w1 * red + w2 * blue`, where red and blue are
+  the players' positions. Positions are clipped at the edge of the
+  square.
+- The angle is sampled from a von Mises and the step fraction from a
+  Beta (both parameters at least 1, so each is single-peaked). I chose
+  these so the angle wraps cleanly and nothing needs clipping.
+- The network sees the dog and both players' positions (6 numbers), with
+  one small network per player. Training is REINFORCE with the same
+  mean-return baseline as above, 15 steps per episode.
+- The reference answer is the one-shot Nash corners from `nash.py`. Walking
+  there is only checked on the default house setup; other setups were
+  only checked for NaNs.
+- The simulator's walking mode is not learned. It moves each player toward
+  their best-response pick by at most `max_step`.
+
 ## Solvers and checks
 
 - The analytic solver finds one pure Nash equilibrium by iterated best

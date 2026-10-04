@@ -2,6 +2,7 @@
 
 **Live demo:** https://charith-reddy-pareddy.github.io/dog-game/
 **Research questions:** [RESEARCH_QUESTIONS.md](RESEARCH_QUESTIONS.md)
+**Assumptions:** [ASSUMPTIONS.md](ASSUMPTIONS.md)
 **Research report:** [RESEARCH_REPORT.md](RESEARCH_REPORT.md) ([PDF version](research_report.pdf), with direct answers to each research question)
 
 A two-player, general-sum game: a red house and a blue house each want a
@@ -71,13 +72,18 @@ solver to check both against, and a browser visualization.
   continuous actions) and `mixed_strategy_indifference_gap` (the
   "actions played with positive probability should all have equal
   value" check, for a discrete mixed strategy).
+- `doggame/polar.py`, `doggame/polar_agent.py` -- a variant where the
+  players walk: each picks an angle and a step length (up to `max_step`)
+  and moves from where it stands. The policy uses a von Mises for the
+  angle and a Beta for the step, trained with REINFORCE.
 - `doggame/experiments.py` -- runs policy-gradient self-play across
   several house/weight configurations and reports exploitability for
   each, to actually answer "can this converge?" instead of trusting
   one demo run. See Findings below.
 - `visualize/index.html` -- a self-contained, no-build browser page.
-  Drag the houses, tune `w`, raise `w0` to give the dog inertia, and
-  step through best-response play.
+  Drag the houses, tune `w`, raise `w0` to give the dog inertia, set a
+  max step so players walk instead of jump, and step through
+  best-response play.
 - `docs/index.html` -- the GitHub Pages version of the same live
   simulator, plus the real training results from `doggame.experiments`
   and the write-up in Findings below. Deployed at
