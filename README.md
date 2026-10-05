@@ -81,6 +81,16 @@ solver to check both against, and a browser visualization.
   a replay buffer, and an exact Nash solve at every target.
 - `doggame/continuous_br.py` -- best response over a continuous action
   by bisection, finite-difference gradient, or a quadratic fit.
+- `doggame/soccer.py`, `doggame/soccer_solver.py` -- a deterministic grid
+  soccer game (zero-sum, with ball possession) and its exact solution by
+  minimax value iteration.
+- `doggame/soccer_pg.py` -- REINFORCE, A2C and PPO for soccer, trained by
+  self-play or by fictitious play (each player learns a best response to
+  the opponent's earlier policies). It never solves a game.
+- `doggame/soccer_eval.py`, `doggame/soccer_experiments.py` -- count wins,
+  losses and ties against random, exact-equilibrium and exact
+  best-response opponents; run the comparison with
+  `python3 -m doggame.soccer_experiments`.
 - `doggame/experiments.py` -- runs policy-gradient self-play across
   several house/weight configurations and reports exploitability for
   each, to actually answer "can this converge?" instead of trusting
