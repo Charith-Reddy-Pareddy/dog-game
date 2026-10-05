@@ -9,7 +9,9 @@ Collision rules, chosen so the game is the same for both players:
 - a move off the board, or into a wall beside the goal, does nothing;
 - if both players aim at the same cell, or try to swap cells, neither moves;
 - if a player walks into an opponent who stays put, the walker doesn't
-  move, and if the walker held the ball it goes to the opponent.
+  move and the ball changes hands: a ball holder who walks into the
+  defender loses it, and a defender who walks into a stationary holder
+  tackles it.
 
 The whole transition is precomputed into tables so a solver can use it
 directly. State index `n_states` is the finished game.
@@ -50,10 +52,10 @@ class Soccer:
         walks_into_1 = target[0] == p[1] and target[1] == p[1]
         if walks_into_1:
             new = list(p)
-            ball = 1 if ball == 0 else ball
+            ball = 1 - ball
         elif walks_into_0:
             new = list(p)
-            ball = 0 if ball == 1 else ball
+            ball = 1 - ball
         elif target[0] == target[1] or (target[0] == p[1] and target[1] == p[0]):
             new = list(p)
         else:

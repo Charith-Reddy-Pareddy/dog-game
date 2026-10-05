@@ -80,3 +80,10 @@ def test_the_game_is_the_same_for_both_players():
                 if nxt < game.n_states:
                     assert mirrored == mirror[nxt]
                 assert game.reward[mirror[s], swap[a1], swap[a0]] == -game.reward[s, a0, a1]
+
+
+def test_walking_into_a_stationary_ball_holder_tackles_the_ball():
+    game = small()
+    # player 0 holds the ball and stays (walks into the wall); player 1 walks into them
+    new, _ = step(game, (2, 1), (2, 2), 0, SOUTH, WEST)
+    assert new[1] == (2, 2) and new[2] == 1
