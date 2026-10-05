@@ -271,22 +271,57 @@
 
     <h3>Solvers and evidence</h3>
     <ul>
-      <li>Only REINFORCE is implemented, with a mean-return baseline. There is no A2C or PPO.</li>
+      <li>The dog game's own policy gradient is REINFORCE with a mean-return baseline. REINFORCE, A2C and PPO are implemented for soccer.</li>
       <li>The original dog-game "DQN" is tabular Nash-Q on a single state, with no neural network. The angle-radius game has a real deep Nash-Q: 10 compass directions, a target network and a replay buffer.</li>
       <li>Each Nash-Q stage game is solved exactly, but the solver can cycle on some games, so answers are checked and retried from another starting point.</li>
       <li>The analytic solver returns one pure equilibrium. When equilibria aren't unique, which one it returns is arbitrary.</li>
       <li>Every run in the results table uses one seed, so the claim about architecture and convergence speed rests on a single data point.</li>
     </ul>
 
-    <h3>Open questions</h3>
+    <h3>Soccer</h3>
+    <ul>
+      <li>The group's own soccer game wasn't available, so this is my version: deterministic and symmetric, four moves, ball possession, a three-cell goal on a 7&times;5 board (and a smaller 5&times;3 board). It is not the "A10" rules.</li>
+      <li>This version has no states that need a mixed strategy, which keeps the comparison simple (fewer mixed-equilibrium states is better). It also means it can't show whether PG finds mixed strategies.</li>
+      <li>Policy gradient never solves a game; the exact solution (discount 0.9) is only used to judge the learned policies. Games are cut off at 100 steps and count as ties.</li>
+      <li>Training settings are my choices, tuned on one seed, and results swung a lot between settings. "Exploitability" is harsh: a policy that never loses to the exact equilibrium can still score high.</li>
+    </ul>
+
+    <h3>Soccer results</h3>
+    <p class="hint" style="margin:0 0 6px">Player 0 on the 5&times;3 board, one seed. Wins / losses / ties over 1000 games.</p>
+    <div class="table-scroll">
+    <table>
+      <thead><tr><th>Method</th><th>vs random</th><th>vs exact equilibrium</th><th>vs exact best response</th></tr></thead>
+      <tbody>
+        <tr><td>REINFORCE self-play</td><td>993/1/6</td><td>0/0/1000</td><td>0/356/644</td></tr>
+        <tr><td>REINFORCE fictitious play</td><td>874/101/25</td><td>0/656/344</td><td>0/1000/0</td></tr>
+        <tr><td>A2C self-play</td><td>924/71/5</td><td>0/500/500</td><td>0/1000/0</td></tr>
+        <tr><td>A2C fictitious play</td><td>886/89/25</td><td>0/656/344</td><td>0/1000/0</td></tr>
+        <tr><td>PPO self-play</td><td>924/71/5</td><td>0/500/500</td><td>0/1000/0</td></tr>
+        <tr><td>PPO fictitious play</td><td>895/102/3</td><td>0/542/458</td><td>0/1000/0</td></tr>
+      </tbody>
+    </table>
+    </div>
+    <ul>
+      <li>None of them replicates the exact solution: every one is beaten by the exact best response.</li>
+      <li>All beat random play (87&ndash;99% wins). Only REINFORCE self-play drew every game against the exact equilibrium; the others lose 500&ndash;656 of them.</li>
+      <li>Fictitious play was not better than self-play at this budget, and improves slowly. This is one seed on one small board, so I wouldn't read a winner into it.</li>
+    </ul>
+
+    <h3>Settled points</h3>
+    <ul>
+      <li>Any game works for PG as long as the solver is correct and the comparison is meaningful; fewer mixed states is better.</li>
+      <li>PG can only approximate finite-horizon discounted rewards, so use both.</li>
+      <li>Fictitious play is how PG solves things: each player learns a best response to the opponent's earlier policies, with no explicit game solving.</li>
+      <li>Win rate: play repeated games and count the wins.</li>
+      <li>The continuous best-response methods (bisection, finite-difference gradient, quadratic fit) are for DQN. PG handles continuous actions directly.</li>
+    </ul>
+
+    <h3>Still open</h3>
     <ol>
       <li>Is the angle-radius action a per-step move of the player's own position, or an absolute polar point?</li>
       <li>In <em>w&#8320;&middot;dog + w&#8321;&middot;x<sub>red</sub> + w&#8322;&middot;x<sub>blue</sub></em>, are x<sub>red</sub> and x<sub>blue</sub> the players' positions? Is w&#8320;&middot;dog the dog's current position or the paper's fixed x&#8320;? Must the weights sum to 1?</li>
-      <li>Where is the soccer environment, and which rules does it use? This repo has no soccer code.</li>
-      <li>What counts as replicating the exact soccer solver: matching Q* at every state, matching selected states, or win rates?</li>
-      <li>Is fictitious play meant for the stage game inside Nash-Q, or at the policy level (a best response to the opponent's average policy)?</li>
-      <li>The angle-radius game now has a deep Nash-Q. Should the original dog game have one too?</li>
-      <li>How are win rates measured: which opponents, how many games, which start states, sampled or greedy actions?</li>
+      <li>Should the soccer comparison use the group's own game (7&times;5, random move order, or the "A10" rules) instead of mine?</li>
+      <li>The angle-radius game has a deep Nash-Q. Should the original dog game have one too?</li>
       <li>How should the angle's wraparound and the board edge be handled?</li>
     </ol>
   </section>
