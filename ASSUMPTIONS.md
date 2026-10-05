@@ -68,6 +68,31 @@ against what was actually intended.
 - The simulator's walking mode is not learned. It moves each player toward
   their best-response pick by at most `max_step`.
 
+## Soccer (`soccer*.py`)
+
+- The group's own soccer game wasn't available, so this is my version: a
+  deterministic, two-player grid soccer game with 4 moves, ball possession,
+  and a three-cell goal on a 7x5 board (a smaller 5x3 board with a one-cell
+  goal is also used). Both players move at the same time. The collision
+  and tackle rules are in the `soccer.py` docstring, and I wrote them so
+  the game is identical for both players. They are not the "A10" rules.
+- A score ends the game (+1 / -1). The exact solution is discounted with
+  0.9. Games are cut off at 100 steps and count as ties. The network input
+  has no step counter, because 0.9 to the 100th power is negligible.
+- This version has no states that need a mixed strategy, which keeps the
+  comparison simple (fewer mixed-equilibrium states is better). It also means
+  it can't show whether PG finds mixed strategies.
+- Policy gradient never solves a game. The exact solution is used only
+  to judge the learned policies.
+- Training settings (batch of 256 games, lr 0.003, entropy bonus 0.001,
+  one seed) are my choices. The entropy and lr were picked by trying four
+  combinations on one seed, so they are tuned to that run. Results swung a
+  lot between settings.
+- "Exploitability" is how much an exact best response wins against the
+  learned policy. It is harsh: a policy that never loses to the exact
+  equilibrium can still score high, because a best response searches out
+  every state it plays badly.
+
 ## Solvers and checks
 
 - The analytic solver finds one pure Nash equilibrium by iterated best
@@ -90,23 +115,29 @@ against what was actually intended.
 - The explanations in the research report for why PG picks one
   equilibrium over another are hypotheses, not tested results.
 
-## Open questions
+## Settled points
 
-These are still open. Until they are settled the code uses the
-choices above.
+- **Which game for PG:** any one where the solver is correct and the comparison
+  is meaningful; fewer mixed-equilibrium states is better.
+- **Discounting:** PG can only approximate finite-horizon discounted
+  rewards, so use both (discounted, with a 100-step limit).
+- **Fictitious play:** it is how PG solves things. Each player learns a
+  best response to the opponent's earlier policies. There is no explicit
+  game solving in PG, and it is not applied to the exact stage-game matrices.
+- **Win rate:** play repeated games and count the wins.
+- **Continuous-action methods** (bisection, finite-difference gradient,
+  quadratic fit): those are for DQN. PG handles continuous actions directly,
+  as the angle-radius policy does.
+
+## Still open
 
 1. Is the angle-radius action (theta, r) a per-step move of the player's
    own position (with r up to some delta), or an absolute polar point?
 2. In `w0*dog + w1*x_red + w2*x_blue`, are `x_red` and `x_blue` the
    players' positions? Is `w0*dog` the dog's current position or the
    paper's fixed `x0`? Must the weights sum to 1?
-3. Where is the soccer environment, and which rules does it use? This
-   repo has no soccer code.
-4. What counts as replicating the exact soccer solver: matching Q* at
-   every state, matching selected states, or win rates?
-5. Is fictitious play meant for the stage game inside Nash-Q, or at the
-   policy level (best response to the opponent's average policy)?
-6. The angle-radius game now has a deep Nash-Q. Should the original dog game have one too?
-7. How are win rates measured (opponents, number of games, start states,
-   sampled or greedy actions)?
-8. How should the angle's wraparound and the board edge be handled?
+3. Should the soccer comparison use the group's own game (7x5, random move
+   order, or the "A10" rules) instead of mine?
+4. The angle-radius game has a deep Nash-Q. Should the original dog game
+   have one too?
+5. How should the angle's wraparound and the board edge be handled?
