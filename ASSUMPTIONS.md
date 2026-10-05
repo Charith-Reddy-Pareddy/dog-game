@@ -93,6 +93,32 @@ against what was actually intended.
   equilibrium can still score high, because a best response searches out
   every state it plays badly.
 
+### What the soccer runs showed
+
+One run (seed 0) on the 5x3 board, 500 self-play iterations or 40
+fictitious-play rounds of 20 iterations each. Player 0, wins/losses/ties
+over 1000 games:
+
+| method | vs random | vs exact equilibrium | vs exact best response |
+|---|---|---|---|
+| REINFORCE self-play | 993/1/6 | 0/0/1000 | 0/356/644 |
+| REINFORCE fictitious play | 874/101/25 | 0/656/344 | 0/1000/0 |
+| A2C self-play | 924/71/5 | 0/500/500 | 0/1000/0 |
+| A2C fictitious play | 886/89/25 | 0/656/344 | 0/1000/0 |
+| PPO self-play | 924/71/5 | 0/500/500 | 0/1000/0 |
+| PPO fictitious play | 895/102/3 | 0/542/458 | 0/1000/0 |
+
+- None of them replicates the exact solution. Every one is beaten by the exact
+  best response, and exploitability is 0.6 to 1.1.
+- Every method beats random play (87-99% wins). Only REINFORCE self-play
+  drew all 1000 games against the exact equilibrium. The others lose
+  500-656 of them, which is every game where the opponent starts with the ball.
+- Fictitious play was not better than self-play here. It improves slowly
+  (on the 7x5 board the average policy went from 0.75 to 0.67 exploitability
+  over 150 rounds), so this budget is too small to say how it ends up.
+- This is one seed on one small board. I would not read a winner into
+  any of it.
+
 ## Solvers and checks
 
 - The analytic solver finds one pure Nash equilibrium by iterated best
