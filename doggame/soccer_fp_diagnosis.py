@@ -16,7 +16,7 @@ import numpy as np
 import torch
 
 from doggame.soccer import Soccer
-from doggame.soccer_eval import best_response, exploitability, random_policy
+from doggame.soccer_eval import best_response, exploitability, random_policy, visited_states
 from doggame.soccer_pg import train_fictitious_play
 
 # name: (rounds, iterations of training per round, how the opponent is mixed, random starting states)
@@ -27,7 +27,11 @@ VARIANTS = {
     "both": (20, 200, "state", False),
     "random starts": (60, 20, "game", True),
     "random starts + state average": (60, 20, "state", True),
+    "baseline, 200 rounds": (200, 20, "game", False),
+    "random starts + state average, 200 rounds": (200, 20, "state", True),
 }
+
+RARE = 10  # a state trained on fewer times than this counts as rarely trained
 
 
 def exact_fictitious_play(game, rounds, checkpoints=()):
@@ -58,8 +62,18 @@ def run_job(job):
             latest = [h[-1].numpy().astype(float) for h in history]
             curve.append((r + 1, exploitability(game, *average), exploitability(game, *latest)))
 
-    train_fictitious_play(game, algorithm, rounds=rounds, iterations=iterations, seed=seed, on_round=watch, mix=mix, random_starts=random_starts)
-    return {"variant": variant, "seed": seed, "algorithm": algorithm, "curve": curve}
+    visits = torch.zeros(game.n_states, dtype=torch.long)
+    average0, _ = train_fictitious_play(game, algorithm, rounds=rounds, iterations=iterations, seed=seed,
+                                        on_round=watch, mix=mix, random_starts=random_starts, visits=visits)
+
+    # the states an exact best response reaches against player 0's policy: how well were they trained?
+    adversary, _ = best_response(game, average0, player=1)
+    reached = visited_states(game, average0, adversary)
+    visits = visits.numpy()
+    return {"variant": variant, "seed": seed, "algorithm": algorithm, "curve": curve,
+            "adversary_states": int(reached.sum()),
+            "rarely_trained_share": float((reached & (visits < RARE)).sum() / reached.sum()),
+            "untrained_share": float((reached & (visits == 0)).sum() / reached.sum())}
 
 
 def summarize(results):
@@ -69,17 +83,22 @@ def summarize(results):
         if rows:
             points = zip(*[r["curve"] for r in rows])
             text = "  ".join(f"r{p[0][0]}: {np.mean([x[1] for x in p]):.2f} ({np.mean([x[2] for x in p]):.2f})" for p in points)
-            print(f"{variant:24s} seeds {len(rows)}  {text}")
+            rare = [r["rarely_trained_share"] for r in rows if "rarely_trained_share" in r]
+            coverage = f"{np.mean(rare):.0%}" if rare else "not recorded"
+            print(f"{variant:42s} seeds {len(rows)}  {text}  | best-response states trained <{RARE}x: {coverage}")
 
 
-def run(seeds=2, algorithm="reinforce", width=5, height=3, goal_size=1, workers=8, results_file="soccer_fp_diagnosis.jsonl"):
+def run(seeds=2, algorithm="reinforce", variants=None, width=5, height=3, goal_size=1, workers=8,
+        results_file="soccer_fp_diagnosis.jsonl"):
+    """`variants` limits which variants run (all of them by default)."""
+    variants = list(variants or VARIANTS)
     try:
         with open(results_file) as f:
             results = [json.loads(line) for line in f if line.strip()]
     except FileNotFoundError:
         results = []
     finished = {(r["variant"], r["seed"], r["algorithm"]) for r in results}
-    todo = [(width, height, goal_size, v, s, algorithm) for v in VARIANTS for s in range(seeds) if (v, s, algorithm) not in finished]
+    todo = [(width, height, goal_size, v, s, algorithm) for v in variants for s in range(seeds) if (v, s, algorithm) not in finished]
     print(f"{len(finished)} jobs already done, {len(todo)} to run", flush=True)
     with Pool(workers) as pool, open(results_file, "a") as out:
         for done, result in enumerate(pool.imap_unordered(run_job, todo), 1):
@@ -91,4 +110,5 @@ def run(seeds=2, algorithm="reinforce", width=5, height=3, goal_size=1, workers=
 
 
 if __name__ == "__main__":
-    run(*(int(x) for x in sys.argv[1:2]))
+    args = sys.argv[1:]
+    run(int(args[0]) if args else 2, args[1] if len(args) > 1 else "reinforce", args[2:] or None)

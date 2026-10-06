@@ -22,3 +22,22 @@ def test_the_state_average_option_trains_and_returns_probability_tables():
 def test_unknown_mix_raises():
     with pytest.raises(ValueError):
         train_fictitious_play(GAME, "reinforce", rounds=1, iterations=1, mix="nonsense")
+
+
+def test_a_job_reports_how_well_the_best_responses_states_were_trained(monkeypatch):
+    import doggame.soccer_fp_diagnosis as diagnosis
+
+    monkeypatch.setitem(diagnosis.VARIANTS, "tiny", (2, 2, "state", True))
+    result = diagnosis.run_job((4, 3, 1, "tiny", 0, "reinforce"))
+
+    assert result["adversary_states"] > 0
+    assert 0.0 <= result["untrained_share"] <= result["rarely_trained_share"] <= 1.0
+    assert len(result["curve"]) >= 1
+
+
+def test_summary_copes_with_older_results_that_lack_the_coverage_numbers(capsys):
+    import doggame.soccer_fp_diagnosis as diagnosis
+
+    old = {"variant": "baseline", "seed": 0, "algorithm": "reinforce", "curve": [[15, 0.9, 0.9]]}
+    diagnosis.summarize([old])
+    assert "not recorded" in capsys.readouterr().out
