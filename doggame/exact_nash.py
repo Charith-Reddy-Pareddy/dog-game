@@ -21,37 +21,41 @@ project's planning notes call out two exact alternatives instead:
   `lemke_howson_nash`.
 """
 
-import signal
-import threading
 import warnings
-from contextlib import contextmanager
+from itertools import cycle
 
 import numpy as np
+from nashpy.linalg import create_col_tableau, create_row_tableau
 from scipy.optimize import linprog
 
 
-class _TimedOut(Exception):
+class _TooManyPivots(Exception):
     pass
 
 
-@contextmanager
-def _time_limit(seconds):
-    """Interrupt a call that runs too long. Needs SIGALRM on the main
-    thread; anywhere else it quietly applies no limit."""
-    if not hasattr(signal, "SIGALRM") or threading.current_thread() is not threading.main_thread():
-        yield
-        return
+def _capped_lemke_howson(payoff_red, payoff_blue, label, max_pivots):
+    """NashPy's Lemke-Howson loop, but giving up after `max_pivots` pivots.
 
-    def stop(*_):
-        raise _TimedOut()
+    On some games the pivoting cycles forever. Finished games need only a
+    few dozen pivots (at most 22 on random 10x10 games), so a cap is a safe
+    and, unlike a time limit, perfectly repeatable way to stop a cycle.
+    """
+    col_tableau = create_col_tableau(payoff_red, True)
+    row_tableau = create_row_tableau(payoff_blue, True)
+    if label in row_tableau.non_basic_variables:
+        tableaux = cycle((row_tableau, col_tableau))
+    else:
+        tableaux = cycle((col_tableau, row_tableau))
 
-    previous = signal.signal(signal.SIGALRM, stop)
-    signal.setitimer(signal.ITIMER_REAL, seconds)
-    try:
-        yield
-    finally:
-        signal.setitimer(signal.ITIMER_REAL, 0)
-        signal.signal(signal.SIGALRM, previous)
+    entering = label
+    for _ in range(max_pivots):
+        entering = next(tableaux).pivot_and_drop_label(entering)
+        labels = col_tableau.non_basic_variables.union(row_tableau.non_basic_variables)
+        if labels == col_tableau.labels:
+            strategy_red = row_tableau.to_strategy(col_tableau.non_basic_variables)
+            strategy_blue = col_tableau.to_strategy(row_tableau.non_basic_variables)
+            return np.asarray(strategy_red, dtype=float), np.asarray(strategy_blue, dtype=float)
+    raise _TooManyPivots()
 
 
 def _is_equilibrium(strategy_red, strategy_blue, payoff_red, payoff_blue, tol=1e-6):
@@ -70,7 +74,7 @@ def _is_equilibrium(strategy_red, strategy_blue, payoff_red, payoff_blue, tol=1e
     )
 
 
-def lemke_howson_nash(payoff_red, payoff_blue, initial_dropped_label=0, epsilon=0.0, seed=0, time_limit=0.25):
+def lemke_howson_nash(payoff_red, payoff_blue, initial_dropped_label=0, epsilon=0.0, seed=0, max_pivots=None):
     """An exact Nash equilibrium of a general-sum bimatrix game via
     NashPy's Lemke-Howson algorithm.
 
@@ -90,11 +94,11 @@ def lemke_howson_nash(payoff_red, payoff_blue, initial_dropped_label=0, epsilon=
 
     NashPy's pivoting can overflow or cycle forever on some games, so
     each answer is checked to be a real equilibrium. If it isn't (or the
-    attempt takes over `time_limit` seconds), the next starting label is
-    tried, and a RuntimeError is raised if none of them work.
+    attempt needs more than `max_pivots` pivots, by default ten times the
+    number of actions), the next starting label is tried, and a
+    RuntimeError is raised if none of them work. The result depends only on
+    the payoffs, never on how fast the machine is.
     """
-    import nashpy as nash
-
     payoff_red = np.asarray(payoff_red, dtype=float)
     payoff_blue = np.asarray(payoff_blue, dtype=float)
     if epsilon:
@@ -102,18 +106,16 @@ def lemke_howson_nash(payoff_red, payoff_blue, initial_dropped_label=0, epsilon=
         payoff_red = payoff_red + rng.uniform(-epsilon, epsilon, size=payoff_red.shape)
         payoff_blue = payoff_blue + rng.uniform(-epsilon, epsilon, size=payoff_blue.shape)
 
-    game = nash.Game(payoff_red, payoff_blue)
     n_labels = sum(payoff_red.shape)
+    max_pivots = max_pivots or 10 * n_labels
     for offset in range(n_labels):
         label = (initial_dropped_label + offset) % n_labels
         try:
-            with _time_limit(time_limit), warnings.catch_warnings():
+            with warnings.catch_warnings():
                 warnings.simplefilter("ignore", RuntimeWarning)  # overflow noise from failed pivots
-                strategy_red, strategy_blue = game.lemke_howson(initial_dropped_label=label)
-        except _TimedOut:
+                strategy_red, strategy_blue = _capped_lemke_howson(payoff_red, payoff_blue, label, max_pivots)
+        except _TooManyPivots:
             continue
-        strategy_red = np.asarray(strategy_red, dtype=float)
-        strategy_blue = np.asarray(strategy_blue, dtype=float)
         if _is_equilibrium(strategy_red, strategy_blue, payoff_red, payoff_blue):
             return strategy_red, strategy_blue
     raise RuntimeError("Lemke-Howson found no valid equilibrium from any starting label")

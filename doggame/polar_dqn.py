@@ -38,7 +38,7 @@ class NashQNetwork(nn.Module):
 
 def nash_strategies(q_red, q_blue):
     """The stage-game equilibrium of one state's pair of 10x10 Q matrices."""
-    return lemke_howson_nash(q_red, q_blue, epsilon=1e-9, time_limit=0.03)
+    return lemke_howson_nash(q_red, q_blue, epsilon=1e-9)
 
 
 def nash_values(q_red, q_blue):

@@ -1,3 +1,5 @@
+import random
+
 import numpy as np
 import torch
 
@@ -43,8 +45,19 @@ def test_training_moves_players_toward_the_nash_corners():
             total += np.linalg.norm(red - nash_red) + np.linalg.norm(blue - nash_blue)
         return total / 6
 
+    random.seed(0)  # the evaluation games sample moves, so seed them too
+    np.random.seed(0)
     torch.manual_seed(0)
     before = average_distance(NashQNetwork())
     after = average_distance(train_nash_dqn(env, episodes=25, seed=0))
 
     assert after < 0.5 * before
+
+
+def test_training_twice_with_the_same_seed_gives_the_same_network():
+    # a time limit on the equilibrium solver once made this vary with machine load
+    env = PolarDogGameEnv((0.88, 0.12), (0.3, 0.65), w=0.5, max_step=0.2)
+    first = train_nash_dqn(env, episodes=4, seed=3)
+    second = train_nash_dqn(env, episodes=4, seed=3)
+    for a, b in zip(first.parameters(), second.parameters()):
+        assert torch.equal(a, b)
