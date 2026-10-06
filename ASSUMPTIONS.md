@@ -84,10 +84,9 @@ against what was actually intended.
   it can't show whether PG finds mixed strategies.
 - Policy gradient never solves a game. The exact solution is used only
   to judge the learned policies.
-- Training settings (batch of 256 games, lr 0.003, entropy bonus 0.001,
-  one seed) are my choices. The entropy and lr were picked by trying four
-  combinations on one seed, so they are tuned to that run. Results swung a
-  lot between settings.
+- Training settings (batch of 256 games, lr 0.003, entropy bonus 0.001)
+  are my choices. The entropy and lr were picked by trying four combinations
+  on seed 0 only. Results swung a lot between settings.
 - "Exploitability" is how much an exact best response wins against the
   learned policy. It is harsh: a policy that never loses to the exact
   equilibrium can still score high, because a best response searches out
@@ -95,29 +94,39 @@ against what was actually intended.
 
 ### What the soccer runs showed
 
-One run (seed 0) on the 5x3 board, 500 self-play iterations or 40
-fictitious-play rounds of 20 iterations each. Player 0, wins/losses/ties
-over 1000 games:
+Five seeds (0-4) on the 5x3 board, 500 self-play iterations or 200
+fictitious-play rounds of 20 iterations each. Player 0, wins/losses/ties per
+1000 games, averaged over the seeds. "Worst" is the most games lost to the
+exact equilibrium by any one seed. Exploitability is the mean, with the range
+over seeds in brackets.
 
-| method | vs random | vs exact equilibrium | vs exact best response |
-|---|---|---|---|
-| REINFORCE self-play | 993/1/6 | 0/0/1000 | 0/356/644 |
-| REINFORCE fictitious play | 874/101/25 | 0/656/344 | 0/1000/0 |
-| A2C self-play | 924/71/5 | 0/500/500 | 0/1000/0 |
-| A2C fictitious play | 886/89/25 | 0/656/344 | 0/1000/0 |
-| PPO self-play | 924/71/5 | 0/500/500 | 0/1000/0 |
-| PPO fictitious play | 895/102/3 | 0/542/458 | 0/1000/0 |
+| method | vs random | vs exact equilibrium | worst seed | vs exact best response | exploitability |
+|---|---|---|---|---|---|
+| REINFORCE self-play | 941/53/6 | 0/297/703 | 500 | 0/871/129 | 0.89 (0.61-1.09) |
+| REINFORCE fictitious play | 902/89/10 | 0/161/839 | 651 | 0/1000/0 | 1.00 (0.94-1.03) |
+| A2C self-play | 922/73/4 | 0/500/500 | 501 | 0/1000/0 | 1.04 (0.96-1.10) |
+| A2C fictitious play | 910/83/6 | 0/490/510 | 1000 | 0/1000/0 | 0.99 (0.93-1.02) |
+| PPO self-play | 954/17/30 | 0/100/900 | 500 | 1/401/597 | 0.40 (0.12-0.81) |
+| PPO fictitious play | 916/79/5 | 0/279/721 | 540 | 2/998/0 | 0.96 (0.86-1.11) |
 
-- None of them replicates the exact solution. Every one is beaten by the exact
-  best response, and exploitability is 0.6 to 1.1.
-- Every method beats random play (87-99% wins). Only REINFORCE self-play
-  drew all 1000 games against the exact equilibrium. The others lose
-  500-656 of them, which is every game where the opponent starts with the ball.
-- Fictitious play was not better than self-play here. It improves slowly
-  (on the 7x5 board the average policy went from 0.75 to 0.67 exploitability
-  over 150 rounds), so this budget is too small to say how it ends up.
-- This is one seed on one small board. I would not read a winner into
-  any of it.
+- None of them replicates the exact solution. Even the best method is beaten
+  by the exact best response, and no seed reaches exploitability 0.
+- PPO self-play is the best on average (exploitability 0.40, and it holds
+  ties against the best response in 597 games), but the seeds vary a lot
+  (0.12 to 0.81).
+- The first single-seed table was misleading. It showed REINFORCE self-play
+  drawing all 1000 games against the exact equilibrium. Averaged over five
+  seeds it loses 297, and one seed loses 500.
+- Fictitious play did not converge, even at 5x the earlier length. The
+  average policy's exploitability is flat between round 40 and round 200
+  (REINFORCE 0.99 to 1.00, A2C 0.99 to 0.99, PPO 0.92 to 0.96), which is about
+  where random play sits (1.12). I have not tested why. Candidates are that
+  20 iterations per round are too few for a real best response, and that
+  averaging per-state probabilities over snapshots isn't the same as the
+  time-averaged play fictitious play converges in.
+- Every method beats random play (90-95% wins).
+- Five seeds on one small board is still a small sample. The entropy and lr
+  were tuned on seed 0, which is one of the five.
 
 ## Solvers and checks
 
@@ -134,8 +143,9 @@ over 1000 games:
 
 ## Evidence
 
-- Every reported run uses one seed (0). The claim about architecture and
-  convergence speed rests on a single data point.
+- The dog-game training runs use one seed (0), so the claim about
+  architecture and convergence speed rests on a single data point. The
+  soccer runs use five seeds.
 - The "3000 more episodes brought it to 0.004" figure came from an
   earlier note. I have not re-run it.
 - The explanations in the research report for why PG picks one
