@@ -14,6 +14,8 @@ Policies come out as tables (one row of move probabilities per state), the
 form `doggame.soccer_eval` works with.
 """
 
+import os
+
 import numpy as np
 import torch
 from torch import nn
@@ -37,6 +39,14 @@ class Agent:
         self.entropy, self.ppo_clip, self.ppo_epochs = entropy, ppo_clip, ppo_epochs
         self.policy, self.value = _mlp(N_ACTIONS), _mlp(1)
         self.optimizer = torch.optim.Adam(list(self.policy.parameters()) + list(self.value.parameters()), lr=lr)
+
+    def state(self):
+        return {"policy": self.policy.state_dict(), "value": self.value.state_dict(), "optimizer": self.optimizer.state_dict()}
+
+    def load(self, saved):
+        self.policy.load_state_dict(saved["policy"])
+        self.value.load_state_dict(saved["value"])
+        self.optimizer.load_state_dict(saved["optimizer"])
 
     def probs(self, states):
         return torch.softmax(self.policy(self.features[states]), dim=-1)
@@ -138,7 +148,8 @@ def train_self_play(game, algorithm="reinforce", iterations=300, games=256, max_
 
 
 def train_fictitious_play(game, algorithm="reinforce", rounds=20, iterations=15, games=256, max_steps=100,
-                          discount=0.9, seed=0, on_round=None, mix="game", random_starts=False, visits=None, **agent_options):
+                          discount=0.9, seed=0, on_round=None, mix="game", random_starts=False, visits=None, checkpoint=None,
+                          checkpoint_every=10, **agent_options):
     """Players take turns learning a best response (by policy gradient) to a
     uniform mix of the opponent's earlier policies. With `mix="game"` each
     game faces one randomly chosen earlier policy; with `mix="state"` every
@@ -146,7 +157,9 @@ def train_fictitious_play(game, algorithm="reinforce", rounds=20, iterations=15,
     is returned and scored at the end. Returns (average policy of
     player 0, average policy of player 1), each a table over states.
     `on_round(i, history)`, if given, is called after each round with every
-    snapshot so far."""
+    snapshot so far. If `checkpoint` (a file path) is given, the whole training
+    state is saved there every `checkpoint_every` rounds, and training resumes
+    from it if the file exists, so a killed run loses at most a few rounds."""
     if mix not in ("game", "state"):
         raise ValueError("mix must be 'game' or 'state'")
     torch.manual_seed(seed)
@@ -162,7 +175,18 @@ def train_fictitious_play(game, algorithm="reinforce", rounds=20, iterations=15,
         picks = torch.randint(len(snapshots), (games,))
         return lambda states: snapshots[picks, states]
 
-    for r in range(rounds):
+    first_round = 0
+    if checkpoint and os.path.exists(checkpoint):
+        saved = torch.load(checkpoint, weights_only=False)
+        for agent, state in zip(agents, saved["agents"]):
+            agent.load(state)
+        history[:] = saved["history"]
+        if visits is not None:
+            visits.copy_(saved["visits"])
+        torch.set_rng_state(saved["rng"])
+        first_round = saved["round"]
+
+    for r in range(first_round, rounds):
         for learner in (0, 1):
             for _ in range(iterations):
                 opponent = mixture(1 - learner)
@@ -175,4 +199,9 @@ def train_fictitious_play(game, algorithm="reinforce", rounds=20, iterations=15,
             history[learner].append(torch.as_tensor(agents[learner].table(), dtype=torch.float32))
         if on_round:
             on_round(r, history)
+        if checkpoint and (r + 1) % checkpoint_every == 0:
+            saved = {"agents": [a.state() for a in agents], "history": history, "round": r + 1,
+                     "visits": visits, "rng": torch.get_rng_state()}
+            torch.save(saved, checkpoint + ".tmp")
+            os.replace(checkpoint + ".tmp", checkpoint)  # never leave a half-written checkpoint
     return tuple(torch.stack(h).mean(0).numpy().astype(np.float64) for h in history)

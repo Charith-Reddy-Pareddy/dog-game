@@ -9,6 +9,8 @@ interrupted run resumes. Run it with `python3 -m doggame.soccer_fp_diagnosis`.
 """
 
 import json
+import os
+import re
 import sys
 from multiprocessing import Pool
 
@@ -33,6 +35,7 @@ VARIANTS = {
 }
 
 RARE = 10  # a state trained on fewer times than this counts as rarely trained
+CHECKPOINT_DIR = "soccer_fp_checkpoints"  # each job saves its full training state here, so a killed run resumes
 PROGRESS_FILE = "soccer_fp_progress.jsonl"  # each checkpoint is saved here as it happens, so a stopped run keeps its curve
 
 
@@ -50,16 +53,32 @@ def exact_fictitious_play(game, rounds, checkpoints=()):
     return average, curve
 
 
+def _saved_curve(variant, seed, algorithm):
+    """The checkpoints an earlier, interrupted attempt at this job already saved."""
+    points = {}
+    try:
+        with open(PROGRESS_FILE) as f:
+            for line in f:
+                r = json.loads(line)
+                if (r["variant"], r["seed"], r["algorithm"]) == (variant, seed, algorithm):
+                    points[r["point"][0]] = tuple(r["point"])
+    except FileNotFoundError:
+        pass
+    return [points[k] for k in sorted(points)]
+
+
 def run_job(job):
     width, height, goal_size, variant, seed, algorithm = job
     torch.set_num_threads(1)
     game = Soccer(width, height, goal_size)
     rounds, iterations, mix, random_starts = VARIANTS[variant]
     every = max(1, rounds // 8)
-    curve = []
+    curve = _saved_curve(variant, seed, algorithm)  # points from before a restart, if any
+    os.makedirs(CHECKPOINT_DIR, exist_ok=True)
+    checkpoint = os.path.join(CHECKPOINT_DIR, re.sub(r"[^a-z0-9]+", "_", f"{variant}_{seed}_{algorithm}".lower()) + ".pt")
 
     def watch(r, history):
-        if (r + 1) % every == 0:
+        if (r + 1) % every == 0 and not any(point[0] == r + 1 for point in curve):  # not already saved before a restart
             average = [torch.stack(h).mean(0).numpy().astype(float) for h in history]
             latest = [h[-1].numpy().astype(float) for h in history]
             point = (r + 1, exploitability(game, *average), exploitability(game, *latest))
@@ -69,7 +88,8 @@ def run_job(job):
 
     visits = torch.zeros(game.n_states, dtype=torch.long)
     average0, _ = train_fictitious_play(game, algorithm, rounds=rounds, iterations=iterations, seed=seed,
-                                        on_round=watch, mix=mix, random_starts=random_starts, visits=visits)
+                                        on_round=watch, mix=mix, random_starts=random_starts, visits=visits,
+                                        checkpoint=checkpoint)
 
     # the states an exact best response reaches against player 0's policy: how well were they trained?
     adversary, _ = best_response(game, average0, player=1)

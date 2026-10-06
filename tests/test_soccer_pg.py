@@ -72,3 +72,24 @@ def test_training_counts_how_often_it_visits_each_state():
     assert (standard[GAME.start_states()] > 0).all()
     # standard starts keep returning to the same two states; random starts spread out
     assert standard.max() / standard.sum() > 2 * spread.max() / spread.sum()
+
+
+def test_an_interrupted_run_resumes_to_exactly_the_same_result(tmp_path):
+    path = str(tmp_path / "run.pt")
+    settings = dict(iterations=2, games=64, mix="state", random_starts=True, seed=5)
+
+    straight_through = train_fictitious_play(GAME, "ppo", rounds=6, **settings)
+
+    train_fictitious_play(GAME, "ppo", rounds=3, checkpoint=path, checkpoint_every=1, **settings)  # "killed" after round 3
+    resumed = train_fictitious_play(GAME, "ppo", rounds=6, checkpoint=path, checkpoint_every=1, **settings)
+
+    for a, b in zip(straight_through, resumed):
+        assert np.array_equal(a, b)
+
+
+def test_a_checkpoint_is_only_written_every_so_many_rounds(tmp_path):
+    path = tmp_path / "run.pt"
+    train_fictitious_play(GAME, "reinforce", rounds=2, iterations=1, games=32, checkpoint=str(path), checkpoint_every=5)
+    assert not path.exists()
+    train_fictitious_play(GAME, "reinforce", rounds=5, iterations=1, games=32, checkpoint=str(path), checkpoint_every=5)
+    assert path.exists()
