@@ -275,7 +275,7 @@
       <li>The original dog-game "DQN" is tabular Nash-Q on a single state, with no neural network. The angle-radius game has a real deep Nash-Q: 10 compass directions, a target network and a replay buffer.</li>
       <li>Each Nash-Q stage game is solved exactly, but the solver can cycle on some games, so answers are checked and retried from another starting point.</li>
       <li>The analytic solver returns one pure equilibrium. When equilibria aren't unique, which one it returns is arbitrary.</li>
-      <li>Every run in the results table uses one seed, so the claim about architecture and convergence speed rests on a single data point.</li>
+      <li>Every run in the dog-game training-results table uses one seed, so the claim about architecture and convergence speed rests on a single data point. The soccer runs use five.</li>
     </ul>
 
     <h3>Soccer</h3>
@@ -283,28 +283,31 @@
       <li>The group's own soccer game wasn't available, so this is my version: deterministic and symmetric, four moves, ball possession, a three-cell goal on a 7&times;5 board (and a smaller 5&times;3 board). It is not the "A10" rules.</li>
       <li>This version has no states that need a mixed strategy, which keeps the comparison simple (fewer mixed-equilibrium states is better). It also means it can't show whether PG finds mixed strategies.</li>
       <li>Policy gradient never solves a game; the exact solution (discount 0.9) is only used to judge the learned policies. Games are cut off at 100 steps and count as ties.</li>
-      <li>Training settings are my choices, tuned on one seed, and results swung a lot between settings. "Exploitability" is harsh: a policy that never loses to the exact equilibrium can still score high.</li>
+      <li>Training settings are my choices, tuned on seed 0, and results swung a lot between settings. "Exploitability" is harsh: a policy that never loses to the exact equilibrium can still score high.</li>
     </ul>
 
     <h3>Soccer results</h3>
-    <p class="hint" style="margin:0 0 6px">Player 0 on the 5&times;3 board, one seed. Wins / losses / ties over 1000 games.</p>
+    <p class="hint" style="margin:0 0 6px">Player 0 on the 5&times;3 board, averaged over 5 seeds. Wins / losses / ties per 1000 games; exploitability is the mean, with the range over seeds in brackets.</p>
+    <p class="hint scroll-hint">Swipe the table sideways to see every column.</p>
     <div class="table-scroll">
     <table>
-      <thead><tr><th>Method</th><th>vs random</th><th>vs exact equilibrium</th><th>vs exact best response</th></tr></thead>
+      <thead><tr><th>Method</th><th>vs random</th><th>vs exact equilibrium</th><th>vs exact best response</th><th>Exploitability</th></tr></thead>
       <tbody>
-        <tr><td>REINFORCE self-play</td><td>993/1/6</td><td>0/0/1000</td><td>0/356/644</td></tr>
-        <tr><td>REINFORCE fictitious play</td><td>874/101/25</td><td>0/656/344</td><td>0/1000/0</td></tr>
-        <tr><td>A2C self-play</td><td>924/71/5</td><td>0/500/500</td><td>0/1000/0</td></tr>
-        <tr><td>A2C fictitious play</td><td>886/89/25</td><td>0/656/344</td><td>0/1000/0</td></tr>
-        <tr><td>PPO self-play</td><td>924/71/5</td><td>0/500/500</td><td>0/1000/0</td></tr>
-        <tr><td>PPO fictitious play</td><td>895/102/3</td><td>0/542/458</td><td>0/1000/0</td></tr>
+        <tr><td>REINFORCE self-play</td><td>941/53/6</td><td>0/297/703 (worst 500)</td><td>0/871/129</td><td>0.89 (0.61-1.09)</td></tr>
+        <tr><td>REINFORCE fictitious play</td><td>902/89/10</td><td>0/161/839 (worst 651)</td><td>0/1000/0</td><td>1.00 (0.94-1.03)</td></tr>
+        <tr><td>A2C self-play</td><td>922/73/4</td><td>0/500/500 (worst 501)</td><td>0/1000/0</td><td>1.04 (0.96-1.10)</td></tr>
+        <tr><td>A2C fictitious play</td><td>910/83/6</td><td>0/490/510 (worst 1000)</td><td>0/1000/0</td><td>0.99 (0.93-1.02)</td></tr>
+        <tr><td>PPO self-play</td><td>954/17/30</td><td>0/100/900 (worst 500)</td><td>1/401/597</td><td>0.40 (0.12-0.81)</td></tr>
+        <tr><td>PPO fictitious play</td><td>916/79/5</td><td>0/279/721 (worst 540)</td><td>2/998/0</td><td>0.96 (0.86-1.11)</td></tr>
       </tbody>
     </table>
     </div>
     <ul>
-      <li>None of them replicates the exact solution: every one is beaten by the exact best response.</li>
-      <li>All beat random play (87&ndash;99% wins). Only REINFORCE self-play drew every game against the exact equilibrium; the others lose 500&ndash;656 of them.</li>
-      <li>Fictitious play was not better than self-play at this budget, and improves slowly. This is one seed on one small board, so I wouldn't read a winner into it.</li>
+      <li>None of them replicates the exact solution. Even the best method is beaten by the exact best response, and no seed reaches exploitability 0.</li>
+      <li>PPO self-play is the best on average (exploitability 0.40), but the seeds vary a lot (0.12 to 0.81).</li>
+      <li>The first single-seed table was misleading: it showed REINFORCE self-play drawing all 1000 games against the exact equilibrium. Over five seeds it loses 297 on average, and one seed loses 500.</li>
+      <li>Fictitious play did not converge, even at 5&times; the earlier length: the average policy's exploitability is flat from round 40 to round 200, about where random play sits. I haven't tested why.</li>
+      <li>Five seeds on one small board is still a small sample, and the training settings were tuned on seed 0.</li>
     </ul>
 
     <h3>Settled points</h3>
