@@ -19,12 +19,14 @@ from doggame.soccer import Soccer
 from doggame.soccer_eval import best_response, exploitability, random_policy
 from doggame.soccer_pg import train_fictitious_play
 
-# name: (rounds, iterations of training per round, how the opponent is mixed)
+# name: (rounds, iterations of training per round, how the opponent is mixed, random starting states)
 VARIANTS = {
-    "baseline": (60, 20, "game"),
-    "state-average opponent": (60, 20, "state"),
-    "longer best responses": (20, 200, "game"),
-    "both": (20, 200, "state"),
+    "baseline": (60, 20, "game", False),
+    "state-average opponent": (60, 20, "state", False),
+    "longer best responses": (20, 200, "game", False),
+    "both": (20, 200, "state", False),
+    "random starts": (60, 20, "game", True),
+    "random starts + state average": (60, 20, "state", True),
 }
 
 
@@ -46,7 +48,7 @@ def run_job(job):
     width, height, goal_size, variant, seed, algorithm = job
     torch.set_num_threads(1)
     game = Soccer(width, height, goal_size)
-    rounds, iterations, mix = VARIANTS[variant]
+    rounds, iterations, mix, random_starts = VARIANTS[variant]
     every = max(1, rounds // 4)
     curve = []
 
@@ -56,7 +58,7 @@ def run_job(job):
             latest = [h[-1].numpy().astype(float) for h in history]
             curve.append((r + 1, exploitability(game, *average), exploitability(game, *latest)))
 
-    train_fictitious_play(game, algorithm, rounds=rounds, iterations=iterations, seed=seed, on_round=watch, mix=mix)
+    train_fictitious_play(game, algorithm, rounds=rounds, iterations=iterations, seed=seed, on_round=watch, mix=mix, random_starts=random_starts)
     return {"variant": variant, "seed": seed, "algorithm": algorithm, "curve": curve}
 
 
