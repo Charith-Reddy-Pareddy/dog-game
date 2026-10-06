@@ -8,3 +8,5 @@ venv/
 soccer_seeds.json
 soccer_seeds.jsonl
 soccer_seeds.log
+soccer_fp_diagnosis.jsonl
+soccer_fp_diagnosis.log
