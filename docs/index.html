@@ -306,8 +306,16 @@
       <li>None of them replicates the exact solution. Even the best method is beaten by the exact best response, and no seed reaches exploitability 0.</li>
       <li>PPO self-play is the best on average (exploitability 0.40), but the seeds vary a lot (0.12 to 0.81).</li>
       <li>The first single-seed table was misleading: it showed REINFORCE self-play drawing all 1000 games against the exact equilibrium. Over five seeds it loses 297 on average, and one seed loses 500.</li>
-      <li>Fictitious play did not converge, even at 5&times; the earlier length: the average policy's exploitability is flat from round 40 to round 200, about where random play sits. I haven't tested why.</li>
+      <li>Fictitious play did not converge, even at 5&times; the earlier length: the average policy's exploitability is flat from round 40 to round 200, about where random play sits. See below for what I found when I looked into why.</li>
       <li>Five seeds on one small board is still a small sample, and the training settings were tuned on seed 0.</li>
+    </ul>
+
+    <h3>Why fictitious play didn't converge</h3>
+    <ul>
+      <li>With exact best responses it does converge (exploitability 0.87 down to 0.011 over 400 rounds), so the averaging is fine. The problem is in the learned best responses.</li>
+      <li>Training each best response ten times longer didn't help, and neither did facing the state-by-state average opponent on its own. Both of my first explanations are ruled out as the main cause.</li>
+      <li>Only random starting states combined with the state-average opponent moved it: the average policy fell from 0.96 to 0.82 and the latest from 0.76 to 0.41 in 60 rounds. That fits the idea that policy gradient only improves the states it plays through, but I haven't tested that directly.</li>
+      <li>It's still far from 0, with two seeds and 60 rounds, and I haven't run it longer.</li>
     </ul>
 
     <h3>Settled points</h3>
