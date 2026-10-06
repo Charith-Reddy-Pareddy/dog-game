@@ -1,7 +1,7 @@
 import numpy as np
 
 from doggame.soccer import MIRROR_ACTION, Soccer
-from doggame.soccer_eval import best_response, exploitability, play_games, random_policy, symmetry_gap
+from doggame.soccer_eval import best_response, exploitability, play_games, random_policy, symmetry_gap, visited_states
 from doggame.soccer_solver import solve_soccer
 
 GAME = Soccer(width=5, height=3, goal_size=1)
@@ -49,3 +49,16 @@ def test_two_lopsided_policies_have_a_symmetry_gap():
     always_north = np.tile([1.0, 0, 0, 0], (GAME.n_states, 1))
     always_south = np.tile([0, 1.0, 0, 0], (GAME.n_states, 1))
     assert symmetry_gap(GAME, always_north, always_south) > 1.0
+
+
+def test_visited_states_include_the_starts_and_only_reachable_states():
+    uniform = random_policy(GAME)
+    visited = visited_states(GAME, uniform, uniform, n_games=200)
+    assert visited[GAME.start_states()].all()
+    assert 2 < visited.sum() <= GAME.n_states
+
+
+def test_a_policy_that_never_moves_only_visits_the_starting_states():
+    always_blocked = np.tile([1.0, 0, 0, 0], (GAME.n_states, 1))  # both walk north into the wall
+    visited = visited_states(GAME, always_blocked, always_blocked, n_games=20, max_steps=10)
+    assert visited.sum() <= 4

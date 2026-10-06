@@ -2,7 +2,8 @@
 probability of each of the four moves in state `s`.
 
 - `play_games`: play it out many times and count wins, losses and ties.
-  A game that reaches the step limit is a tie.
+  A game that reaches the step limit is a tie. `visited_states` reports
+  which states those games pass through.
 - `best_response`: the best possible opponent, found exactly.
 - `exploitability`: how much two policies together leave on the table.
 - `symmetry_gap`: how far the two players' policies are from mirroring
@@ -18,13 +19,15 @@ def random_policy(game):
     return np.full((game.n_states, N_ACTIONS), 1.0 / N_ACTIONS)
 
 
-def play_games(game, policy0, policy1, n_games=1000, max_steps=100, seed=0):
-    """Wins, losses and ties for player 0. Games alternate between the two starting states."""
+def _play(game, policy0, policy1, n_games, max_steps, seed):
+    """Play the games out. Returns each game's result for player 0 (+1 win,
+    -1 loss, 0 tie) and which states any game passed through."""
     rng = np.random.default_rng(seed)
     starts = game.start_states()
     state = np.array([starts[i % 2] for i in range(n_games)])
-    result = np.zeros(n_games)  # +1 win, -1 loss, 0 tie
+    result = np.zeros(n_games)
     active = np.ones(n_games, dtype=bool)
+    visited = np.zeros(game.n_states, dtype=bool)
 
     def sample(policy, states):
         return (rng.random(len(states))[:, None] > policy[states].cumsum(axis=1)).sum(axis=1).clip(max=N_ACTIONS - 1)
@@ -33,13 +36,25 @@ def play_games(game, policy0, policy1, n_games=1000, max_steps=100, seed=0):
         live = np.flatnonzero(active)
         if len(live) == 0:
             break
+        visited[state[live]] = True
         a0, a1 = sample(policy0, state[live]), sample(policy1, state[live])
         reward = game.reward[state[live], a0, a1]
         nxt = game.next_state[state[live], a0, a1]
         result[live] = reward
         state[live] = np.minimum(nxt, game.n_states - 1)
         active[live[nxt == game.n_states]] = False
+    return result, visited
+
+
+def play_games(game, policy0, policy1, n_games=1000, max_steps=100, seed=0):
+    """Wins, losses and ties for player 0. Games alternate between the two starting states."""
+    result, _ = _play(game, policy0, policy1, n_games, max_steps, seed)
     return {"wins": int((result > 0).sum()), "losses": int((result < 0).sum()), "ties": int((result == 0).sum())}
+
+
+def visited_states(game, policy0, policy1, n_games=500, max_steps=100, seed=0):
+    """A True/False entry per state: did any game from the standard starts reach it?"""
+    return _play(game, policy0, policy1, n_games, max_steps, seed)[1]
 
 
 def best_response(game, opponent, player, discount=0.9, iterations=300):
