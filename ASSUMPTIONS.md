@@ -120,13 +120,45 @@ over seeds in brackets.
 - Fictitious play did not converge, even at 5x the earlier length. The
   average policy's exploitability is flat between round 40 and round 200
   (REINFORCE 0.99 to 1.00, A2C 0.99 to 0.99, PPO 0.92 to 0.96), which is about
-  where random play sits (1.12). I have not tested why. Candidates are that
-  20 iterations per round are too few for a real best response, and that
-  averaging per-state probabilities over snapshots isn't the same as the
-  time-averaged play fictitious play converges in.
+  where random play sits (1.12). The diagnosis below looked into why.
 - Every method beats random play (90-95% wins).
 - Five seeds on one small board is still a small sample. The entropy and lr
   were tuned on seed 0, which is one of the five.
+
+### Why fictitious play didn't converge
+
+REINFORCE on the 5x3 board, 2 seeds, exploitability of the average policy
+(and of the latest policy) after 60 rounds of 20 iterations, unless noted.
+Details are in `doggame/soccer_fp_diagnosis.py`; raw numbers are in
+`results/soccer_fp_diagnosis_runs.jsonl`.
+
+| variant | average policy | latest policy |
+|---|---|---|
+| exact best responses (no learning), 400 rounds | 0.011 | - |
+| baseline | 0.97 | 1.03 |
+| train against the state-by-state average opponent | 0.97 | 0.96 |
+| 10x longer best responses (200 iterations x 20 rounds) | 1.00 | 1.03 |
+| both of those | 0.97 | 0.96 |
+| random starting states | 0.95 | 0.84 |
+| random starting states + state-average opponent | 0.82 | 0.41 |
+
+- With exact best responses, fictitious play converges (0.87 down to 0.011),
+  so the averaging itself is fine. The problem is in the learned best responses.
+- Training each best response ten times longer did not help, and neither did
+  facing the state-by-state average opponent alone. Both of my first
+  explanations are ruled out as the main cause.
+- Only the last variant moved, and only when both changes were combined:
+  random starting states plus facing the same average policy that is
+  scored. The average policy fell from 0.96 to 0.82 and the latest policy
+  from 0.76 to 0.41 within 60 rounds.
+- This fits one explanation: a policy-gradient policy only improves on the
+  states it plays through, and an exact best response then steers into the
+  states it never trained on. I haven't tested that directly (for example,
+  by measuring which states training visits).
+- It is still far from 0, it's two seeds and 60 rounds, and I haven't run it
+  longer, so I don't know if it keeps improving. The new settings are options
+  (`mix="state"`, `random_starts=True`), not the defaults, and the seed
+  results above were run without them.
 
 ## Solvers and checks
 
