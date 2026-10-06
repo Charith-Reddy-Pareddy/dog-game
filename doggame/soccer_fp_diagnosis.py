@@ -29,6 +29,7 @@ VARIANTS = {
     "random starts + state average": (60, 20, "state", True),
     "baseline, 200 rounds": (200, 20, "game", False),
     "random starts + state average, 200 rounds": (200, 20, "state", True),
+    "random starts + state average, 400 rounds": (400, 20, "state", True),
 }
 
 RARE = 10  # a state trained on fewer times than this counts as rarely trained
