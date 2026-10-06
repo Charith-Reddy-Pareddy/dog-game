@@ -70,16 +70,31 @@ def summarize(results):
             print(f"{algorithm:10s}", "  ".join(f"r{p[0][0]}: {np.mean([x[1] for x in p]):.2f}" for p in points))
 
 
-def run(seeds=5, self_play_iterations=500, fp_rounds=200, width=5, height=3, goal_size=1, workers=6):
+def load_results(path):
+    try:
+        with open(path) as f:
+            return [json.loads(line) for line in f if line.strip()]
+    except FileNotFoundError:
+        return []
+
+
+def run(seeds=5, self_play_iterations=500, fp_rounds=200, width=5, height=3, goal_size=1,
+        workers=6, results_file="soccer_seeds.jsonl"):
+    """Every finished job is appended to `results_file` straight away, and jobs
+    already in it are skipped, so an interrupted run picks up where it stopped."""
+    results = load_results(results_file)
+    finished = {(r["algorithm"], r["method"], r["seed"]) for r in results}
     jobs = [(width, height, goal_size, a, "self-play", s, self_play_iterations, 100) for a in ALGORITHMS for s in range(seeds)]
     jobs += [(width, height, goal_size, a, "fictitious play", s, fp_rounds, fp_rounds // 5) for a in ALGORITHMS for s in range(seeds)]
-    results = []
-    with Pool(workers) as pool:
-        for done, result in enumerate(pool.imap_unordered(run_job, jobs), 1):
+    todo = [job for job in jobs if (job[3], job[4], job[5]) not in finished]
+    print(f"{len(finished)} jobs already done, {len(todo)} to run", flush=True)
+
+    with Pool(workers) as pool, open(results_file, "a") as out:
+        for done, result in enumerate(pool.imap_unordered(run_job, todo), 1):
             results.append(result)
-            print(f"[{done}/{len(jobs)}] {result['algorithm']} {result['method']} seed {result['seed']}", flush=True)
-    with open("soccer_seeds.json", "w") as f:
-        json.dump(results, f)
+            out.write(json.dumps(result) + "\n")
+            out.flush()
+            print(f"[{done}/{len(todo)}] {result['algorithm']} {result['method']} seed {result['seed']}", flush=True)
     summarize(results)
 
 
