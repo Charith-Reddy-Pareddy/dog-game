@@ -59,8 +59,10 @@ against what was actually intended.
   state, with a replay buffer and a frozen target network. Each player
   explores with a random move at a decaying rate, and otherwise samples
   the Nash strategy of its Q.
-- Each stage game is solved exactly, with up to 0.03 s per attempt. A game
-  that cycles is retried from another starting label (see below).
+- Each stage game is solved exactly. A game whose pivoting cycles is cut off
+  after a fixed number of pivots and retried from another starting label (see
+  below). It used to be cut off by a time limit, which made training depend on
+  how busy the machine was.
 - `continuous_br.py` has the three continuous best-response methods from
   the notes (bisection, finite-difference gradient, quadratic fit). They
   assume a single peak and are standalone: the deep Nash-Q uses discrete
@@ -120,16 +122,18 @@ over seeds in brackets.
 - Fictitious play did not converge, even at 5x the earlier length. The
   average policy's exploitability is flat between round 40 and round 200
   (REINFORCE 0.99 to 1.00, A2C 0.99 to 0.99, PPO 0.92 to 0.96), which is about
-  where random play sits (1.12). The diagnosis below looked into why.
+  where random play sits (1.12). The diagnosis below looked into why, and
+  found two settings that make it improve (they were not used for this table).
 - Every method beats random play (90-95% wins).
 - Five seeds on one small board is still a small sample. The entropy and lr
   were tuned on seed 0, which is one of the five.
 
 ### Why fictitious play didn't converge
 
-REINFORCE on the 5x3 board, 2 seeds, exploitability of the average policy
-(and of the latest policy) after 60 rounds of 20 iterations, unless noted.
-Details are in `doggame/soccer_fp_diagnosis.py`; raw numbers are in
+REINFORCE on the 5x3 board, 20 iterations of training per round.
+Exploitability of the average policy (and of the latest policy). The first
+six variants are 2 seeds and 60 rounds; the last two are 4 seeds and 200
+rounds. Details are in `doggame/soccer_fp_diagnosis.py`; raw numbers are in
 `results/soccer_fp_diagnosis_runs.jsonl`.
 
 | variant | average policy | latest policy |
@@ -141,24 +145,27 @@ Details are in `doggame/soccer_fp_diagnosis.py`; raw numbers are in
 | both of those | 0.97 | 0.96 |
 | random starting states | 0.95 | 0.84 |
 | random starting states + state-average opponent | 0.82 | 0.41 |
+| baseline, 200 rounds | 1.00 | 0.91 |
+| random starting states + state-average opponent, 200 rounds | 0.58 | 0.20 |
 
 - With exact best responses, fictitious play converges (0.87 down to 0.011),
   so the averaging itself is fine. The problem is in the learned best responses.
 - Training each best response ten times longer did not help, and neither did
-  facing the state-by-state average opponent alone. Both of my first
-  explanations are ruled out as the main cause.
-- Only the last variant moved, and only when both changes were combined:
-  random starting states plus facing the same average policy that is
-  scored. The average policy fell from 0.96 to 0.82 and the latest policy
-  from 0.76 to 0.41 within 60 rounds.
-- This fits one explanation: a policy-gradient policy only improves on the
-  states it plays through, and an exact best response then steers into the
-  states it never trained on. I haven't tested that directly (for example,
-  by measuring which states training visits).
-- It is still far from 0, it's two seeds and 60 rounds, and I haven't run it
-  longer, so I don't know if it keeps improving. The new settings are options
-  (`mix="state"`, `random_starts=True`), not the defaults, and the seed
-  results above were run without them.
+  facing the state-by-state average opponent alone. Those two were my first
+  explanations, and they are ruled out as the main cause.
+- Only the combination moved it: random starting states plus facing the same
+  average policy that is scored. Over 200 rounds the average policy keeps
+  improving (0.85, 0.73, 0.65, 0.58 at rounds 50, 100, 150, 200) and the latest
+  policy falls from 0.47 to 0.20, while the baseline stays flat at 1.00.
+- My next explanation was that policy gradient only improves the states it
+  plays through. I tested it, and it is not supported: of the states an exact
+  best response reaches, 0% had been trained on fewer than 10 times, in either
+  the baseline or the combined setting. That is a crude threshold, so it does not
+  prove coverage is irrelevant, but I don't know why the combination helps.
+- It is still not converged (0.58 average at round 200), and I don't know
+  whether it would reach 0. The new settings are options (`mix="state"`,
+  `random_starts=True`), not the defaults, and the seed results above were run
+  without them.
 
 ## Solvers and checks
 
