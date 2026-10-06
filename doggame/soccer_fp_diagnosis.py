@@ -33,6 +33,7 @@ VARIANTS = {
 }
 
 RARE = 10  # a state trained on fewer times than this counts as rarely trained
+PROGRESS_FILE = "soccer_fp_progress.jsonl"  # each checkpoint is saved here as it happens, so a stopped run keeps its curve
 
 
 def exact_fictitious_play(game, rounds, checkpoints=()):
@@ -54,14 +55,17 @@ def run_job(job):
     torch.set_num_threads(1)
     game = Soccer(width, height, goal_size)
     rounds, iterations, mix, random_starts = VARIANTS[variant]
-    every = max(1, rounds // 4)
+    every = max(1, rounds // 8)
     curve = []
 
     def watch(r, history):
         if (r + 1) % every == 0:
             average = [torch.stack(h).mean(0).numpy().astype(float) for h in history]
             latest = [h[-1].numpy().astype(float) for h in history]
-            curve.append((r + 1, exploitability(game, *average), exploitability(game, *latest)))
+            point = (r + 1, exploitability(game, *average), exploitability(game, *latest))
+            curve.append(point)
+            with open(PROGRESS_FILE, "a") as f:
+                f.write(json.dumps({"variant": variant, "seed": seed, "algorithm": algorithm, "point": point}) + "\n")
 
     visits = torch.zeros(game.n_states, dtype=torch.long)
     average0, _ = train_fictitious_play(game, algorithm, rounds=rounds, iterations=iterations, seed=seed,

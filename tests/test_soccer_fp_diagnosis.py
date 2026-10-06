@@ -24,10 +24,11 @@ def test_unknown_mix_raises():
         train_fictitious_play(GAME, "reinforce", rounds=1, iterations=1, mix="nonsense")
 
 
-def test_a_job_reports_how_well_the_best_responses_states_were_trained(monkeypatch):
+def test_a_job_reports_how_well_the_best_responses_states_were_trained(monkeypatch, tmp_path):
     import doggame.soccer_fp_diagnosis as diagnosis
 
     monkeypatch.setitem(diagnosis.VARIANTS, "tiny", (2, 2, "state", True))
+    monkeypatch.setattr(diagnosis, "PROGRESS_FILE", str(tmp_path / "progress.jsonl"))
     result = diagnosis.run_job((4, 3, 1, "tiny", 0, "reinforce"))
 
     assert result["adversary_states"] > 0
@@ -41,3 +42,18 @@ def test_summary_copes_with_older_results_that_lack_the_coverage_numbers(capsys)
     old = {"variant": "baseline", "seed": 0, "algorithm": "reinforce", "curve": [[15, 0.9, 0.9]]}
     diagnosis.summarize([old])
     assert "not recorded" in capsys.readouterr().out
+
+
+def test_each_checkpoint_is_saved_as_it_happens(monkeypatch, tmp_path):
+    import json
+
+    import doggame.soccer_fp_diagnosis as diagnosis
+
+    path = tmp_path / "progress.jsonl"
+    monkeypatch.setitem(diagnosis.VARIANTS, "tiny", (8, 1, "state", True))
+    monkeypatch.setattr(diagnosis, "PROGRESS_FILE", str(path))
+    result = diagnosis.run_job((4, 3, 1, "tiny", 0, "reinforce"))
+
+    saved = [json.loads(line) for line in path.read_text().splitlines()]
+    assert [r["point"][0] for r in saved] == [point[0] for point in result["curve"]]
+    assert len(saved) == 8  # a checkpoint every round
