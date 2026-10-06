@@ -7,3 +7,4 @@ venv/
 .DS_Store
 soccer_seeds.json
 soccer_seeds.jsonl
+soccer_seeds.log
