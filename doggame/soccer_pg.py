@@ -130,20 +130,27 @@ def train_self_play(game, algorithm="reinforce", iterations=300, games=256, max_
 
 
 def train_fictitious_play(game, algorithm="reinforce", rounds=20, iterations=15, games=256, max_steps=100,
-                          discount=0.9, seed=0, on_round=None, **agent_options):
+                          discount=0.9, seed=0, on_round=None, mix="game", **agent_options):
     """Players take turns learning a best response (by policy gradient) to a
-    uniform mix of the opponent's earlier policies. Returns (average policy of
+    uniform mix of the opponent's earlier policies. With `mix="game"` each
+    game faces one randomly chosen earlier policy; with `mix="state"` every
+    game faces the state-by-state average of them, which is the policy that
+    is returned and scored at the end. Returns (average policy of
     player 0, average policy of player 1), each a table over states.
     `on_round(i, history)`, if given, is called after each round with every
     snapshot so far."""
+    if mix not in ("game", "state"):
+        raise ValueError("mix must be 'game' or 'state'")
     torch.manual_seed(seed)
     tensors = _tensors(game)
     agents = [Agent(tensors[0], algorithm, **agent_options) for _ in range(2)]
     history = [[torch.as_tensor(a.table(), dtype=torch.float32)] for a in agents]  # snapshots of each player
 
     def mixture(player):
-        """Move probabilities from a different earlier snapshot in each game."""
         snapshots = torch.stack(history[player])
+        if mix == "state":
+            average = snapshots.mean(0)
+            return lambda states: average[states]
         picks = torch.randint(len(snapshots), (games,))
         return lambda states: snapshots[picks, states]
 
