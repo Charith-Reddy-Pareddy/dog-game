@@ -61,3 +61,14 @@ def test_random_starts_cover_many_different_states():
     states, _, _, _ = rollout(GAME, _tensors(GAME), always(NORTH), always(NORTH), n_games=200, max_steps=1,
                               discount=0.9, random_starts=True)
     assert len(set(states.tolist())) > 50  # the standard starts are only two states
+
+
+def test_training_counts_how_often_it_visits_each_state():
+    standard = torch.zeros(GAME.n_states, dtype=torch.long)
+    train_fictitious_play(GAME, "reinforce", rounds=1, iterations=2, games=64, visits=standard)
+    spread = torch.zeros(GAME.n_states, dtype=torch.long)
+    train_fictitious_play(GAME, "reinforce", rounds=1, iterations=2, games=64, random_starts=True, visits=spread)
+
+    assert (standard[GAME.start_states()] > 0).all()
+    # standard starts keep returning to the same two states; random starts spread out
+    assert standard.max() / standard.sum() > 2 * spread.max() / spread.sum()

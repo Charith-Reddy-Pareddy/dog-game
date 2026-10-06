@@ -78,12 +78,13 @@ def _tensors(game):
             torch.as_tensor(game.next_state))
 
 
-def rollout(game, tensors, probs0, probs1, n_games, max_steps, discount, random_starts=False):
+def rollout(game, tensors, probs0, probs1, n_games, max_steps, discount, random_starts=False, visits=None):
     """Play `n_games` at once. `probs_i(states)` gives player i's move
     probabilities. Returns the visited states, both players' moves, and
     player 0's discounted return from each step (player 1's is its negative).
     Games begin from the two standard starting states, or from random states
-    if `random_starts`."""
+    if `random_starts`. If `visits` (a count per state) is given, it is
+    increased for every state the games pass through."""
     _, reward, next_state = tensors
     if random_starts:
         state = torch.randint(game.n_states, (n_games,))
@@ -115,18 +116,20 @@ def rollout(game, tensors, probs0, probs1, n_games, max_steps, discount, random_
         returns[t] = running
     keep = torch.stack(live).flatten()
     flat = lambda xs: torch.stack(xs).flatten()[keep]
+    if visits is not None:
+        visits += torch.bincount(flat(visited), minlength=game.n_states)
     return flat(visited), flat(moves0), flat(moves1), flat(returns)
 
 
 def train_self_play(game, algorithm="reinforce", iterations=300, games=256, max_steps=100,
-                    discount=0.9, seed=0, on_iteration=None, random_starts=False, **agent_options):
+                    discount=0.9, seed=0, on_iteration=None, random_starts=False, visits=None, **agent_options):
     """Both players learn at once from the same games. Returns (agent0, agent1).
     `on_iteration(i, agents)`, if given, is called after each update."""
     torch.manual_seed(seed)
     tensors = _tensors(game)
     agents = [Agent(tensors[0], algorithm, **agent_options) for _ in range(2)]
     for i in range(iterations):
-        states, a0, a1, returns = rollout(game, tensors, agents[0].probs, agents[1].probs, games, max_steps, discount, random_starts)
+        states, a0, a1, returns = rollout(game, tensors, agents[0].probs, agents[1].probs, games, max_steps, discount, random_starts, visits)
         agents[0].update(states, a0, returns)
         agents[1].update(states, a1, -returns)
         if on_iteration:
@@ -135,7 +138,7 @@ def train_self_play(game, algorithm="reinforce", iterations=300, games=256, max_
 
 
 def train_fictitious_play(game, algorithm="reinforce", rounds=20, iterations=15, games=256, max_steps=100,
-                          discount=0.9, seed=0, on_round=None, mix="game", random_starts=False, **agent_options):
+                          discount=0.9, seed=0, on_round=None, mix="game", random_starts=False, visits=None, **agent_options):
     """Players take turns learning a best response (by policy gradient) to a
     uniform mix of the opponent's earlier policies. With `mix="game"` each
     game faces one randomly chosen earlier policy; with `mix="state"` every
@@ -164,10 +167,10 @@ def train_fictitious_play(game, algorithm="reinforce", rounds=20, iterations=15,
             for _ in range(iterations):
                 opponent = mixture(1 - learner)
                 if learner == 0:
-                    states, a0, _, returns = rollout(game, tensors, agents[0].probs, opponent, games, max_steps, discount, random_starts)
+                    states, a0, _, returns = rollout(game, tensors, agents[0].probs, opponent, games, max_steps, discount, random_starts, visits)
                     agents[0].update(states, a0, returns)
                 else:
-                    states, _, a1, returns = rollout(game, tensors, opponent, agents[1].probs, games, max_steps, discount, random_starts)
+                    states, _, a1, returns = rollout(game, tensors, opponent, agents[1].probs, games, max_steps, discount, random_starts, visits)
                     agents[1].update(states, a1, -returns)
             history[learner].append(torch.as_tensor(agents[learner].table(), dtype=torch.float32))
         if on_round:
