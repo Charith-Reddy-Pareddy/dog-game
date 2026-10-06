@@ -55,3 +55,9 @@ def test_fictitious_play_returns_a_probability_table_per_player():
     for table in (average0, average1):
         assert table.shape == (GAME.n_states, 4)
         assert np.allclose(table.sum(axis=1), 1.0, atol=1e-5)
+
+
+def test_random_starts_cover_many_different_states():
+    states, _, _, _ = rollout(GAME, _tensors(GAME), always(NORTH), always(NORTH), n_games=200, max_steps=1,
+                              discount=0.9, random_starts=True)
+    assert len(set(states.tolist())) > 50  # the standard starts are only two states
