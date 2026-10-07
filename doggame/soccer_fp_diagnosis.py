@@ -32,6 +32,7 @@ VARIANTS = {
     "baseline, 200 rounds": (200, 20, "game", False),
     "random starts + state average, 200 rounds": (200, 20, "state", True),
     "random starts + state average, 400 rounds": (400, 20, "state", True),
+    "random starts + state average, 800 rounds": (800, 20, "state", True),
 }
 
 RARE = 10  # a state trained on fewer times than this counts as rarely trained
@@ -113,17 +114,24 @@ def summarize(results):
             print(f"{variant:42s} seeds {len(rows)}  {text}  | best-response states trained <{RARE}x: {coverage}")
 
 
+def pending_jobs(board, variants, seed_range, algorithm, finished):
+    """The jobs still to run: every variant and seed not already finished."""
+    return [(*board, v, s, algorithm) for v in variants for s in seed_range if (v, s, algorithm) not in finished]
+
+
 def run(seeds=2, algorithm="reinforce", variants=None, width=5, height=3, goal_size=1, workers=8,
         results_file="soccer_fp_diagnosis.jsonl"):
-    """`variants` limits which variants run (all of them by default)."""
+    """`variants` limits which variants run (all of them by default). `seeds` is
+    how many seeds to run (0, 1, ...), or a (first, stop) pair for a range."""
     variants = list(variants or VARIANTS)
+    seed_range = range(*seeds) if isinstance(seeds, tuple) else range(seeds)
     try:
         with open(results_file) as f:
             results = [json.loads(line) for line in f if line.strip()]
     except FileNotFoundError:
         results = []
     finished = {(r["variant"], r["seed"], r["algorithm"]) for r in results}
-    todo = [(width, height, goal_size, v, s, algorithm) for v in variants for s in range(seeds) if (v, s, algorithm) not in finished]
+    todo = pending_jobs((width, height, goal_size), variants, seed_range, algorithm, finished)
     print(f"{len(finished)} jobs already done, {len(todo)} to run", flush=True)
     with Pool(workers) as pool, open(results_file, "a") as out:
         for done, result in enumerate(pool.imap_unordered(run_job, todo), 1):
@@ -136,4 +144,5 @@ def run(seeds=2, algorithm="reinforce", variants=None, width=5, height=3, goal_s
 
 if __name__ == "__main__":
     args = sys.argv[1:]
-    run(int(args[0]) if args else 2, args[1] if len(args) > 1 else "reinforce", args[2:] or None)
+    seeds = tuple(int(x) for x in args[0].split("-")) if args and "-" in args[0] else int(args[0]) if args else 2
+    run(seeds, args[1] if len(args) > 1 else "reinforce", args[2:] or None)

@@ -57,3 +57,21 @@ def test_each_checkpoint_is_saved_as_it_happens(monkeypatch, tmp_path):
     saved = [json.loads(line) for line in path.read_text().splitlines()]
     assert [r["point"][0] for r in saved] == [point[0] for point in result["curve"]]
     assert len(saved) == 8  # a checkpoint every round
+
+
+def test_pending_jobs_skip_finished_ones_and_respect_the_seed_range():
+    from doggame.soccer_fp_diagnosis import pending_jobs
+
+    finished = {("tiny", 3, "reinforce")}
+    jobs = pending_jobs((5, 3, 1), ["tiny"], range(3, 6), "reinforce", finished)
+
+    assert [job[4] for job in jobs] == [4, 5]  # seed 3 is done; 6 and beyond are outside the range
+    assert jobs[0] == (5, 3, 1, "tiny", 4, "reinforce")
+
+
+def test_a_seed_range_is_accepted_by_run(monkeypatch, tmp_path, capsys):
+    import doggame.soccer_fp_diagnosis as diagnosis
+
+    monkeypatch.setattr(diagnosis, "pending_jobs", lambda *args: print("range:", list(args[2])) or [])
+    diagnosis.run((8, 11), "ppo", ["tiny"], workers=1, results_file=str(tmp_path / "r.jsonl"))
+    assert "range: [8, 9, 10]" in capsys.readouterr().out
