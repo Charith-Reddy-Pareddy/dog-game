@@ -1,8 +1,9 @@
 import numpy as np
+import pytest
 import torch
 
 from doggame.soccer import Soccer
-from doggame.soccer_averaging import SCHEMES, average_from, scheme_exploitabilities
+from doggame.soccer_averaging import SCHEMES, analyze, average_from, scheme_exploitabilities
 from doggame.soccer_eval import random_policy
 from doggame.soccer_solver import solve_soccer
 
@@ -40,3 +41,16 @@ def test_average_from_averages_only_the_snapshots_from_the_start_point():
 
 def test_there_is_a_scheme_for_each_part_of_the_history():
     assert list(SCHEMES.values()) == sorted(SCHEMES.values()) and SCHEMES["all snapshots"] == 0.0
+
+
+def test_analyze_cuts_checkpoints_back_to_the_requested_round_and_skips_short_ones(tmp_path):
+    # a checkpoint at round 20 (21 snapshots): random play for the first 11, then the equilibrium
+    history = [as_snapshots(random_policy(GAME), 11) + as_snapshots(SOLUTION.policy0, 10),
+               as_snapshots(random_policy(GAME), 11) + as_snapshots(SOLUTION.policy1, 10)]
+    path = str(tmp_path / "checkpoint.pt")
+    torch.save({"history": history, "round": 20}, path)
+
+    (cut,) = analyze([path], 4, 3, 1, rounds=10)
+    assert cut[1] == 10 and cut[2]["all snapshots"] == pytest.approx(cut[2]["second half only"])  # only random play is left
+
+    assert analyze([path], 4, 3, 1, rounds=30) == []

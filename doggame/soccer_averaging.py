@@ -43,14 +43,21 @@ def scheme_exploitabilities(game, history):
     return scores
 
 
-def analyze(paths, width=5, height=3, goal_size=1):
+def analyze(paths, width=5, height=3, goal_size=1, rounds=None):
+    """Score each checkpoint. With `rounds`, checkpoints past that round are cut
+    back to their first `rounds` rounds (checkpoints short of it are skipped)."""
     game = Soccer(width, height, goal_size)
     rows = []
     for path in paths:
         saved = torch.load(path, weights_only=False)
-        scores = scheme_exploitabilities(game, saved["history"])
-        rows.append((path, saved["round"], scores))
-        print(f"{path} (round {saved['round']}): " + ", ".join(f"{k} {v:.2f}" for k, v in scores.items()))
+        history, reached = saved["history"], saved["round"]
+        if rounds:
+            if reached < rounds:
+                continue
+            history, reached = [h[:rounds + 1] for h in history], rounds  # one initial snapshot plus one per round
+        scores = scheme_exploitabilities(game, history)
+        rows.append((path, reached, scores))
+        print(f"{path} (round {reached}): " + ", ".join(f"{k} {v:.2f}" for k, v in scores.items()))
     print("\nmean over checkpoints")
     for name in [*SCHEMES, "latest only"]:
         print(f"  {name:28s} {np.mean([r[2][name] for r in rows]):.2f}")
@@ -58,4 +65,7 @@ def analyze(paths, width=5, height=3, goal_size=1):
 
 
 if __name__ == "__main__":
-    analyze(sys.argv[1:])
+    args = sys.argv[1:]
+    cut = int(args[1]) if args[:1] == ["--rounds"] else None
+    args = args[2:] if cut else args
+    analyze(args, rounds=cut)
