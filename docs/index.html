@@ -319,8 +319,8 @@
       <li>It's still not converged (0.58 at round 200), and I don't know whether it would reach 0. The new settings are options, not the defaults, and the seed results above were run without them.</li>
     </ul>
 
-    <h3>Fictitious play with PPO (interim)</h3>
-    <p class="hint" style="margin:0 0 6px">PPO with random starting states and the state-average opponent, 5&times;3 board, 8 seeds. The 400-round run is still going; rounds past 250 aren't reported yet.</p>
+    <h3>Fictitious play with PPO</h3>
+    <p class="hint" style="margin:0 0 6px">PPO with random starting states and the state-average opponent, 5&times;3 board, 400 rounds, 8 seeds. Exploitability: mean, with the range over seeds in brackets.</p>
     <p class="hint scroll-hint">Swipe the table sideways to see every column.</p>
     <div class="table-scroll">
     <table>
@@ -331,14 +331,18 @@
         <tr><td>150</td><td>0.35 (0.06&ndash;0.67)</td><td>0.10 (0.00&ndash;0.49)</td><td>6 of 8</td></tr>
         <tr><td>200</td><td>0.31 (0.04&ndash;0.61)</td><td>0.10 (0.00&ndash;0.50)</td><td>6 of 8</td></tr>
         <tr><td>250</td><td>0.29 (0.03&ndash;0.57)</td><td>0.12 (0.00&ndash;0.49)</td><td>6 of 8</td></tr>
+        <tr><td>300</td><td>0.28 (0.03&ndash;0.53)</td><td>0.13 (0.00&ndash;0.49)</td><td>5 of 8</td></tr>
+        <tr><td>350</td><td>0.27 (0.02&ndash;0.50)</td><td>0.12 (0.00&ndash;0.49)</td><td>6 of 8</td></tr>
+        <tr><td>400</td><td>0.26 (0.02&ndash;0.47)</td><td>0.20 (0.00&ndash;0.60)</td><td>5 of 8</td></tr>
       </tbody>
     </table>
     </div>
     <ul>
       <li>PPO is clearly better than REINFORCE here: at round 200 the average policy is at 0.31 (REINFORCE: 0.58) and the latest policy at 0.10 (REINFORCE: 0.20).</li>
-      <li>Six of eight seeds reach a latest policy an exact best response can barely exploit (under 0.05) by round 150. The other two stay near 0.5.</li>
-      <li>The average policy is flattening (0.31, then 0.29). It still includes the weak early policies, which may explain the gap with the latest policy, but I haven't tested that.</li>
-      <li>The latest policy is one best response, not something fictitious play promises to converge. I haven't checked that it stays near 0 round after round, so a low number could be a lucky snapshot.</li>
+      <li>The average policy keeps improving, slowly: 0.49 at round 50 down to 0.26 at round 400. It hasn't converged, and no seed reaches 0.</li>
+      <li>The seeds differ a lot. Two end almost unexploitable (0.03 and 0.02), one is at 0.15, and the other five are between 0.30 and 0.47. Seed 7 never gets below about 0.46.</li>
+      <li>The latest policy is not stable, so don't read it as a result. Seed 0 sat at 0.00 from round 100 to 350 and then jumped to 0.60 at round 400. A good-looking latest policy can be a lucky snapshot; fictitious play only promises something about the average policy.</li>
+      <li>I haven't tested why the average declines so slowly. A guess is that it still includes the weak early policies. This is one small board and one set of settings.</li>
     </ul>
 
     <h3>Settled points</h3>
