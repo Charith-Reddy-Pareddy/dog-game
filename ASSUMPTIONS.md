@@ -167,14 +167,13 @@ rounds. Details are in `doggame/soccer_fp_diagnosis.py`; raw numbers are in
   `random_starts=True`), not the defaults, and the seed results above were run
   without them.
 
-### Fictitious play with PPO (interim: the 400-round run is still going)
+### Fictitious play with PPO
 
 PPO with the two settings that helped REINFORCE (random starting states and
-the state-average opponent), 5x3 board, 20 iterations per round, 8 seeds
-(0-7). Exploitability of the average policy and of the latest policy, mean
-over seeds with the range in brackets. Rounds past 250 have too few seeds
-finished to report yet; these numbers will be replaced by the full 400-round
-results.
+the state-average opponent), 5x3 board, 20 iterations per round, 400 rounds,
+8 seeds (0-7). Exploitability of the average policy and of the latest policy,
+mean over seeds with the range in brackets. Raw numbers are in
+`results/soccer_fp_diagnosis_runs.jsonl`.
 
 | round | average policy | latest policy | seeds with latest policy under 0.05 |
 |---|---|---|---|
@@ -183,22 +182,32 @@ results.
 | 150 | 0.35 (0.06-0.67) | 0.10 (0.00-0.49) | 6 of 8 |
 | 200 | 0.31 (0.04-0.61) | 0.10 (0.00-0.50) | 6 of 8 |
 | 250 | 0.29 (0.03-0.57) | 0.12 (0.00-0.49) | 6 of 8 |
+| 300 | 0.28 (0.03-0.53) | 0.13 (0.00-0.49) | 5 of 8 |
+| 350 | 0.27 (0.02-0.50) | 0.12 (0.00-0.49) | 6 of 8 |
+| 400 | 0.26 (0.02-0.47) | 0.20 (0.00-0.60) | 5 of 8 |
 
-- PPO is clearly better than REINFORCE here. At round 200 the average
-  policy is at 0.31 (REINFORCE: 0.58 on 4 seeds) and the latest policy at
-  0.10 (REINFORCE: 0.20).
-- Six of eight seeds reach a latest policy that an exact best response
-  can barely exploit (under 0.05, some exactly 0) by round 150. The other two
-  stay near 0.5.
-- The average policy improves more slowly and is flattening (0.31, then
-  0.29). Fictitious play's guarantee is about the average policy, and the
-  average still includes the weak early policies, which fade only slowly.
-  That may explain the gap between the two columns, but I haven't tested it.
-- The latest policy is one player's most recent best response, not
-  something fictitious play promises to converge. I haven't checked that it
-  stays near 0 round after round, so a low number could be a lucky snapshot.
-- The seed-to-seed spread is large, so I wouldn't quote the means without
-  the ranges.
+- PPO is clearly better than REINFORCE here. At round 200 the average policy
+  is at 0.31 (REINFORCE: 0.58 on 4 seeds) and the latest policy at 0.10
+  (REINFORCE: 0.20).
+- The average policy keeps improving, slowly: 0.49 at round 50 down to 0.26
+  at round 400, about 0.01 per 50 rounds by the end. It has not converged and
+  no seed reaches 0.
+- The seeds differ a lot. Two end with an almost unexploitable average
+  policy (seed 1: 0.03, seed 3: 0.02). One more is at 0.15, and the other five
+  are between 0.30 and 0.47. Seed 7 never gets below about 0.46.
+- The latest policy is not stable, so don't read it as a result. It is
+  exactly 0.00 for most seeds most of the time, but seed 0 sat at 0.00 from round
+  100 to round 350 and then jumped to 0.60 at round 400. Seed 6 jumped from 0.00 to
+  0.49 at round 250 and stayed there, and seed 2 bounced between 0.79, 0.32, 0.00
+  and 0.05. A good-looking latest policy can be a lucky snapshot. Fictitious
+  play only promises something about the average policy.
+- For every seed, 0% of the states an exact best response reaches were
+  trained on fewer than 10 times, so the state-coverage explanation is still
+  not supported.
+- I haven't tested why the average policy declines so slowly. It still
+  includes the weak early policies, which fade only like 1 over the number of
+  rounds, but that is a guess.
+- This is one small board and one set of settings.
 
 ## Solvers and checks
 
