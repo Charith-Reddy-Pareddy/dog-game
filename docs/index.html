@@ -319,6 +319,28 @@
       <li>It's still not converged (0.58 at round 200), and I don't know whether it would reach 0. The new settings are options, not the defaults, and the seed results above were run without them.</li>
     </ul>
 
+    <h3>Fictitious play with PPO (interim)</h3>
+    <p class="hint" style="margin:0 0 6px">PPO with random starting states and the state-average opponent, 5&times;3 board, 8 seeds. The 400-round run is still going; rounds past 250 aren't reported yet.</p>
+    <p class="hint scroll-hint">Swipe the table sideways to see every column.</p>
+    <div class="table-scroll">
+    <table>
+      <thead><tr><th>Round</th><th>Average policy</th><th>Latest policy</th><th>Seeds with latest under 0.05</th></tr></thead>
+      <tbody>
+        <tr><td>50</td><td>0.49 (0.19&ndash;0.85)</td><td>0.28 (0.00&ndash;0.79)</td><td>4 of 8</td></tr>
+        <tr><td>100</td><td>0.40 (0.09&ndash;0.73)</td><td>0.12 (0.00&ndash;0.49)</td><td>5 of 8</td></tr>
+        <tr><td>150</td><td>0.35 (0.06&ndash;0.67)</td><td>0.10 (0.00&ndash;0.49)</td><td>6 of 8</td></tr>
+        <tr><td>200</td><td>0.31 (0.04&ndash;0.61)</td><td>0.10 (0.00&ndash;0.50)</td><td>6 of 8</td></tr>
+        <tr><td>250</td><td>0.29 (0.03&ndash;0.57)</td><td>0.12 (0.00&ndash;0.49)</td><td>6 of 8</td></tr>
+      </tbody>
+    </table>
+    </div>
+    <ul>
+      <li>PPO is clearly better than REINFORCE here: at round 200 the average policy is at 0.31 (REINFORCE: 0.58) and the latest policy at 0.10 (REINFORCE: 0.20).</li>
+      <li>Six of eight seeds reach a latest policy an exact best response can barely exploit (under 0.05) by round 150. The other two stay near 0.5.</li>
+      <li>The average policy is flattening (0.31, then 0.29). It still includes the weak early policies, which may explain the gap with the latest policy, but I haven't tested that.</li>
+      <li>The latest policy is one best response, not something fictitious play promises to converge. I haven't checked that it stays near 0 round after round, so a low number could be a lucky snapshot.</li>
+    </ul>
+
     <h3>Settled points</h3>
     <ul>
       <li>Any game works for PG as long as the solver is correct and the comparison is meaningful; fewer mixed states is better.</li>
