@@ -167,6 +167,39 @@ rounds. Details are in `doggame/soccer_fp_diagnosis.py`; raw numbers are in
   `random_starts=True`), not the defaults, and the seed results above were run
   without them.
 
+### Fictitious play with PPO (interim: the 400-round run is still going)
+
+PPO with the two settings that helped REINFORCE (random starting states and
+the state-average opponent), 5x3 board, 20 iterations per round, 8 seeds
+(0-7). Exploitability of the average policy and of the latest policy, mean
+over seeds with the range in brackets. Rounds past 250 have too few seeds
+finished to report yet; these numbers will be replaced by the full 400-round
+results.
+
+| round | average policy | latest policy | seeds with latest policy under 0.05 |
+|---|---|---|---|
+| 50 | 0.49 (0.19-0.85) | 0.28 (0.00-0.79) | 4 of 8 |
+| 100 | 0.40 (0.09-0.73) | 0.12 (0.00-0.49) | 5 of 8 |
+| 150 | 0.35 (0.06-0.67) | 0.10 (0.00-0.49) | 6 of 8 |
+| 200 | 0.31 (0.04-0.61) | 0.10 (0.00-0.50) | 6 of 8 |
+| 250 | 0.29 (0.03-0.57) | 0.12 (0.00-0.49) | 6 of 8 |
+
+- PPO is clearly better than REINFORCE here. At round 200 the average
+  policy is at 0.31 (REINFORCE: 0.58 on 4 seeds) and the latest policy at
+  0.10 (REINFORCE: 0.20).
+- Six of eight seeds reach a latest policy that an exact best response
+  can barely exploit (under 0.05, some exactly 0) by round 150. The other two
+  stay near 0.5.
+- The average policy improves more slowly and is flattening (0.31, then
+  0.29). Fictitious play's guarantee is about the average policy, and the
+  average still includes the weak early policies, which fade only slowly.
+  That may explain the gap between the two columns, but I haven't tested it.
+- The latest policy is one player's most recent best response, not
+  something fictitious play promises to converge. I haven't checked that it
+  stays near 0 round after round, so a low number could be a lucky snapshot.
+- The seed-to-seed spread is large, so I wouldn't quote the means without
+  the ranges.
+
 ## Solvers and checks
 
 - The analytic solver finds one pure Nash equilibrium by iterated best
