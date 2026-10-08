@@ -107,7 +107,13 @@
   .notes h3 { margin: 18px 0 6px; font-size: 0.95rem; }
   footer { text-align: center; color: var(--muted); font-size: 0.82rem; padding: 8px 0 0; }
 
+  .traj-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; margin: 14px 0 10px; }
+  .traj-grid figure { margin: 0; min-width: 0; }
+  .traj-grid figcaption { font-size: 0.82rem; font-weight: 600; margin-bottom: 4px; }
+  .traj-grid svg { width: 100%; height: auto; display: block; background: #fbf9f4; border: 1px solid var(--line); border-radius: 12px; }
+  .traj-legend { font-size: 0.78rem; color: var(--muted); line-height: 1.5; }
   @media (max-width: 640px) {
+    .traj-grid { grid-template-columns: 1fr; }
     .scroll-hint { display: block; }
     .card { padding: 20px; }
     table { font-size: 0.75rem; }
@@ -243,6 +249,25 @@
       exactly the non-uniqueness the source research predicts once houses
       share a coordinate.
     </div>
+  </section>
+
+  <section class="card" id="trajectories">
+    <h2>Walking trajectories</h2>
+    <p class="sub">
+      One sampled 15-step game of the angle-radius version, before and after
+      training (seed 0), on the setup red (0.88, 0.12), blue (0.3, 0.65), w = 0.5.
+      Red and blue walk from their own houses, and the dog moves to the average
+      of their positions. REINFORCE picks an angle and a step length; the
+      Nash-Q network picks one of 10 compass directions.
+    </p>
+    <div class="traj-grid" id="trajGrid"></div>
+    <p class="traj-legend">
+      Squares are the houses, &times; marks the one-shot Nash corner, open
+      circles are starts and filled circles are ends; the dashed gray line is the
+      dog. After training both players end at or near their corners and the dog
+      ends near the middle. This is one game for one seed; the five-seed numbers
+      are in the dog-game results PDF in the repository.
+    </p>
   </section>
 
   <section class="card notes" id="assumptions">
@@ -823,6 +848,45 @@
     div.className = "stat";
     div.innerHTML = `<div class="num">${s.num}</div><div class="lbl">${s.lbl}</div>`;
     statGrid.appendChild(div);
+  });
+})();
+</script>
+<script>
+/* ---------- walking trajectories ---------- */
+(function () {
+  const T = {"houseRed":[0.88,0.12],"houseBlue":[0.3,0.65],"nashRed":[1.0,0.0],"nashBlue":[0.0,1.0],"panels":[{"title":"REINFORCE, before training","path":{"red":[[0.88,0.12],[0.853,0.0],[0.806,0.0],[0.975,0.0],[0.855,0.077],[0.778,0.043],[0.713,0.0],[0.607,0.0],[0.461,0.0],[0.412,0.0],[0.375,0.0],[0.356,0.0],[0.309,0.051],[0.293,0.0],[0.282,0.0],[0.17,0.0]],"blue":[[0.3,0.65],[0.348,0.683],[0.386,0.723],[0.525,0.679],[0.541,0.692],[0.629,0.738],[0.663,0.722],[0.68,0.883],[0.703,0.878],[0.703,0.881],[0.762,1.0],[0.746,1.0],[0.739,1.0],[0.744,1.0],[0.913,0.993],[0.834,1.0]],"dog":[[0.59,0.385],[0.601,0.342],[0.596,0.361],[0.75,0.339],[0.698,0.384],[0.704,0.39],[0.688,0.361],[0.644,0.442],[0.582,0.439],[0.558,0.44],[0.568,0.5],[0.551,0.5],[0.524,0.525],[0.519,0.5],[0.598,0.497],[0.502,0.5]]}},{"title":"REINFORCE, after training","path":{"red":[[0.88,0.12],[0.901,0.068],[0.924,0.012],[0.977,0.0],[0.989,0.0],[1.0,0.0],[1.0,0.0],[1.0,0.0],[1.0,0.0],[1.0,0.0],[0.988,0.0],[1.0,0.0],[1.0,0.0],[1.0,0.0],[1.0,0.0],[1.0,0.0]],"blue":[[0.3,0.65],[0.174,0.797],[0.062,0.902],[0.0,1.0],[0.002,1.0],[0.0,1.0],[0.0,1.0],[0.0,1.0],[0.0,1.0],[0.0,1.0],[0.0,1.0],[0.0,1.0],[0.0,1.0],[0.0,1.0],[0.0,1.0],[0.0,1.0]],"dog":[[0.59,0.385],[0.538,0.432],[0.493,0.457],[0.489,0.5],[0.495,0.5],[0.5,0.5],[0.5,0.5],[0.5,0.5],[0.5,0.5],[0.5,0.5],[0.494,0.5],[0.5,0.5],[0.5,0.5],[0.5,0.5],[0.5,0.5],[0.5,0.5]]}},{"title":"Nash-Q, before training","path":{"red":[[0.88,0.12],[1.0,0.238],[0.838,0.355],[0.676,0.473],[0.615,0.663],[0.453,0.78],[0.291,0.898],[0.229,1.0],[0.029,1.0],[0.0,1.0],[0.0,1.0],[0.0,1.0],[0.0,1.0],[0.0,1.0],[0.0,1.0],[0.0,1.0]],"blue":[[0.3,0.65],[0.138,0.532],[0.076,0.723],[0.0,0.723],[0.162,0.605],[0.324,0.488],[0.485,0.37],[0.647,0.252],[0.847,0.252],[1.0,0.252],[1.0,0.252],[1.0,0.252],[1.0,0.252],[1.0,0.252],[1.0,0.252],[1.0,0.252]],"dog":[[0.59,0.385],[0.569,0.385],[0.457,0.539],[0.338,0.598],[0.388,0.634],[0.388,0.634],[0.388,0.634],[0.438,0.626],[0.438,0.626],[0.5,0.626],[0.5,0.626],[0.5,0.626],[0.5,0.626],[0.5,0.626],[0.5,0.626],[0.5,0.626]]}},{"title":"Nash-Q, after training","path":{"red":[[0.88,0.12],[0.818,0.0],[0.98,0.0],[0.918,0.0],[0.98,0.0],[0.918,0.0],[0.98,0.0],[0.918,0.0],[0.98,0.0],[0.918,0.0],[0.98,0.0],[0.918,0.0],[0.98,0.0],[0.918,0.0],[0.98,0.0],[0.918,0.0]],"blue":[[0.3,0.65],[0.138,0.768],[0.0,0.885],[0.0,1.0],[0.0,1.0],[0.0,1.0],[0.0,1.0],[0.0,1.0],[0.0,1.0],[0.0,1.0],[0.0,1.0],[0.0,1.0],[0.0,1.0],[0.0,1.0],[0.0,1.0],[0.0,1.0]],"dog":[[0.59,0.385],[0.478,0.384],[0.49,0.443],[0.459,0.5],[0.49,0.5],[0.459,0.5],[0.49,0.5],[0.459,0.5],[0.49,0.5],[0.459,0.5],[0.49,0.5],[0.459,0.5],[0.49,0.5],[0.459,0.5],[0.49,0.5],[0.459,0.5]]}}]};
+  const RED = "#d8555f", BLUE = "#3f7d9e", DOG = "#7a7369", SIZE = 200, PAD = 12, SPAN = SIZE - 2 * PAD;
+  const at = p => [PAD + p[0] * SPAN, PAD + (1 - p[1]) * SPAN];
+  const svg = (tag, attrs) => {
+    const el = document.createElementNS("http://www.w3.org/2000/svg", tag);
+    for (const k in attrs) el.setAttribute(k, attrs[k]);
+    return el;
+  };
+  const grid = document.getElementById("trajGrid");
+  T.panels.forEach(panel => {
+    const fig = document.createElement("figure");
+    const cap = document.createElement("figcaption");
+    cap.textContent = panel.title;
+    const s = svg("svg", { viewBox: "0 0 " + SIZE + " " + SIZE, role: "img", "aria-label": panel.title + ": paths of red, blue and the dog" });
+    s.appendChild(svg("rect", { x: PAD, y: PAD, width: SPAN, height: SPAN, fill: "none", stroke: "#e4ddd0" }));
+    [[T.houseRed, RED], [T.houseBlue, BLUE]].forEach(([h, c]) => {
+      const [x, y] = at(h);
+      s.appendChild(svg("rect", { x: x - 4, y: y - 4, width: 8, height: 8, fill: c, "fill-opacity": 0.25, stroke: c }));
+    });
+    [[T.nashRed, RED], [T.nashBlue, BLUE]].forEach(([n, c]) => {
+      const [x, y] = at(n);
+      s.appendChild(svg("path", { d: "M" + (x - 4) + " " + (y - 4) + "L" + (x + 4) + " " + (y + 4) + "M" + (x - 4) + " " + (y + 4) + "L" + (x + 4) + " " + (y - 4), stroke: c, "stroke-width": 1.6 }));
+    });
+    [["dog", DOG, "3 3"], ["red", RED, ""], ["blue", BLUE, ""]].forEach(([name, c, dash]) => {
+      const pts = panel.path[name];
+      s.appendChild(svg("polyline", { points: pts.map(p => at(p).join(",")).join(" "), fill: "none", stroke: c, "stroke-width": 1.6, "stroke-dasharray": dash, "stroke-linejoin": "round" }));
+      const [x0, y0] = at(pts[0]), [x1, y1] = at(pts[pts.length - 1]);
+      s.appendChild(svg("circle", { cx: x0, cy: y0, r: 3, fill: "#fffdf9", stroke: c, "stroke-width": 1.4 }));
+      s.appendChild(svg("circle", { cx: x1, cy: y1, r: 3, fill: c, stroke: c }));
+    });
+    fig.appendChild(cap);
+    fig.appendChild(s);
+    grid.appendChild(fig);
   });
 })();
 </script>
