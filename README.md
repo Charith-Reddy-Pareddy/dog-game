@@ -92,6 +92,9 @@ solver to check both against, and a browser visualization.
   losses and ties against random, exact-equilibrium and exact
   best-response opponents; run the comparison with
   `python3 -m doggame.soccer_experiments`.
+- `doggame/soccer_averaging.py`, `doggame/soccer_report.py` -- score the saved
+  fictitious-play snapshots under different ways of averaging them, and build
+  `soccer_fictitious_play_results.pdf` from the files in `results/`.
 - `doggame/experiments.py` -- runs policy-gradient self-play across
   several house/weight configurations and reports exploitability for
   each, to actually answer "can this converge?" instead of trusting
