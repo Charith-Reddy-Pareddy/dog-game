@@ -342,7 +342,68 @@
       <li>The average policy keeps improving, slowly: 0.49 at round 50 down to 0.26 at round 400. It hasn't converged, and no seed reaches 0.</li>
       <li>The seeds differ a lot. Two end almost unexploitable (0.03 and 0.02), one is at 0.15, and the other five are between 0.30 and 0.47. Seed 7 never gets below about 0.46.</li>
       <li>The latest policy is not stable, so don't read it as a result. Seed 0 sat at 0.00 from round 100 to 350 and then jumped to 0.60 at round 400. A good-looking latest policy can be a lucky snapshot; fictitious play only promises something about the average policy.</li>
-      <li>I haven't tested why the average declines so slowly. A guess is that it still includes the weak early policies. This is one small board and one set of settings.</li>
+      <li>Why the average declines so slowly is tested in the next part. This is one small board and one set of settings.</li>
+    </ul>
+
+    <h3>Eight more seeds, 800 rounds, and the early policies</h3>
+    <p class="hint" style="margin:0 0 6px">The same PPO settings on seeds 8&ndash;15, run to 800 rounds. Exploitability: mean over the 8 seeds, with the range in brackets.</p>
+    <p class="hint scroll-hint">Swipe the table sideways to see every column.</p>
+    <div class="table-scroll">
+    <table>
+      <thead><tr><th>Round</th><th>Average policy</th><th>Latest policy</th><th>Seeds with latest under 0.05</th></tr></thead>
+      <tbody>
+        <tr><td>100</td><td>0.31 (0.09&ndash;0.55)</td><td>0.16 (0.00&ndash;0.46)</td><td>5 of 8</td></tr>
+        <tr><td>200</td><td>0.26 (0.04&ndash;0.48)</td><td>0.12 (0.00&ndash;0.49)</td><td>6 of 8</td></tr>
+        <tr><td>300</td><td>0.23 (0.03&ndash;0.49)</td><td>0.12 (0.00&ndash;0.49)</td><td>6 of 8</td></tr>
+        <tr><td>400</td><td>0.23 (0.02&ndash;0.72)</td><td>0.10 (0.00&ndash;0.78)</td><td>7 of 8</td></tr>
+        <tr><td>500</td><td>0.22 (0.02&ndash;0.73)</td><td>0.13 (0.00&ndash;0.62)</td><td>6 of 8</td></tr>
+        <tr><td>600</td><td>0.20 (0.02&ndash;0.73)</td><td>0.04 (0.00&ndash;0.32)</td><td>7 of 8</td></tr>
+        <tr><td>700</td><td>0.18 (0.02&ndash;0.73)</td><td>0.04 (0.00&ndash;0.32)</td><td>7 of 8</td></tr>
+        <tr><td>800</td><td>0.17 (0.02&ndash;0.71)</td><td>0.04 (0.00&ndash;0.32)</td><td>7 of 8</td></tr>
+      </tbody>
+    </table>
+    </div>
+    <ul>
+      <li>Over all 16 seeds the average policy at round 400 is 0.25 on average (0.02&ndash;0.72), and 5 of the 16 are under 0.05.</li>
+      <li>The average keeps falling after round 400: 0.23 at round 400, 0.17 at round 800, about 0.015 per 100 rounds. It still has not reached 0.</li>
+      <li>Seven of the eight seeds end at 0.22 or lower. Seed 15 is the exception: its average is 0.71 and its latest policy 0.32. Without seed 15 the mean is 0.09.</li>
+    </ul>
+    <p style="margin:10px 0 6px">To test the guess that the average declines slowly because it still contains the weak early policies, I scored the same saved snapshots under different ways of averaging them. Exploitability, mean over the 8 seeds:</p>
+    <div class="table-scroll">
+    <table>
+      <thead><tr><th>Way of averaging</th><th>At round 400</th><th>At round 800</th></tr></thead>
+      <tbody>
+        <tr><td>all snapshots (the average policy)</td><td>0.23</td><td>0.17</td></tr>
+        <tr><td>without the first quarter</td><td>0.18</td><td>0.13</td></tr>
+        <tr><td>second half only</td><td>0.16</td><td>0.12</td></tr>
+        <tr><td>last quarter only</td><td>0.12</td><td>0.07</td></tr>
+        <tr><td>latest snapshot only</td><td>0.10</td><td>0.04</td></tr>
+      </tbody>
+    </table>
+    </div>
+    <p style="margin:10px 0 6px">At round 800, per seed:</p>
+    <p class="hint scroll-hint">Swipe the table sideways to see every column.</p>
+    <div class="table-scroll">
+    <table>
+      <thead><tr><th>Seed</th><th>All</th><th>Without first quarter</th><th>Second half</th><th>Last quarter</th><th>Latest</th></tr></thead>
+      <tbody>
+        <tr><td>8</td><td>0.13</td><td>0.04</td><td>0.00</td><td>0.00</td><td>0.00</td></tr>
+        <tr><td>9</td><td>0.22</td><td>0.10</td><td>0.11</td><td>0.00</td><td>0.00</td></tr>
+        <tr><td>10</td><td>0.02</td><td>0.01</td><td>0.01</td><td>0.02</td><td>0.00</td></tr>
+        <tr><td>11</td><td>0.07</td><td>0.03</td><td>0.00</td><td>0.00</td><td>0.00</td></tr>
+        <tr><td>12</td><td>0.05</td><td>0.00</td><td>0.00</td><td>0.00</td><td>0.00</td></tr>
+        <tr><td>13</td><td>0.11</td><td>0.14</td><td>0.18</td><td>0.00</td><td>0.00</td></tr>
+        <tr><td>14</td><td>0.06</td><td>0.08</td><td>0.13</td><td>0.26</td><td>0.00</td></tr>
+        <tr><td>15</td><td>0.71</td><td>0.67</td><td>0.54</td><td>0.32</td><td>0.32</td></tr>
+      </tbody>
+    </table>
+    </div>
+    <ul>
+      <li>The guess is partly right. The more of the early history is dropped, the lower the mean exploitability, at both rounds.</li>
+      <li>The first quarter alone accounts for a small part: 0.23 to 0.18 at round 400 and 0.17 to 0.13 at round 800. At round 800 dropping it helps 6 of the 8 seeds and hurts 2 (seeds 13 and 14).</li>
+      <li>It does not explain every seed. In seeds 13 and 14 the average gets worse when the early policies are dropped (seed 14: 0.06 for all snapshots, 0.26 for the last quarter). Seed 15 is poor under every way of averaging, so something else is wrong there.</li>
+      <li>&ldquo;Latest snapshot only&rdquo; has the lowest mean, but it is one policy and it can jump, so I don't treat it as a result.</li>
+      <li>This shows that the early policies add to the exploitability. It does not test how fast they fade, and it is one checkpoint per seed on 8 seeds.</li>
     </ul>
 
     <h3>Settled points</h3>
