@@ -1,0 +1,15 @@
+soccer_fp_checkpoints/random_starts_state_average_800_rounds_10_ppo.pt (round 400): all snapshots 0.03, without the first quarter 0.00, second half only 0.01, last quarter only 0.00, latest only 0.00
+soccer_fp_checkpoints/random_starts_state_average_800_rounds_11_ppo.pt (round 400): all snapshots 0.22, without the first quarter 0.19, second half only 0.23, last quarter only 0.22, latest only 0.00
+soccer_fp_checkpoints/random_starts_state_average_800_rounds_12_ppo.pt (round 400): all snapshots 0.16, without the first quarter 0.08, second half only 0.00, last quarter only 0.00, latest only 0.00
+soccer_fp_checkpoints/random_starts_state_average_800_rounds_13_ppo.pt (round 400): all snapshots 0.03, without the first quarter 0.00, second half only 0.00, last quarter only 0.00, latest only 0.00
+soccer_fp_checkpoints/random_starts_state_average_800_rounds_14_ppo.pt (round 400): all snapshots 0.02, without the first quarter 0.00, second half only 0.00, last quarter only 0.00, latest only 0.00
+soccer_fp_checkpoints/random_starts_state_average_800_rounds_15_ppo.pt (round 400): all snapshots 0.72, without the first quarter 0.75, second half only 0.77, last quarter only 0.78, latest only 0.78
+soccer_fp_checkpoints/random_starts_state_average_800_rounds_8_ppo.pt (round 400): all snapshots 0.33, without the first quarter 0.35, second half only 0.24, last quarter only 0.00, latest only 0.00
+soccer_fp_checkpoints/random_starts_state_average_800_rounds_9_ppo.pt (round 400): all snapshots 0.37, without the first quarter 0.05, second half only 0.03, last quarter only 0.00, latest only 0.00
+
+mean over checkpoints
+  all snapshots                0.23
+  without the first quarter    0.18
+  second half only             0.16
+  last quarter only            0.12
+  latest only                  0.10

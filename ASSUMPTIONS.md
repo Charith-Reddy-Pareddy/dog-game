@@ -204,10 +204,78 @@ mean over seeds with the range in brackets. Raw numbers are in
 - For every seed, 0% of the states an exact best response reaches were
   trained on fewer than 10 times, so the state-coverage explanation is still
   not supported.
-- I haven't tested why the average policy declines so slowly. It still
-  includes the weak early policies, which fade only like 1 over the number of
-  rounds, but that is a guess.
+- Why the average declines so slowly is tested in the next section.
 - This is one small board and one set of settings.
+
+### Eight more seeds, 800 rounds, and the early policies
+
+Same PPO settings, seeds 8-15, run to 800 rounds. Exploitability, mean over the
+8 seeds with the range in brackets. Raw numbers are in
+`results/soccer_fp_diagnosis_runs.jsonl`.
+
+| round | average policy | latest policy | seeds with latest policy under 0.05 |
+|---|---|---|---|
+| 100 | 0.31 (0.09-0.55) | 0.16 (0.00-0.46) | 5 of 8 |
+| 200 | 0.26 (0.04-0.48) | 0.12 (0.00-0.49) | 6 of 8 |
+| 300 | 0.23 (0.03-0.49) | 0.12 (0.00-0.49) | 6 of 8 |
+| 400 | 0.23 (0.02-0.72) | 0.10 (0.00-0.78) | 7 of 8 |
+| 500 | 0.22 (0.02-0.73) | 0.13 (0.00-0.62) | 6 of 8 |
+| 600 | 0.20 (0.02-0.73) | 0.04 (0.00-0.32) | 7 of 8 |
+| 700 | 0.18 (0.02-0.73) | 0.04 (0.00-0.32) | 7 of 8 |
+| 800 | 0.17 (0.02-0.71) | 0.04 (0.00-0.32) | 7 of 8 |
+
+- Over all 16 seeds (0-15) the average policy at round 400 is 0.25 on average
+  (0.02-0.72), and 5 of the 16 are under 0.05.
+- The average keeps falling after round 400: 0.23 at round 400, 0.17 at round
+  800, about 0.015 per 100 rounds. It still has not reached 0.
+- Seven of the eight seeds end at 0.22 or lower. Seed 15 is the exception: its
+  average is 0.71 at round 800 and its latest policy is 0.32. Without seed 15
+  the mean is 0.09.
+
+To test the guess that the average declines slowly because it still contains
+the weak early policies, each checkpoint holds every snapshot so far, so the
+same snapshots can be averaged in different ways
+(`python3 -m doggame.soccer_averaging --rounds 800 soccer_fp_checkpoints/*.pt`).
+Exploitability, mean over the 8 seeds; raw output is in
+`results/soccer_averaging_round_400.txt` and `results/soccer_averaging_round_800.txt`.
+
+| way of averaging | at round 400 | at round 800 |
+|---|---|---|
+| all snapshots (the average policy) | 0.23 | 0.17 |
+| without the first quarter | 0.18 | 0.13 |
+| second half only | 0.16 | 0.12 |
+| last quarter only | 0.12 | 0.07 |
+| latest snapshot only | 0.10 | 0.04 |
+
+At round 800, per seed:
+
+| seed | all | without first quarter | second half | last quarter | latest |
+|---|---|---|---|---|---|
+| 8 | 0.13 | 0.04 | 0.00 | 0.00 | 0.00 |
+| 9 | 0.22 | 0.10 | 0.11 | 0.00 | 0.00 |
+| 10 | 0.02 | 0.01 | 0.01 | 0.02 | 0.00 |
+| 11 | 0.07 | 0.03 | 0.00 | 0.00 | 0.00 |
+| 12 | 0.05 | 0.00 | 0.00 | 0.00 | 0.00 |
+| 13 | 0.11 | 0.14 | 0.18 | 0.00 | 0.00 |
+| 14 | 0.06 | 0.08 | 0.13 | 0.26 | 0.00 |
+| 15 | 0.71 | 0.67 | 0.54 | 0.32 | 0.32 |
+
+- The guess is partly right. The more of the early history is dropped, the
+  lower the mean exploitability, at both rounds.
+- The part from the first quarter alone is small: 0.23 to 0.18 at round 400 and
+  0.17 to 0.13 at round 800. At round 800, dropping the first quarter helps 6
+  of the 8 seeds and hurts 2 (seeds 13 and 14).
+- It does not explain every seed. In seeds 13 and 14 the average gets worse
+  when the early policies are dropped (seed 14: 0.06 for all snapshots, 0.26
+  for the last quarter). Seed 15 is poor under every way of averaging (0.71 to
+  0.32), so something other than the early policies is wrong there. At round
+  400 seeds 8 and 11 also barely changed.
+- "Latest snapshot only" has the lowest mean, but it is one policy, and earlier
+  seeds showed it can jump (seed 0 went from 0.00 to 0.60), so I don't treat it
+  as a result.
+- This shows that the early policies add to the exploitability. It does not
+  test the 1-over-the-number-of-rounds explanation of how fast they fade. It
+  is one checkpoint per seed and 8 seeds.
 
 ## Solvers and checks
 
