@@ -96,8 +96,10 @@ solver to check both against, and a browser visualization.
   fictitious-play snapshots under different ways of averaging them, and build
   a PDF of those results from the files in `results/` (the PDF is not kept in
   the repo).
-- `doggame/dog_game_study.py`, `doggame/dog_game_report.py` -- the multi-seed dog-game
-  runs (convergence, and the angle-radius walk) and the PDF built from them.
+- `doggame/dog_game_study.py`, `doggame/dog_game_trajectories.py`,
+  `doggame/dog_game_report.py` -- the multi-seed dog-game runs (convergence, and
+  the angle-radius walk), the recorded paths of the players and the dog, and the
+  PDF built from them.
 - `doggame/experiments.py` -- runs policy-gradient self-play across
   several house/weight configurations and reports exploitability for
   each, to actually answer "can this converge?" instead of trusting
