@@ -4,6 +4,7 @@
 **Research questions:** [RESEARCH_QUESTIONS.md](RESEARCH_QUESTIONS.md)
 **Assumptions:** [ASSUMPTIONS.md](ASSUMPTIONS.md)
 **Soccer fictitious-play results:** [PDF](soccer_fictitious_play_results.pdf) (longer runs and the early-policy averaging test)
+**Dog-game results:** [PDF](dog_game_results.pdf) (convergence over seeds, and the angle-radius version)
 **Research report:** [RESEARCH_REPORT.md](RESEARCH_REPORT.md) ([PDF version](research_report.pdf), with direct answers to each research question)
 
 A two-player, general-sum game: a red house and a blue house each want a
@@ -95,6 +96,8 @@ solver to check both against, and a browser visualization.
 - `doggame/soccer_averaging.py`, `doggame/soccer_report.py` -- score the saved
   fictitious-play snapshots under different ways of averaging them, and build
   `soccer_fictitious_play_results.pdf` from the files in `results/`.
+- `doggame/dog_game_study.py`, `doggame/dog_game_report.py` -- the multi-seed dog-game
+  runs (convergence, and the angle-radius walk) and the PDF built from them.
 - `doggame/experiments.py` -- runs policy-gradient self-play across
   several house/weight configurations and reports exploitability for
   each, to actually answer "can this converge?" instead of trusting
