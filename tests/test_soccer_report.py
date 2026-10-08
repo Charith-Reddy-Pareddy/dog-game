@@ -35,5 +35,6 @@ def test_curves_are_grouped_by_variant_and_seed_and_averaged(tmp_path):
     curves = load_curves(path, "a")
 
     assert sorted(curves) == [0, 1] and curves[0][200] == (0.2, 0.0)
-    assert mean_curve(curves, 0) == pytest.approx([(100, 0.3), (200, 0.15)])
-    assert mean_curve(curves, 1) == pytest.approx([(100, 0.1), (200, 0.0)])
+    assert [r for r, _ in mean_curve(curves, 0)] == [100, 200]
+    assert [v for _, v in mean_curve(curves, 0)] == pytest.approx([0.3, 0.15])
+    assert [v for _, v in mean_curve(curves, 1)] == pytest.approx([0.1, 0.0])
