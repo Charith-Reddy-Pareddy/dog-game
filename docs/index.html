@@ -274,13 +274,9 @@
       <li>The dog game's own policy gradient is REINFORCE with a mean-return baseline.</li>
       <li>The original dog-game "DQN" is tabular Nash-Q on a single state, with no neural network. The angle-radius game has a real deep Nash-Q: 10 compass directions, a target network and a replay buffer.</li>
       <li>Each Nash-Q stage game is solved exactly, but the solver can cycle on some games, so answers are checked and retried from another starting point.</li>
+      <li>The continuous best-response methods (bisection, finite-difference gradient, quadratic fit) are for DQN. Policy gradient handles continuous actions directly.</li>
       <li>The analytic solver returns one pure equilibrium. When equilibria aren't unique, which one it returns is arbitrary.</li>
       <li>Every run in the dog-game training-results table uses one seed, so the claim about architecture and convergence speed rests on a single data point.</li>
-    </ul>
-
-    <h3>Settled points</h3>
-    <ul>
-      <li>The continuous best-response methods (bisection, finite-difference gradient, quadratic fit) are for DQN. PG handles continuous actions directly.</li>
     </ul>
 
     <h3>Still open</h3>
