@@ -3,7 +3,6 @@
 **Live demo:** https://charith-reddy-pareddy.github.io/dog-game/
 **Research questions:** [RESEARCH_QUESTIONS.md](RESEARCH_QUESTIONS.md)
 **Assumptions:** [ASSUMPTIONS.md](ASSUMPTIONS.md)
-**Soccer fictitious-play results:** [PDF](soccer_fictitious_play_results.pdf) (longer runs and the early-policy averaging test)
 **Dog-game results:** [PDF](dog_game_results.pdf) (convergence over seeds, and the angle-radius version)
 **Research report:** [RESEARCH_REPORT.md](RESEARCH_REPORT.md) ([PDF version](research_report.pdf), with direct answers to each research question)
 
@@ -95,7 +94,8 @@ solver to check both against, and a browser visualization.
   `python3 -m doggame.soccer_experiments`.
 - `doggame/soccer_averaging.py`, `doggame/soccer_report.py` -- score the saved
   fictitious-play snapshots under different ways of averaging them, and build
-  `soccer_fictitious_play_results.pdf` from the files in `results/`.
+  a PDF of those results from the files in `results/` (the PDF is not kept in
+  the repo).
 - `doggame/dog_game_study.py`, `doggame/dog_game_report.py` -- the multi-seed dog-game
   runs (convergence, and the angle-radius walk) and the PDF built from them.
 - `doggame/experiments.py` -- runs policy-gradient self-play across
