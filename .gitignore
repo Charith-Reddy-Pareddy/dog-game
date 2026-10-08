@@ -13,3 +13,4 @@ soccer_fp_diagnosis.log
 soccer_fp_progress.jsonl
 soccer_fp_ppo.log
 soccer_fp_checkpoints/
+soccer_fp_long.log
