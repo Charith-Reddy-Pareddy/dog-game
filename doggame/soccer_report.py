@@ -11,6 +11,8 @@ import re
 
 import numpy as np
 
+from doggame.pdf_kit import kit
+
 RESULTS = "results"
 OUTPUT = "soccer_fictitious_play_results.pdf"
 SCHEMES = ["all snapshots", "without the first quarter", "second half only", "last quarter only", "latest only"]
@@ -52,9 +54,8 @@ def build(path=OUTPUT, results=RESULTS):
     from reportlab.graphics.widgets.markers import makeMarker
     from reportlab.lib import colors
     from reportlab.lib.pagesizes import letter
-    from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
     from reportlab.lib.units import inch
-    from reportlab.platypus import KeepTogether, Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
+    from reportlab.platypus import KeepTogether, SimpleDocTemplate, Spacer
 
     runs = f"{results}/soccer_fp_diagnosis_runs.jsonl"
     first, second = load_curves(runs, FIRST_RUN), load_curves(runs, SECOND_RUN)
@@ -71,26 +72,8 @@ def build(path=OUTPUT, results=RESULTS):
     n = len(seeds800)
     example = max(hurt, key=lambda s: seeds800[s]["last quarter only"])
 
-    styles = getSampleStyleSheet()
-    body = ParagraphStyle("body", parent=styles["BodyText"], fontSize=10, leading=14, spaceAfter=6)
-    h1 = ParagraphStyle("h1", parent=styles["Heading1"], fontSize=18, spaceAfter=4)
-    h2 = ParagraphStyle("h2", parent=styles["Heading2"], fontSize=13, spaceBefore=12, spaceAfter=4, keepWithNext=1)
-    small = ParagraphStyle("small", parent=body, fontSize=8.5, leading=11, textColor=colors.HexColor("#555555"))
-    bullet = ParagraphStyle("bullet", parent=body, leftIndent=14, bulletIndent=2, spaceAfter=3)
-    cell = ParagraphStyle("cell", parent=body, fontSize=8.5, leading=10.5, spaceAfter=0)
-
-    text = lambda t, style=body: Paragraph(t, style)
-    point = lambda t: Paragraph(t, bullet, bulletText="•")
-
-    def table(data, widths):
-        t = Table([[Paragraph(str(c), cell) for c in row] for row in data], colWidths=widths, repeatRows=1)
-        t.setStyle(TableStyle([
-            ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#e8eef5")),
-            ("GRID", (0, 0), (-1, -1), 0.4, colors.HexColor("#b8c2cc")),
-            ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
-            ("TOPPADDING", (0, 0), (-1, -1), 3), ("BOTTOMPADDING", (0, 0), (-1, -1), 3),
-        ]))
-        return t
+    k = kit()
+    text, point, table, small = k.text, k.point, k.table, k.small
 
     def line_chart():
         d = Drawing(440, 230)
@@ -141,10 +124,10 @@ def build(path=OUTPUT, results=RESULTS):
     hurt_seeds = " and ".join(map(str, hurt))
 
     story = [
-        text("Fictitious play with policy gradient on soccer", h1),
-        text("Longer runs, more seeds, and whether the early policies slow the average", small),
+        k.h1("Fictitious play with policy gradient on soccer"),
+        small("Longer runs, more seeds, and whether the early policies slow the average"),
         Spacer(1, 6),
-        text("Summary", h2),
+        k.h2("Summary"),
         point(f"PPO fictitious play (random starting states, state-average opponent) on the 5x3 soccer board, run to 800 rounds on seeds 8-15. "
               f"The exploitability of the average policy falls from {np.mean(average(second, 100)):.2f} at round 100 to {np.mean(average(second, 800)):.2f} at round 800 "
               f"(mean over {len(second)} seeds). It has not reached 0."),
@@ -153,27 +136,27 @@ def build(path=OUTPUT, results=RESULTS):
         point("Testing the guess that the average declines slowly because it still contains the weak early policies: the guess is partly right. "
               f"Dropping more of the early history lowers the mean exploitability, but the first quarter alone explains only a small part "
               f"({mean800['all snapshots']:.2f} to {mean800['without the first quarter']:.2f} at round 800), and for some seeds dropping early policies makes the average worse."),
-        text("Setup", h2),
+        k.h2("Setup"),
         text("Soccer is a deterministic two-player zero-sum grid game, solved exactly by minimax value iteration (discount 0.9, 100-step limit counted as a tie). "
              "Exploitability is the exact best-response gain against a policy, so 0 is an equilibrium. PPO learns a best response to the state-by-state average of the "
              "opponent's earlier policies, from random starting states, 20 iterations of 256 games per round. The average policy is the plain average of every "
              "snapshot so far. Seeds 0-7 were run to 400 rounds earlier; seeds 8-15 were run to 800 rounds here."),
-        text("Longer run", h2),
+        k.h2("Longer run"),
         table(long_run, [0.7 * inch, 1.9 * inch, 1.9 * inch, 1.9 * inch]),
-        text(f"Exploitability, mean over seeds 8-15 with the range in brackets.", small),
+        small("Exploitability, mean over seeds 8-15 with the range in brackets."),
         Spacer(1, 4),
         line_chart(),
-        text(f"Mean exploitability by round. The average policy keeps falling after round 400 "
-             f"({np.mean(average(second, 400)):.2f} to {np.mean(average(second, 800)):.2f}), about 0.015 per 100 rounds.", small),
+        small(f"Mean exploitability by round. The average policy keeps falling after round 400 "
+              f"({np.mean(average(second, 400)):.2f} to {np.mean(average(second, 800)):.2f}), about 0.015 per 100 rounds."),
         point(f"Over all {len(all16)} seeds the average policy at round 400 is {np.mean(all16):.2f} on average ({min(all16):.2f}-{max(all16):.2f}), "
               f"and {sum(v < 0.05 for v in all16)} of the {len(all16)} are under 0.05."),
         point(f"The latest policy is below 0.05 for {sum(v < 0.05 for v in average(second, 800, 1))} of {len(second)} seeds at round 800, but earlier seeds showed it can jump "
               "(seed 0 went from 0.00 to 0.60), so fictitious play's claim is about the average policy."),
-        text("Do the early policies slow the average?", h2),
+        k.h2("Do the early policies slow the average?"),
         text("Each checkpoint stores every snapshot so far, so the same snapshots can be averaged in different ways: all of them, without the first quarter, "
              "the second half only, the last quarter only, or just the latest. If the early policies were the main drag, the averages that drop them would be much less exploitable."),
         KeepTogether([bar_chart(),
-                      text(f"Mean exploitability over the {n} seeds under each way of averaging.", small),
+                      small(f"Mean exploitability over the {n} seeds under each way of averaging."),
                       table(mean_table, [3.0 * inch, 1.5 * inch, 1.5 * inch])]),
         Spacer(1, 8),
         KeepTogether([text("At round 800, per seed:"),
@@ -186,12 +169,12 @@ def build(path=OUTPUT, results=RESULTS):
         point(f"It does not explain every seed. In seeds {hurt_seeds} the average gets worse when the early policies are dropped "
               f"(seed {example}: {seeds800[example]['all snapshots']:.2f} for all snapshots, {seeds800[example]['last quarter only']:.2f} for the last quarter). "
               f"Seed {worst} is poor under every way of averaging, so something other than the early policies is wrong there."),
-        text("What this does and does not show", h2),
+        k.h2("What this does and does not show"),
         point("It shows that the early policies add to the exploitability of the average policy, in most seeds."),
         point(f"It does not test the explanation that they fade like 1 over the number of rounds, and it does not say why seed {worst} is stuck."),
         point(f"It is one checkpoint per seed, {n} seeds, one small board and one set of settings. The learning rate and entropy weight were tuned on seed 0."),
-        text("Raw numbers are in results/soccer_fp_diagnosis_runs.jsonl, results/soccer_averaging_round_400.txt and results/soccer_averaging_round_800.txt. "
-             "The averaging test is doggame/soccer_averaging.py.", small),
+        small("Raw numbers are in results/soccer_fp_diagnosis_runs.jsonl, results/soccer_averaging_round_400.txt and results/soccer_averaging_round_800.txt. "
+              "The averaging test is doggame/soccer_averaging.py."),
     ]
     SimpleDocTemplate(path, pagesize=letter, leftMargin=0.8 * inch, rightMargin=0.8 * inch, topMargin=0.7 * inch,
                       bottomMargin=0.7 * inch, title="Fictitious play with policy gradient on soccer", author="").build(story)
