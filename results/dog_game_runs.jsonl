@@ -1,0 +1,85 @@
+{"kind": "convergence", "architecture": "separate", "seed": 0, "config": 0, "exploitability": 0.00024138380334842724}
+{"kind": "convergence", "architecture": "separate", "seed": 0, "config": 1, "exploitability": 0.18336230407950194}
+{"kind": "convergence", "architecture": "separate", "seed": 0, "config": 2, "exploitability": 0.00021492442917808718}
+{"kind": "convergence", "architecture": "separate", "seed": 0, "config": 3, "exploitability": 0.00013148678711283335}
+{"kind": "convergence", "architecture": "separate", "seed": 0, "config": 4, "exploitability": 8.153541687465696e-05}
+{"kind": "convergence", "architecture": "shared", "seed": 0, "config": 0, "exploitability": 0.00023125443540061852}
+{"kind": "convergence", "architecture": "shared", "seed": 0, "config": 1, "exploitability": 0.0039242169334678945}
+{"kind": "convergence", "architecture": "shared", "seed": 0, "config": 2, "exploitability": 0.00021183867534951828}
+{"kind": "convergence", "architecture": "shared", "seed": 0, "config": 3, "exploitability": 0.00011703611405752823}
+{"kind": "convergence", "architecture": "shared", "seed": 0, "config": 4, "exploitability": 8.771425966149632e-05}
+{"kind": "convergence", "architecture": "partial", "seed": 0, "config": 0, "exploitability": 0.00039705906582990225}
+{"kind": "convergence", "architecture": "partial", "seed": 0, "config": 1, "exploitability": 0.0008097133421061109}
+{"kind": "convergence", "architecture": "partial", "seed": 0, "config": 2, "exploitability": 0.0004075754677641541}
+{"kind": "convergence", "architecture": "partial", "seed": 0, "config": 3, "exploitability": 0.0001841880085841907}
+{"kind": "convergence", "architecture": "partial", "seed": 0, "config": 4, "exploitability": 0.00013920883291173095}
+{"kind": "convergence", "architecture": "separate", "seed": 1, "config": 0, "exploitability": 0.00021783320518795057}
+{"kind": "convergence", "architecture": "separate", "seed": 1, "config": 1, "exploitability": 0.0004883043336941784}
+{"kind": "convergence", "architecture": "separate", "seed": 1, "config": 2, "exploitability": 0.0004236622180949223}
+{"kind": "convergence", "architecture": "separate", "seed": 1, "config": 3, "exploitability": 9.767773431826332e-05}
+{"kind": "convergence", "architecture": "separate", "seed": 1, "config": 4, "exploitability": 8.044635537081748e-05}
+{"kind": "convergence", "architecture": "shared", "seed": 1, "config": 0, "exploitability": 0.0002299291528434777}
+{"kind": "convergence", "architecture": "shared", "seed": 1, "config": 1, "exploitability": 0.00041435688962415673}
+{"kind": "convergence", "architecture": "shared", "seed": 1, "config": 2, "exploitability": 0.0004332323881508504}
+{"kind": "convergence", "architecture": "shared", "seed": 1, "config": 3, "exploitability": 8.089162063429356e-05}
+{"kind": "convergence", "architecture": "shared", "seed": 1, "config": 4, "exploitability": 7.06770996239739e-05}
+{"kind": "convergence", "architecture": "partial", "seed": 1, "config": 0, "exploitability": 0.0004608431540008562}
+{"kind": "convergence", "architecture": "partial", "seed": 1, "config": 1, "exploitability": 0.0005159241001830295}
+{"kind": "convergence", "architecture": "partial", "seed": 1, "config": 2, "exploitability": 0.0010402271542166441}
+{"kind": "convergence", "architecture": "partial", "seed": 1, "config": 3, "exploitability": 0.0001990932679701296}
+{"kind": "convergence", "architecture": "partial", "seed": 1, "config": 4, "exploitability": 0.00013606780775634458}
+{"kind": "convergence", "architecture": "separate", "seed": 2, "config": 0, "exploitability": 0.0001605329552171464}
+{"kind": "convergence", "architecture": "separate", "seed": 2, "config": 1, "exploitability": 0.0011879628749546511}
+{"kind": "convergence", "architecture": "separate", "seed": 2, "config": 2, "exploitability": 0.0003113930303986212}
+{"kind": "convergence", "architecture": "separate", "seed": 2, "config": 3, "exploitability": 6.572081388367401e-05}
+{"kind": "convergence", "architecture": "separate", "seed": 2, "config": 4, "exploitability": 6.306982533722111e-05}
+{"kind": "convergence", "architecture": "shared", "seed": 2, "config": 0, "exploitability": 0.00016528955048816796}
+{"kind": "convergence", "architecture": "shared", "seed": 2, "config": 1, "exploitability": 0.0007368182078771879}
+{"kind": "convergence", "architecture": "shared", "seed": 2, "config": 2, "exploitability": 0.00028866118942388885}
+{"kind": "convergence", "architecture": "shared", "seed": 2, "config": 3, "exploitability": 5.814382188576439e-05}
+{"kind": "convergence", "architecture": "shared", "seed": 2, "config": 4, "exploitability": 6.0684351914870593e-05}
+{"kind": "convergence", "architecture": "partial", "seed": 2, "config": 0, "exploitability": 0.0003194312499694152}
+{"kind": "convergence", "architecture": "partial", "seed": 2, "config": 1, "exploitability": 0.0010543532743767514}
+{"kind": "convergence", "architecture": "partial", "seed": 2, "config": 2, "exploitability": 0.0007864219459776667}
+{"kind": "convergence", "architecture": "partial", "seed": 2, "config": 3, "exploitability": 0.00015535448358527937}
+{"kind": "convergence", "architecture": "partial", "seed": 2, "config": 4, "exploitability": 0.00021403417603544153}
+{"kind": "convergence", "architecture": "separate", "seed": 3, "config": 0, "exploitability": 0.00014998813536348798}
+{"kind": "convergence", "architecture": "separate", "seed": 3, "config": 1, "exploitability": 0.0005585845681587154}
+{"kind": "convergence", "architecture": "separate", "seed": 3, "config": 2, "exploitability": 0.00039883980934762864}
+{"kind": "convergence", "architecture": "separate", "seed": 3, "config": 3, "exploitability": 8.973654129820763e-05}
+{"kind": "convergence", "architecture": "separate", "seed": 3, "config": 4, "exploitability": 8.115635299862228e-05}
+{"kind": "convergence", "architecture": "shared", "seed": 3, "config": 0, "exploitability": 0.0001490380488410048}
+{"kind": "convergence", "architecture": "shared", "seed": 3, "config": 1, "exploitability": 0.0005330911088055057}
+{"kind": "convergence", "architecture": "shared", "seed": 3, "config": 2, "exploitability": 0.00040902136582116055}
+{"kind": "convergence", "architecture": "shared", "seed": 3, "config": 3, "exploitability": 7.650121861654813e-05}
+{"kind": "convergence", "architecture": "shared", "seed": 3, "config": 4, "exploitability": 9.391168197298017e-05}
+{"kind": "convergence", "architecture": "partial", "seed": 3, "config": 0, "exploitability": 0.0003845558088214074}
+{"kind": "convergence", "architecture": "partial", "seed": 3, "config": 1, "exploitability": 0.0007786218894333952}
+{"kind": "convergence", "architecture": "partial", "seed": 3, "config": 2, "exploitability": 0.0009308307475162647}
+{"kind": "convergence", "architecture": "partial", "seed": 3, "config": 3, "exploitability": 0.00015910475119074174}
+{"kind": "convergence", "architecture": "partial", "seed": 3, "config": 4, "exploitability": 0.0002156717679004383}
+{"kind": "convergence", "architecture": "separate", "seed": 4, "config": 0, "exploitability": 0.00021785630378157173}
+{"kind": "convergence", "architecture": "separate", "seed": 4, "config": 1, "exploitability": 0.0007154047046665779}
+{"kind": "convergence", "architecture": "separate", "seed": 4, "config": 2, "exploitability": 0.00034202748355344204}
+{"kind": "convergence", "architecture": "separate", "seed": 4, "config": 3, "exploitability": 8.972833000536751e-05}
+{"kind": "convergence", "architecture": "separate", "seed": 4, "config": 4, "exploitability": 8.401995354642006e-05}
+{"kind": "convergence", "architecture": "shared", "seed": 4, "config": 0, "exploitability": 0.00018562514635578342}
+{"kind": "convergence", "architecture": "shared", "seed": 4, "config": 1, "exploitability": 0.0005627314191343213}
+{"kind": "convergence", "architecture": "shared", "seed": 4, "config": 2, "exploitability": 0.0003184466939455399}
+{"kind": "convergence", "architecture": "shared", "seed": 4, "config": 3, "exploitability": 0.00010103165191616137}
+{"kind": "convergence", "architecture": "shared", "seed": 4, "config": 4, "exploitability": 8.934908791522617e-05}
+{"kind": "convergence", "architecture": "partial", "seed": 4, "config": 0, "exploitability": 0.00039530642844431974}
+{"kind": "convergence", "architecture": "partial", "seed": 4, "config": 1, "exploitability": 0.0009035509667061348}
+{"kind": "convergence", "architecture": "partial", "seed": 4, "config": 2, "exploitability": 0.0005123781741240285}
+{"kind": "convergence", "architecture": "partial", "seed": 4, "config": 3, "exploitability": 0.00018217790389973842}
+{"kind": "convergence", "architecture": "partial", "seed": 4, "config": 4, "exploitability": 0.000165498344921855}
+{"kind": "walking", "architecture": "reinforce", "seed": 0, "config": 0, "before": 1.7171955567442656, "after": 0.04928889061110804}
+{"kind": "walking", "architecture": "nash-q", "seed": 0, "config": 0, "before": 2.183153927297702, "after": 0.07180339887499007}
+{"kind": "walking", "architecture": "reinforce", "seed": 1, "config": 0, "before": 2.092214194294563, "after": 0.0020944562261621335}
+{"kind": "walking", "architecture": "nash-q", "seed": 1, "config": 0, "before": 1.668769548720746, "after": 0.0}
+{"kind": "walking", "architecture": "reinforce", "seed": 2, "config": 0, "before": 1.865781433586006, "after": 0.04784878341073122}
+{"kind": "walking", "architecture": "nash-q", "seed": 2, "config": 0, "before": 1.4142135623730954, "after": 0.0}
+{"kind": "walking", "architecture": "reinforce", "seed": 3, "config": 0, "before": 1.6609760642027536, "after": 0.07353883691007294}
+{"kind": "walking", "architecture": "nash-q", "seed": 3, "config": 0, "before": 2.0504545292009295, "after": 0.0}
+{"kind": "walking", "architecture": "reinforce", "seed": 4, "config": 0, "before": 0.12205869759471133, "after": 0.031173913281454923}
+{"kind": "walking", "architecture": "nash-q", "seed": 4, "config": 0, "before": 2.4142135623730954, "after": 0.0}
