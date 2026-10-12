@@ -8,12 +8,12 @@ This report studies the dog game, a two-player, general-sum game with continuous
 
 ## Summary
 
-- **Policy-gradient self-play converges on the dog game.** 74 of 75 REINFORCE runs and 25 of 25 PPO runs reached exploitability below 0.004 within 1500 episodes. PPO needs far fewer episodes: 19 of 25 runs had converged after 100, against none for REINFORCE and A2C (Section 5.2), though on the walking game PPO is the least stable of the three (Section 5.10).
+- **Policy-gradient self-play converges on the dog game.** 74 of 75 REINFORCE runs and 25 of 25 PPO runs reached exploitability below 0.004 within 1500 episodes. PPO needs far fewer episodes: 19 of 25 runs had converged after 100, against none for REINFORCE and A2C (Section 5.2), an advantage that comes from reusing each episode (with one epoch PPO is no faster than REINFORCE), and on the walking game PPO is the least stable of the three (Sections 5.10 and 5.11).
 - **Self-play never finds the solver's interior equilibrium when the houses share a coordinate.** All 30 runs ended on a boundary equilibrium, one of two mirror images, split 23 to 7 and the same for every network layout (Section 5.3).
 - **Dog inertia slows training sharply.** On the harder setup 4, 5, 1 and 0 of 5 runs converged at dog weights 0, 0.3, 0.6 and 0.9 (Section 5.4).
 - **Pre-training helps or hurts depending on the source.** From a setup with the same equilibrium corners, every run was under the threshold after 100 episodes; from one with flipped corners, every run was worse than starting from scratch (Section 5.5).
 - **Nash-Q on a grid.** The stage-game error falls about as 1 over the fictitious-play iterations, and re-solving less often changes nothing in this game. The grid is exact from 5 x 5, the exact equilibrium is always a single action pair, and all of fictitious play's apparent mixing is noise (Sections 5.6 to 5.8).
-- **Walking game.** REINFORCE and the 10-direction Nash-Q network both end near the one-shot Nash corners in all 5 seeds (Section 5.9). With A2C and PPO added, the ranking changes: A2C is the most reliable (5 of 5 seeds at the corners), while PPO is the fastest to get there but swings away again in 3 of 5 seeds (Section 5.10).
+- **Walking game.** REINFORCE and the 10-direction Nash-Q network both end near the one-shot Nash corners in all 5 seeds (Section 5.9). With A2C and PPO added, the ranking changes: A2C is the most reliable (5 of 5 seeds at the corners), while PPO is the fastest to get there but swings away again in 3 of 5 seeds. A smaller learning rate does not fix it and fewer epochs only help partly (Sections 5.10 and 5.11).
 - **Open:** why self-play picks the 3-to-1 split, why mismatched pre-training hurts, the equilibrium of the dynamic games (with inertia, and walking), and a PPO comparison matched on gradient steps (Section 6).
 
 ## 1. Background
@@ -107,7 +107,7 @@ The same five setups and seeds, the `separate` layout, 1500 episodes, scored at 
 
 - **PPO is much faster per episode.** 19 of 25 PPO runs converged after 100 episodes, against none for REINFORCE and A2C, and all 25 converged by 500.
 - **A2C is not faster than REINFORCE** for the first 500 episodes, but it converged on all 25 runs by 1000 episodes, including the slow run that REINFORCE left unconverged.
-- **The comparison is matched on episodes, not on gradient steps.** PPO takes four gradient steps on each episode and REINFORCE takes one, so part of PPO's lead may be extra optimization rather than a better update. A comparison matched on gradient steps was not run.
+- **The comparison is matched on episodes, not on gradient steps.** PPO takes four gradient steps on each episode and REINFORCE takes one. Section 5.11 reruns PPO with fewer epochs to separate the two.
 
 ### 5.3 Which equilibrium does self-play find?
 
@@ -233,6 +233,38 @@ The same three algorithms on the walking game (Section 5.9's house setup), five 
 - **A single end-of-training number would mislead.** A first run of this study, scored only at 50, 100, 200 and 300 episodes, gave the same order but different per-seed outcomes (PPO seed 3 ended at 1.4 there and at 0.0 here), because evaluating the policy draws random numbers and so changes the training run. The paths are sensitive, which is why this study records every 25 episodes and reports the share of checkpoints.
 - **Why PPO is unstable here is not tested.** Possible causes are four epochs on a 15-step batch, a learning rate of 0.01 and advantage normalization over so few samples. Whether a smaller learning rate or fewer epochs fixes it was not run.
 
+### 5.11 Where does PPO's speed come from, and can it be made stable?
+
+Two follow-ups to Sections 5.2 and 5.10, 65 more runs.
+
+**Main game, matched on gradient steps.** PPO takes one gradient step per epoch on each episode, and REINFORCE and A2C take one in total. The same five setups and seeds, the `separate` layout, with PPO at 1 and 2 epochs next to the default 4:
+
+| Algorithm | Gradient steps per episode | 100 episodes | 250 episodes | 500 episodes | 1000 episodes | 1500 episodes | Median at the end |
+|---|---|---|---|---|---|---|---|
+| REINFORCE | 1 | 0 of 25 | 13 of 25 | 24 of 25 | 24 of 25 | 24 of 25 | 0.0002 |
+| A2C | 1 | 0 of 25 | 13 of 25 | 24 of 25 | 25 of 25 | 25 of 25 | 0.0001 |
+| PPO, 1 epoch | 1 | 1 of 25 | 12 of 25 | 20 of 25 | 24 of 25 | 25 of 25 | 0.0002 |
+| PPO, 2 epochs | 2 | 9 of 25 | 22 of 25 | 23 of 25 | 25 of 25 | 25 of 25 | 0.0000 |
+| PPO, 4 epochs (default) | 4 | 19 of 25 | 24 of 25 | 25 of 25 | 25 of 25 | 25 of 25 | 0.0000 |
+
+- **The speed-up comes from reusing each episode.** After 100 episodes 1, 9 and 19 of 25 runs had converged with 1, 2 and 4 epochs. With one epoch PPO is no faster than REINFORCE (20 of 25 against 24 of 25 after 500 episodes), so the clipped objective and the learned baseline are not what makes it fast.
+- **Per gradient step it is not clearly ahead.** PPO with 4 epochs after 100 episodes has taken 400 steps and has 19 of 25 runs converged. REINFORCE after 250 episodes (250 steps) has 13 and after 500 (500 steps) has 24. So PPO is more efficient in samples, because each episode is used several times, but not clearly in steps.
+
+**Walking game, a gentler PPO.** PPO with one epoch and/or a learning rate of 0.003 instead of 0.01, five seeds each, scored as in Section 5.10 (300 episodes):
+
+| Setting | Before training | At 50 | At 100 | At 200 | At 300 | Late checkpoints at the corners (from 150) | Seeds at the corners at the end |
+|---|---|---|---|---|---|---|---|
+| A2C (reference) | 1.49 | 0.731 | 0.199 | 0.032 | 0.011 | 34 of 35 | 5 of 5 |
+| PPO, lr 0.01, 4 epochs (default) | 1.49 | 0.263 | 0.127 | 0.500 | 0.371 | 14 of 35 | 2 of 5 |
+| PPO, lr 0.01, 1 epoch | 1.49 | 0.595 | 0.479 | 0.249 | 0.123 | 21 of 35 | 4 of 5 |
+| PPO, lr 0.003, 4 epochs | 1.49 | 0.477 | 0.361 | 0.448 | 0.362 | 15 of 35 | 1 of 5 |
+| PPO, lr 0.003, 1 epoch | 1.49 | 0.836 | 0.641 | 0.470 | 0.322 | 8 of 35 | 2 of 5 |
+
+- **Fewer epochs helps but does not fix it.** One epoch at learning rate 0.01 ends with 4 of 5 seeds at the corners and 21 of 35 later checkpoints there, against 2 of 5 and 14 of 35 for the default. It is slower early (mean distance 0.60 after 50 episodes, against 0.26).
+- **A smaller learning rate does not help.** It gives 1 of 5 seeds at 4 epochs and 2 of 5 at one epoch. Several of those runs were still far from the corners at 300 episodes, so a longer budget might change this; that was not run.
+- **None matches A2C**, which has 5 of 5 seeds and 34 of 35 later checkpoints at the corners. The instability is therefore not just a step-size problem, and reusing each episode seems to contribute, but why is not tested.
+- Five seeds per setting and a 300-episode horizon, so small differences between settings should not be read as a ranking.
+
 ## 6. Research questions and answers
 
 The statuses are the same as in [RESEARCH_QUESTIONS.md](RESEARCH_QUESTIONS.md).
@@ -263,7 +295,7 @@ The statuses are the same as in [RESEARCH_QUESTIONS.md](RESEARCH_QUESTIONS.md).
 
 **Q13-Q15.** Q13 (vertex Nash for multi-state games) is open because the dog game has one state. Q14 (LLM play and inverse reward recovery) is a separate research thread. Q15 (disk-shaped action spaces) is partly addressed by the walking version's angle and step length.
 
-**Q16. Do A2C and PPO beat REINFORCE?** *Partly answered.* On the main game PPO is much faster per episode and A2C is not faster than REINFORCE (Section 5.2). On the walking game the order changes: A2C is the most reliable and PPO is fast but unstable (Section 5.10, Q26). PPO also takes four gradient steps per episode, so a step-matched comparison is open (Q24).
+**Q16. Do A2C and PPO beat REINFORCE?** *Answered.* On the main game PPO is much faster per episode and A2C is not faster than REINFORCE (Section 5.2). With one epoch, matching REINFORCE on gradient steps, PPO is no faster than REINFORCE, so its speed comes from reusing each episode (Section 5.11, Q24). On the walking game the order changes: A2C is the most reliable and PPO is fast but unstable (Section 5.10, Q26).
 
 **Q17-Q20.** Q17 (why the outcome is 3 to 1 and never interior) and Q20 (why mismatched pre-training hurts) have measured patterns but untested mechanisms. Q18 is answered (Section 5.4). Q19 (the equilibrium of the dynamic game with inertia) is open.
 
@@ -271,17 +303,19 @@ The statuses are the same as in [RESEARCH_QUESTIONS.md](RESEARCH_QUESTIONS.md).
 
 **Q22. Is the exact equilibrium always one action pair?** *Answered.* Yes, in all 25 games (Section 5.7).
 
-**Q23-Q25.** Whether the one-shot corners are an equilibrium of the walking game, a compute-matched PPO comparison, and the effect of step length and discount are open.
+**Q23 and Q25.** Whether the one-shot corners are an equilibrium of the walking game, and the effect of step length and discount, are open.
+
+**Q24. Does PPO stay ahead when matched on gradient steps?** *Answered for the main game.* No clear lead per step: with one epoch PPO is no faster than REINFORCE, and with 4 epochs it is in line with REINFORCE given the same number of steps (Section 5.11).
 
 **Q26. Do A2C and PPO beat REINFORCE on the walking game?** *Answered for one house setup (15 runs).* A2C is the most reliable, REINFORCE is slower, and PPO is the fastest but does not stay at the corners (Section 5.10).
 
-**Q27-Q28.** Why PPO is unstable on the walking game, and whether a smaller learning rate or fewer epochs fixes it, are open.
+**Q27-Q29.** Why PPO is unstable on the walking game is open on the mechanism: a smaller learning rate does not help and fewer epochs help partly (Q28, Section 5.11). Whether the slower settings settle with more than 300 episodes (Q29) is open.
 
 ## 7. Limits
 
 - Most results rest on five seeds, and the equilibrium-selection study on ten per layout. Percentages are counts out of those, not estimates with error bars.
 - The convergence threshold (0.004) and the pre-training and inertia setups are my choices. Training settings (learning rate 0.01, one episode per update) were not tuned for each algorithm.
-- PPO and A2C are compared on episodes, not on gradient steps or wall-clock time.
+- PPO and A2C are compared mainly on episodes. Section 5.11 adds a comparison on gradient steps for the main game. Wall-clock time was not compared.
 - Policies trained with inertia are scored against the one-shot equilibrium. The walking game is scored against the one-shot corners. Neither is the equilibrium of its own dynamic game.
 - The pre-training study has a single target setup. The walking study has a single house setup.
 - The walking-game scores use 10 sampled games per checkpoint and five seeds, and the paths are noisy, so small differences between algorithms should not be read as a ranking.
@@ -294,7 +328,7 @@ The statuses are the same as in [RESEARCH_QUESTIONS.md](RESEARCH_QUESTIONS.md).
 python3 -m pytest                          # the test suite
 python3 -m doggame.experiments             # the original convergence study
 python3 -m doggame.dog_game_study          # five-seed convergence and walking runs
-python3 -m doggame.dog_game_studies        # the eight studies in Section 5 (resumable, shardable)
+python3 -m doggame.dog_game_studies        # the nine studies in Section 5 (resumable, shardable)
 python3 -m doggame.dog_game_summary        # print every table as Markdown
 python3 -m doggame.research_report_pdf     # build research_report.pdf from this file
 ```

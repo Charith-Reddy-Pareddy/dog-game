@@ -114,11 +114,11 @@ with the numbers and the caveats, are in [RESEARCH_REPORT.md](RESEARCH_REPORT.md
 
 16. **Do A2C and PPO reach the equilibrium faster than REINFORCE, and is the
     speed-up from the baseline or from reusing each episode?**
-    *Status: partly answered. On the main game PPO is much faster per episode
-    (19 of 25 runs converged after 100 episodes, against 0 of 25) and A2C is not
-    faster than REINFORCE. On the walking game the order changes (Q26). PPO also
-    takes four gradient steps per episode, so a comparison matched on gradient
-    steps is still open.*
+    *Status: answered. On the main game PPO is much faster per episode (19 of 25
+    runs converged after 100 episodes, against 0 of 25) and A2C is not faster than
+    REINFORCE. With one epoch (one gradient step per episode, like the others) PPO is
+    no faster than REINFORCE, so the speed-up comes from reusing each episode (Q24).
+    On the walking game the order changes (Q26).*
 17. **What decides which of the two mirror equilibria self-play finds, and
     why does it never find the interior solution?**
     *Status: open on the mechanism. The outcome is measured (23 of 30
@@ -149,8 +149,10 @@ with the numbers and the caveats, are in [RESEARCH_REPORT.md](RESEARCH_REPORT.md
     The walking experiments check that players head to the one-shot corners,
     not that those corners are an equilibrium of the walking game.
     *Status: open.*
-24. **Does a compute-matched comparison (same number of gradient steps, not
-    episodes) keep PPO ahead?** *Status: open.*
+24. **Does PPO stay ahead when matched on gradient steps rather than episodes?**
+    *Status: answered for the main game (75 runs of PPO with 1, 2 and 4 epochs).
+    No clear lead per gradient step. After 100 episodes 1, 9 and 19 of 25 runs had
+    converged with 1, 2 and 4 epochs, and one-epoch PPO is no faster than REINFORCE.*
 25. **How does the walking game change with the maximum step length and with
     the discount?** *Status: open; only a step of 0.2 and a discount of 0.9
     were run.*
@@ -160,11 +162,17 @@ with the numbers and the caveats, are in [RESEARCH_REPORT.md](RESEARCH_REPORT.md
     (5 of 5 seeds at the corners at the end, 34 of 35 later checkpoints under
     0.1); REINFORCE is slower (4 of 5, 24 of 35); PPO gets there fastest but
     does not stay (2 of 5, 14 of 35).*
-27. **Why is PPO unstable on the walking game?** Candidates are four epochs on a
-    15-step batch, a learning rate of 0.01, and advantage normalization over so
-    few samples. *Status: open.*
-28. **Does a smaller learning rate or fewer epochs make PPO reliable on the
-    walking game?** *Status: open.*
+27. **Why is PPO unstable on the walking game?**
+    *Status: open on the mechanism. A smaller learning rate does not help and fewer
+    epochs help partly, so it is not simply the step size; reusing each episode seems
+    to contribute, but that is a hypothesis.*
+28. **Does a smaller learning rate or fewer epochs make PPO reliable on the walking game?**
+    *Status: answered for the settings tried (15 runs). Fewer epochs help partly (4 of 5
+    seeds at the corners, 21 of 35 later checkpoints, against 2 of 5 and 14 of 35 for the
+    default), a smaller learning rate does not (1 of 5 and 2 of 5), and nothing matches A2C
+    (5 of 5, 34 of 35).*
+29. **Do the slower PPO settings settle with more than 300 episodes?** Several runs
+    were still far from the corners when training stopped. *Status: open.*
 
 ## Where each question is answered in this repository
 
@@ -180,8 +188,9 @@ with the numbers and the caveats, are in [RESEARCH_REPORT.md](RESEARCH_REPORT.md
 | 10 | study `noise` (31 runs) |
 | 12, 18, 19 | study `inertia` (40 runs) |
 | 26 | study `walking` (15 runs) |
+| 24, 27, 28 | study `ppo_variants` (65 runs) |
 | walking game | `results/dog_game_runs.jsonl`, `results/dog_game_trajectories.json` |
 
-Questions 5b, 11, 13, 14, 19, 23, 24, 25, 27 and 28 are open. The studies are in
+Questions 5b, 11, 13, 14, 19, 23, 25, 27 and 29 are open. The studies are in
 [`doggame/dog_game_studies.py`](doggame/dog_game_studies.py) and the tables are
 produced by [`doggame/dog_game_summary.py`](doggame/dog_game_summary.py).
