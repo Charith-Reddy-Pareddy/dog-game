@@ -98,3 +98,9 @@ def test_the_walking_house_and_inertia_studies_define_the_expected_runs():
 
     assert len(houses) == 3 * 3 * 5 and {k["setup"] for k in houses} == {0, 1, 2} and {k["algorithm"] for k in houses} == {"reinforce", "a2c", "ppo"}
     assert len(inertia) == 10 and {k["w0"] for k in inertia} == {0.3, 0.6}
+
+
+def test_the_walking_equilibrium_study_checks_four_setups_resting_and_walking():
+    keys = [k for k, _ in studies.study_walking_equilibrium(range(5))]
+
+    assert len(keys) == 8 and {k["start"] for k in keys} == {"houses", "corners"} and {k["setup"] for k in keys} == {"default", 0, 1, 2}

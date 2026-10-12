@@ -13,6 +13,7 @@ to do only the second of four shards.
 - walking_settings: the walking game with a shorter or longer step and a lower or higher discount
 - walking_houses: the three algorithms on three other house setups
 - walking_inertia: A2C on the walking game with dog inertia
+- walking_equilibrium: is walking to the one-shot corners an equilibrium of the walking game?
 - selection:    which equilibrium self-play finds when the houses share a coordinate
 - inertia:      does giving the dog momentum (w0) change where training ends up
 - pretraining:  does starting from a policy trained on another setup help
@@ -39,6 +40,7 @@ from doggame.experiments import DEFAULT_CONFIGS
 from doggame.fictitious_play import expected_value, fictitious_play
 from doggame.nash import solve_stage_nash
 from doggame.polar import PolarDogGameEnv
+from doggame.walking_equilibrium import check_profile
 from doggame.polar_agent import PolarPolicy, final_positions, train_polar, train_polar_actor_critic
 from doggame.train import train_self_play
 from doggame.train_ac import train_actor_critic
@@ -177,6 +179,18 @@ def study_walking_inertia(seeds):
             yield dict(w0=w0, seed=seed), lambda w0=w0, seed=seed: walking_run("a2c", seed, w0=w0)
 
 
+def study_walking_equilibrium(seeds):
+    """Is walking to the one-shot corners an equilibrium of the walking game? Deterministic, so `seeds` is unused."""
+    setups = [("default", WALK_HOUSES, 0.5)] + [(i, (c["house_red"], c["house_blue"]), c["w"]) for i, c in enumerate(DEFAULT_CONFIGS[:3])]
+    for setup, houses, w in setups:
+        for start in ("houses", "corners"):
+            def run(houses=houses, w=w, start=start):
+                nash_red, nash_blue, _ = solve_stage_nash(houses[0], houses[1], w, Square())
+                result = check_profile(houses, w, (nash_red, nash_blue), starts=(nash_red, nash_blue) if start == "corners" else None)
+                return {player: {k: float(v) for k, v in values.items()} for player, values in result.items()}
+            yield dict(setup=setup, start=start), run
+
+
 def study_selection(seeds):
     for architecture in ("separate", "shared", "partial"):
         for seed in range(10):  # equilibrium selection is a question about frequencies, so use more seeds
@@ -272,7 +286,8 @@ def study_noise(seeds, resolution=9):
 
 
 STUDIES = dict(algorithms=study_algorithms, walking=study_walking, ppo_variants=study_ppo_variants, ppo_long=study_ppo_long,
-               walking_settings=study_walking_settings, walking_houses=study_walking_houses, walking_inertia=study_walking_inertia, selection=study_selection, inertia=study_inertia, pretraining=study_pretraining,
+               walking_settings=study_walking_settings, walking_houses=study_walking_houses, walking_inertia=study_walking_inertia,
+               walking_equilibrium=study_walking_equilibrium, selection=study_selection, inertia=study_inertia, pretraining=study_pretraining,
                stage_solver=study_stage_solver, resolution=study_resolution, noise=study_noise)
 
 

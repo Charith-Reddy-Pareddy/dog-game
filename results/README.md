@@ -26,6 +26,7 @@ experiment keeps what it finished and a rerun skips it. Print every table with
   - `walking_settings`: A2C on the walking game with another maximum step or discount.
   - `walking_houses`: the three algorithms on the walking game with three other house setups.
   - `walking_inertia`: A2C on the walking game with dog inertia (`w0` of 0.3 and 0.6).
+  - `walking_equilibrium`: for each house setup and start, how much either player could gain by deviating from the walk to the one-shot corners (`red` and `blue`, each with `followed`, `best` and `gain`).
   - `selection`: where self-play ends when the houses share a y-coordinate (`red`, `blue`, `exploitability`).
   - `inertia`: training with the dog's own weight `w0` set to 0, 0.3, 0.6 or 0.9.
   - `pretraining`: training on a setup after starting from another one (`curve`).
