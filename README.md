@@ -4,7 +4,7 @@
 **Research questions:** [RESEARCH_QUESTIONS.md](RESEARCH_QUESTIONS.md)
 **Assumptions:** [ASSUMPTIONS.md](ASSUMPTIONS.md)
 **Dog-game results:** [PDF](dog_game_results.pdf) (convergence over seeds, and the angle-radius version)
-**Research report:** [RESEARCH_REPORT.md](RESEARCH_REPORT.md) ([PDF version](research_report.pdf), with direct answers to each research question)
+**Research report:** [RESEARCH_REPORT.md](RESEARCH_REPORT.md) ([PDF version](research_report.pdf), built from it, with direct answers to each research question)
 
 A two-player, general-sum game: a red house and a blue house each want a
 shared "dog" to end up as close as possible to their own doorstep. Each
@@ -100,6 +100,14 @@ solver to check both against, and a browser visualization.
   `doggame/dog_game_report.py` -- the multi-seed dog-game runs (convergence, and
   the angle-radius walk), the recorded paths of the players and the dog, and the
   PDF built from them.
+- `doggame/train_ac.py` -- A2C and PPO self-play for the dog game, as alternatives
+  to REINFORCE in `train.py`.
+- `doggame/dog_game_studies.py`, `doggame/dog_game_summary.py` -- seven experiments
+  that answer open research questions (algorithms, equilibrium selection, inertia,
+  pre-training, stage-solver precision, grid resolution, fictitious-play noise), and
+  the tables built from their saved results.
+- `doggame/research_report_pdf.py` -- builds `research_report.pdf` from
+  `RESEARCH_REPORT.md`.
 - `doggame/experiments.py` -- runs policy-gradient self-play across
   several house/weight configurations and reports exploitability for
   each, to actually answer "can this converge?" instead of trusting
@@ -188,41 +196,34 @@ opinion to drag a shared audience toward their true position.
 
 ## Findings
 
-Running `doggame.experiments` (5 house/weight configurations x 3
-network architectures, 1500 self-play episodes each) gives an actual
-answer to "can policy-gradient self-play converge to Nash on the dog
-game?": **usually, but the number of episodes needed isn't fixed --
-it depends on the configuration and architecture.** 14 of the 15
-(config, architecture) runs reached exploitability below 0.004 within
-1500 episodes. The 15th (the `separate` architecture on
-`house_red=(0.8, 0.8)`, `house_blue=(0.2, 0.3)`, `w=0.3`) was still at
-0.183 at that point -- clearly not converged. Training that exact run
-3000 episodes further brought it down to 0.004, so it wasn't stuck in
-a bad equilibrium, it was just slower: one action dimension took
-longer to get pushed out to the domain boundary than the others. That
-answers the meeting's question honestly rather than optimistically --
-this does converge, but "1500 episodes" isn't a number you can quote
-without also naming the configuration and architecture it was
-measured on.
+The full results, with the number of runs behind each claim, are in the
+[research report](RESEARCH_REPORT.md) ([PDF](research_report.pdf)), and the
+questions they answer are in [RESEARCH_QUESTIONS.md](RESEARCH_QUESTIONS.md).
+In short, from saved runs in `results/`:
 
-Distance to the *specific* equilibrium `doggame.nash` reports is a
-different story: one configuration (`house_red=(0.95, 0.5)`,
-`house_blue=(0.05, 0.5)` -- both houses at the same y-coordinate)
-consistently converged to a policy roughly 0.49 away from the
-solver's answer, in every architecture. That is not a training
-failure. It's the exact phenomenon the meeting flagged: a unique Nash
-equilibrium is only guaranteed when the two houses differ in *both*
-coordinates. Here they share a y-coordinate, so the y-axis of the
-stage game is degenerate -- any pair of y-actions that averages back
-to that shared value is equally optimal. `doggame.nash`'s iterated
-best response happens to land on the "obvious" solution (both players
-picking y = 0.5 exactly); policy-gradient training instead found a
-boundary-cancellation solution (red near y = 1, blue near y = 0,
-`0.5*1 + 0.5*0 = 0.5`). Checking both with `exploitability` confirms
-they're both genuinely unexploitable (< 0.0002 for either) -- two
-different, equally valid equilibria, not one right answer and one
-bug. This is why `doggame.verify` checks optimality directly rather
-than distance to a single precomputed candidate.
+- **Policy-gradient self-play converges on the dog game.** 74 of 75 REINFORCE
+  runs (5 house setups x 3 network layouts x 5 seeds) and 25 of 25 PPO runs reach
+  exploitability below 0.004 within 1500 episodes. PPO needs far fewer episodes
+  (19 of 25 runs after 100, against none for REINFORCE and A2C), though it takes
+  four gradient steps per episode.
+- **The one miss is not a bad equilibrium.** It is the `separate` layout on one
+  setup, one seed, at 0.18; the other four seeds of that setup converge.
+- **Shared coordinates give many equilibria.** When both houses share a
+  y-coordinate, the best-response solver returns the interior point, but none of
+  30 trained policies did: all ended at the edges, one player on top and one at
+  the bottom (23 with red on top, 7 the other way). They are all genuinely
+  unexploitable, which is why `doggame.verify` checks optimality directly.
+- **Dog inertia slows training**, sharply on the harder setup (4, 5, 1 and 0 of 5
+  runs converge at `w0` of 0, 0.3, 0.6 and 0.9).
+- **Pre-training helps or hurts** depending on whether the source setup has the
+  same equilibrium corners as the target.
+- **Nash-Q:** the stage-game error falls about as 1 over the fictitious-play
+  iterations, the grid is exact from 5 x 5, and the exact equilibrium is always one
+  action pair, so fictitious play's apparent mixing is noise.
+
+Reproduce with `python3 -m doggame.experiments`,
+`python3 -m doggame.dog_game_study` and `python3 -m doggame.dog_game_studies`; print
+every table with `python3 -m doggame.dog_game_summary`.
 
 ## Status
 

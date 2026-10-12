@@ -28,8 +28,9 @@ against what was actually intended.
   a learned value that doesn't depend on the state.
 - Actions are clipped to the square before the log-probability is taken,
   which makes the gradient slightly biased.
-- The baseline is the mean return within the episode, not a learned value
-  function. Only REINFORCE is implemented, not A2C or PPO.
+- REINFORCE uses the mean return within the episode as its baseline. A2C and
+  PPO (`train_ac.py`) use a learned value function of the dog's position, one
+  per player; PPO reuses each episode for 4 epochs with the ratio clipped at 0.2.
 - Episodes are 20 steps long, trained with Adam at lr 0.01. Both players
   update together on one optimizer.
 - The state is only the dog's position, and a new policy is trained for
@@ -292,11 +293,17 @@ At round 800, per seed:
 
 ## Evidence
 
-- The dog-game training runs use one seed (0), so the claim about
-  architecture and convergence speed rests on a single data point. The
-  soccer runs use five seeds.
+- The dog-game convergence study uses five seeds per cell (75 runs), the other
+  studies five seeds, and the equilibrium-selection study ten per layout.
+  "Converged" means exploitability below 0.004, which is my threshold.
 - The "3000 more episodes brought it to 0.004" figure came from an
-  earlier note. I have not re-run it.
+  earlier single-seed note. I have not re-run it.
+- The studies in `dog_game_studies.py` use my own designs: pre-training is 1500
+  self-play episodes on another setup before training on the target, inertia
+  runs use `w0` of 0, 0.3, 0.6 and 0.9, and the stage-solver study uses
+  fictitious play with 10 to 3000 iterations against the exact solver. PPO and
+  A2C are compared with REINFORCE on episodes, not gradient steps.
+- Timings in the resolution study were taken on a heavily loaded machine.
 - The explanations in the research report for why PG picks one
   equilibrium over another are hypotheses, not tested results.
 
