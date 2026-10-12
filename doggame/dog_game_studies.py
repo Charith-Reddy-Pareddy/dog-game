@@ -7,6 +7,7 @@ keeps what it did and a rerun skips it. Run everything with
 to do only the second of four shards.
 
 - algorithms:   REINFORCE vs A2C vs PPO, how fast each gets near the equilibrium
+- walking:      the same three algorithms on the angle-radius (walking) game
 - selection:    which equilibrium self-play finds when the houses share a coordinate
 - inertia:      does giving the dog momentum (w0) change where training ends up
 - pretraining:  does starting from a policy trained on another setup help
@@ -24,6 +25,7 @@ import numpy as np
 import torch
 
 from doggame.agents import TwoPlayerPolicy
+from doggame.dog_game_study import WALK_HOUSES, walk_distance
 from doggame.discretize import action_grid, payoff_matrices
 from doggame.dqn import solve_discretized_nash_q
 from doggame.env import DogGameEnv, Square, make_inertial_transition, negative_squared_distance_reward, weighted_average_transition
@@ -31,6 +33,8 @@ from doggame.exact_nash import lemke_howson_nash
 from doggame.experiments import DEFAULT_CONFIGS
 from doggame.fictitious_play import expected_value, fictitious_play
 from doggame.nash import solve_stage_nash
+from doggame.polar import PolarDogGameEnv
+from doggame.polar_agent import PolarPolicy, final_positions, train_polar, train_polar_actor_critic
 from doggame.train import train_self_play
 from doggame.train_ac import train_actor_critic
 from doggame.verify import exploitability, mixed_strategy_indifference_gap
@@ -88,6 +92,30 @@ def study_algorithms(seeds):
                     policy = TwoPlayerPolicy(env.domain, architecture="separate", seed=seed)
                     return dict(curve=train_with_curve(env, policy, algorithm, EPISODES, checkpoints, seed))
                 yield dict(config=config_index, algorithm=algorithm, seed=seed), run
+
+
+def study_walking(seeds):
+    """REINFORCE, A2C and PPO on the walking game: how far the players end from the one-shot Nash corners."""
+    checkpoints = tuple(range(25, 301, 25))  # finely, because the walking policies' paths swing
+    for algorithm in ("reinforce", "a2c", "ppo"):
+        for seed in seeds:
+            def run(algorithm=algorithm, seed=seed):
+                env = PolarDogGameEnv(*WALK_HOUSES, w=0.5, max_step=0.2)
+                torch.manual_seed(seed)
+                policy = PolarPolicy(seed=seed)
+                distance = lambda: walk_distance(env, lambda: final_positions(env, policy))
+                start, curve = distance(), {}
+
+                def record(done):
+                    if done in checkpoints:
+                        curve[done] = distance()
+
+                if algorithm == "reinforce":
+                    train_polar(env, policy, episodes=300, seed=seed, callback=record)
+                else:
+                    train_polar_actor_critic(env, policy, algorithm, episodes=300, seed=seed, callback=record)
+                return dict(start=start, curve=curve)
+            yield dict(algorithm=algorithm, seed=seed), run
 
 
 def study_selection(seeds):
@@ -184,7 +212,7 @@ def study_noise(seeds, resolution=9):
     yield dict(iterations="exact", seed=0), lambda: dict(spread=float(spread), gap=float(gap), support=int((exact_red > 1e-3).sum()), top=float(exact_red.max()))
 
 
-STUDIES = dict(algorithms=study_algorithms, selection=study_selection, inertia=study_inertia, pretraining=study_pretraining,
+STUDIES = dict(algorithms=study_algorithms, walking=study_walking, selection=study_selection, inertia=study_inertia, pretraining=study_pretraining,
                stage_solver=study_stage_solver, resolution=study_resolution, noise=study_noise)
 
 
