@@ -1,0 +1,74 @@
+import json
+
+import numpy as np
+
+import doggame.dog_game_studies as studies
+from doggame.agents import TwoPlayerPolicy
+from doggame.exact_nash import lemke_howson_nash
+
+
+def test_the_gap_is_zero_at_the_exact_equilibrium_and_positive_away_from_it():
+    _, payoff_red, payoff_blue = studies.stage_game(5)
+    strategy_red, strategy_blue = lemke_howson_nash(payoff_red, payoff_blue)
+    uniform = np.full(len(strategy_red), 1 / len(strategy_red))
+
+    assert studies.nash_gap(payoff_red, payoff_blue, strategy_red, strategy_blue) < 1e-9
+    assert studies.nash_gap(payoff_red, payoff_blue, uniform, uniform) > 0.01
+
+
+def test_a_score_reports_the_distance_and_exploitability_of_the_policy():
+    env = studies.make_env(studies.DEFAULT_CONFIGS[0])
+
+    result = studies.score(TwoPlayerPolicy(env.domain, seed=0), env)
+
+    assert set(result) == {"exploitability", "distance", "red", "blue"}
+    assert result["exploitability"] > 0 and len(result["red"]) == 2
+
+
+def test_fictitious_play_looks_mixed_only_while_its_first_random_pick_is_above_the_floor():
+    rows = {(key["iterations"], key["seed"]): execute() for key, execute in studies.study_noise([0])}
+
+    assert rows[("exact", 0)]["spread"] < 1e-9 and rows[("exact", 0)]["support"] == 1
+    assert rows[(30, 0)]["spread"] > 0.1 and rows[(30, 0)]["support"] == 2   # the leftover 1/31 of the first pick
+    assert rows[(30, 0)]["top"] == np.float64(30 / 31) or abs(rows[(30, 0)]["top"] - 30 / 31) < 1e-9
+    assert rows[(10000, 0)]["spread"] < 1e-9 and rows[(10000, 0)]["support"] == 1
+
+
+def test_the_resolution_study_finds_the_continuous_equilibrium_on_every_grid():
+    rows = [execute() for key, execute in studies.study_resolution([0]) if key["config"] == 0]
+
+    assert [r["actions"] for r in rows] == [9, 25, 81, 169, 289]
+    assert all(r["support"] == [1, 1] and r["distance"] < 1e-6 for r in rows)
+
+
+def test_run_skips_finished_runs_and_appends_the_rest(tmp_path, monkeypatch):
+    calls = []
+
+    def tiny_study(seeds):
+        for seed in seeds:
+            yield dict(seed=seed), lambda seed=seed: (calls.append(seed), dict(value=seed * 10))[1]
+
+    monkeypatch.setitem(studies.STUDIES, "tiny", tiny_study)
+    path = tmp_path / "studies.jsonl"
+    path.write_text(json.dumps(dict(study="tiny", key=dict(seed=0), value=0)) + "\n")
+
+    studies.run(["tiny"], seeds=range(3), path=str(path))
+
+    assert calls == [1, 2]
+    rows = [json.loads(line) for line in path.read_text().splitlines()]
+    assert [r["key"]["seed"] for r in rows] == [0, 1, 2] and rows[2]["value"] == 20
+
+
+def test_shards_split_the_runs_between_processes_without_overlap(tmp_path, monkeypatch):
+    def tiny_study(seeds):
+        for seed in seeds:
+            yield dict(seed=seed), lambda seed=seed: dict(value=seed)
+
+    monkeypatch.setitem(studies.STUDIES, "tiny", tiny_study)
+    path = str(tmp_path / "studies.jsonl")
+
+    studies.run(["tiny"], seeds=range(6), path=path, shard=(1, 3))
+    studies.run(["tiny"], seeds=range(6), path=path, shard=(0, 3))
+
+    seeds = [json.loads(line)["key"]["seed"] for line in open(path)]
+    assert seeds == [1, 4, 0, 3]  # shard 1 of 3 did runs 1 and 4, shard 0 did runs 0 and 3, nobody did 2 or 5
