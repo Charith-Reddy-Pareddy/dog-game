@@ -81,23 +81,62 @@ def algorithms_table(rows):
 WALKED = 0.1  # summed distance to the two corners below this counts as having walked there (my threshold)
 
 
+def _walking_row(label, runs, late=150, shown=(50, 100, 200, 300)):
+    """One table row: the mean distance at a few points in training, and the time spent at the corners."""
+    last = str(max(int(e) for r in runs for e in r["curve"]))
+    later = [v < WALKED for r in runs for e, v in r["curve"].items() if int(e) >= late]
+    return ([label, fmt(np.mean([r["start"] for r in runs]), 2)] + [fmt(np.mean([r["curve"][str(e)] for r in runs]), 3) for e in shown]
+            + [f"{sum(later)} of {len(later)}", f"{sum(r['curve'][last] < WALKED for r in runs)} of {len(runs)}"])
+
+
+def _walking_header(first, late=150, shown=(50, 100, 200, 300)):
+    return [first, "Before training"] + [f"At {e}" for e in shown] + [f"Late checkpoints at the corners (from {late})", "Seeds at the corners at the end"]
+
+
 def walking_algorithms_table(rows, late=150):
     """Mean distance from the one-shot Nash corners on the walking game, "At N" being after N episodes of training,
     and how much of the later training (checkpoints from `late` episodes on) each algorithm spends at the corners
     (summed distance under WALKED). The paths swing, so one end-of-training number would mislead."""
     runs = study(rows, "walking")
     shown = [e for e in (50, 100, 200, 300) if any(str(e) in r["curve"] for r in runs)]
-    last = str(max(int(e) for r in runs for e in r["curve"])) if runs else ""
-    table = [["Algorithm", "Before training"] + [f"At {e}" for e in shown]
-             + [f"Late checkpoints at the corners (from {late})", "Seeds at the corners at the end"]]
+    table = [_walking_header("Algorithm", late, shown)]
     for name, label in ALGORITHM_NAMES.items():
         mine = [r for r in runs if r["key"]["algorithm"] == name]
-        if not mine:
-            continue
-        later = [v < WALKED for r in mine for e, v in r["curve"].items() if int(e) >= late]
-        table.append([label, fmt(np.mean([r["start"] for r in mine]), 2)]
-                     + [fmt(np.mean([r["curve"][str(e)] for r in mine]), 3) for e in shown]
-                     + [f"{sum(later)} of {len(later)}", f"{sum(r['curve'][last] < WALKED for r in mine)} of {len(mine)}"])
+        if mine:
+            table.append(_walking_row(label, mine, late, shown))
+    return table
+
+
+def ppo_walking_table(rows, late=150):
+    """PPO on the walking game with fewer epochs or a smaller learning rate, next to the default and A2C."""
+    walking = study(rows, "walking")
+    variants = [r for r in study(rows, "ppo_variants") if r["key"]["game"] == "walking"]
+    shown = [e for e in (50, 100, 200, 300) if any(str(e) in r["curve"] for r in walking + variants)]
+    table = [_walking_header("Setting", late, shown)]
+    groups = [("A2C (reference)", [r for r in walking if r["key"]["algorithm"] == "a2c"]),
+              ("PPO, lr 0.01, 4 epochs (default)", [r for r in walking if r["key"]["algorithm"] == "ppo"])]
+    for lr, epochs in ((0.01, 1), (0.003, 4), (0.003, 1)):
+        groups.append((f"PPO, lr {lr}, {epochs} epoch{'s' if epochs > 1 else ''}", [r for r in variants if r["key"]["lr"] == lr and r["key"]["epochs"] == epochs]))
+    table += [_walking_row(label, runs, late, shown) for label, runs in groups if runs]
+    return table
+
+
+def ppo_epochs_table(rows):
+    """Main game: share of runs under the threshold after each number of episodes, with the gradient steps each
+    algorithm takes per episode, so PPO's speed can be compared with REINFORCE and A2C on equal steps."""
+    algorithms = study(rows, "algorithms")
+    variants = [r for r in study(rows, "ppo_variants") if r["key"]["game"] == "main"]
+    checkpoints = sorted({int(e) for r in algorithms for e in r["curve"]})
+    table = [["Algorithm", "Gradient steps per episode"] + [f"{e} episodes" for e in checkpoints] + ["Median at the end"]]
+    groups = [("REINFORCE", 1, [r for r in algorithms if r["key"]["algorithm"] == "reinforce"]),
+              ("A2C", 1, [r for r in algorithms if r["key"]["algorithm"] == "a2c"])]
+    for epochs in (1, 2):
+        groups.append((f"PPO, {epochs} epoch{'s' if epochs > 1 else ''}", epochs, [r for r in variants if r["key"]["epochs"] == epochs]))
+    groups.append(("PPO, 4 epochs (default)", 4, [r for r in algorithms if r["key"]["algorithm"] == "ppo"]))
+    for label, steps, runs in groups:
+        if runs:
+            table.append([label, str(steps)] + [f"{sum(r['curve'][str(e)] < CONVERGED for r in runs)} of {len(runs)}" for e in checkpoints]
+                         + [fmt(np.median([r["curve"][str(checkpoints[-1])] for r in runs]))])
     return table
 
 
@@ -231,7 +270,8 @@ if __name__ == "__main__":
     studies, runs = load(STUDIES), load(RUNS)
     for name, table in (("convergence", convergence_table(runs)), ("algorithms", algorithms_table(studies)), ("selection", selection_table(studies)),
                         ("inertia", inertia_table(studies)), ("pretraining", pretraining_table(studies)), ("stage solver", stage_solver_table(studies)),
-                        ("resolution", resolution_table(studies)), ("noise", noise_table(studies)), ("walking", walking_table(runs)), ("walking algorithms", walking_algorithms_table(studies))):
+                        ("resolution", resolution_table(studies)), ("noise", noise_table(studies)), ("walking", walking_table(runs)), ("walking algorithms", walking_algorithms_table(studies)),
+                        ("ppo epochs", ppo_epochs_table(studies)), ("ppo walking", ppo_walking_table(studies))):
         print(f"\n### {name}\n\n{markdown(table)}")
     print("\nconvergence counts:", convergence_counts(runs))
     print("inertia median distance:", inertia_distances(studies))

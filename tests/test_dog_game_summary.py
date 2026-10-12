@@ -1,5 +1,6 @@
 from doggame.dog_game_summary import (algorithms_table, convergence_counts, markdown, noise_table, resolution_table,
-                                      selection_outcome, selection_table, walking_algorithms_table, walking_share_series, walking_table)
+                                      selection_outcome, selection_table, walking_algorithms_table, walking_share_series, walking_table,
+                                      ppo_epochs_table, ppo_walking_table)
 
 
 def run(study, key, **fields):
@@ -85,3 +86,28 @@ def test_the_share_series_shows_a_seed_leaving_the_corners_again():
             run("walking", dict(algorithm="ppo", seed=1), start=1.0, curve={"50": 0.02, "100": 0.9})]
 
     assert walking_share_series(rows) == {"ppo": [(50, 1.0), (100, 0.5)]}
+
+
+def test_ppo_epochs_table_lines_up_gradient_steps_with_the_share_of_converged_runs():
+    def entry(study_name, key, e100):
+        return run(study_name, key, curve={"100": e100, "500": 0.0001})
+
+    rows = [entry("algorithms", dict(config=0, algorithm="reinforce", seed=0), 0.5), entry("algorithms", dict(config=0, algorithm="ppo", seed=0), 0.001),
+            entry("ppo_variants", dict(game="main", epochs=1, lr=0.01, config=0, seed=0), 0.001),
+            entry("ppo_variants", dict(game="walking", epochs=1, lr=0.01, seed=0), 0.5)]  # a walking run is not a main-game run
+
+    table = ppo_epochs_table(rows)
+
+    assert [r[0] for r in table[1:]] == ["REINFORCE", "PPO, 1 epoch", "PPO, 4 epochs (default)"]
+    assert table[1][:4] == ["REINFORCE", "1", "0 of 1", "1 of 1"] and table[2][:3] == ["PPO, 1 epoch", "1", "1 of 1"] and table[3][1] == "4"
+
+
+def test_ppo_walking_table_compares_settings_with_the_default_and_a2c():
+    curve = {"100": 0.05, "150": 0.02, "300": 0.03}
+    rows = [run("walking", dict(algorithm="a2c", seed=0), start=1.5, curve=curve), run("walking", dict(algorithm="ppo", seed=0), start=1.5, curve=curve),
+            run("ppo_variants", dict(game="walking", epochs=4, lr=0.003, seed=0), start=1.5, curve=curve)]
+
+    table = ppo_walking_table(rows)
+
+    assert [r[0] for r in table[1:]] == ["A2C (reference)", "PPO, lr 0.01, 4 epochs (default)", "PPO, lr 0.003, 4 epochs"]
+    assert table[3][-2:] == ["2 of 2", "1 of 1"]
