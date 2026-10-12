@@ -17,23 +17,25 @@ from doggame.train import discounted_returns, run_episode
 ALGORITHMS = ("a2c", "ppo")
 
 
-def _value_net(hidden=32):
-    return nn.Sequential(nn.Linear(2, hidden), nn.Tanh(), nn.Linear(hidden, hidden), nn.Tanh(), nn.Linear(hidden, 1))
+def _value_net(state_dim, hidden=32):
+    return nn.Sequential(nn.Linear(state_dim, hidden), nn.Tanh(), nn.Linear(hidden, hidden), nn.Tanh(), nn.Linear(hidden, 1))
 
 
 def train_actor_critic(env, policy, algorithm="a2c", episodes=500, steps_per_episode=20, lr=0.01, seed=0,
-                       callback=None, ppo_epochs=4, clip=0.2):
+                       callback=None, ppo_epochs=4, clip=0.2, rollout=run_episode, state_dim=2):
     """Train `policy` by self-play with A2C or PPO. `callback(episodes_done)`, if
-    given, is called after every update. Returns the two players' value networks."""
+    given, is called after every update. `rollout` plays one episode and `state_dim` is
+    the size of its states, so the same loop trains the walking game's policy too
+    (see doggame.polar_agent). Returns the two players' value networks."""
     if algorithm not in ALGORITHMS:
         raise ValueError(f"algorithm must be one of {ALGORITHMS}")
     torch.manual_seed(seed)
-    values = nn.ModuleList([_value_net(), _value_net()])
+    values = nn.ModuleList([_value_net(state_dim), _value_net(state_dim)])
     optimizer = torch.optim.Adam(list(policy.parameters()) + list(values.parameters()), lr=lr)
     as_tensor = lambda x: torch.as_tensor(np.array(x), dtype=torch.float32)
 
     for episode in range(episodes):
-        states, actions_red, actions_blue, rewards_red, rewards_blue = run_episode(env, policy, steps_per_episode)
+        states, actions_red, actions_blue, rewards_red, rewards_blue = rollout(env, policy, steps_per_episode)
         states_t, actions_red_t, actions_blue_t = as_tensor(states), as_tensor(actions_red), as_tensor(actions_blue)
         returns = [as_tensor(discounted_returns(r, env.discount)) for r in (rewards_red, rewards_blue)]
         with torch.no_grad():

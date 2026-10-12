@@ -1,4 +1,4 @@
-"""REINFORCE for the angle-radius dog game.
+"""Policy gradient (REINFORCE, A2C and PPO) for the angle-radius dog game.
 
 Each player's network reads the state (dog, red, blue positions) and
 outputs a distribution over a move: the angle comes from a von Mises
@@ -74,11 +74,11 @@ def run_episode(env, policy, steps):
     return states, moves_red, moves_blue, rewards_red, rewards_blue
 
 
-def train_polar(env, policy, episodes=300, steps=15, lr=0.01, seed=0):
+def train_polar(env, policy, episodes=300, steps=15, lr=0.01, seed=0, callback=None):
     torch.manual_seed(seed)
     optimizer = torch.optim.Adam(policy.parameters(), lr=lr)
 
-    for _ in range(episodes):
+    for episode in range(episodes):
         states, moves_red, moves_blue, rewards_red, rewards_blue = run_episode(env, policy, steps)
 
         advantages = []
@@ -93,6 +93,15 @@ def train_polar(env, policy, episodes=300, steps=15, lr=0.01, seed=0):
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()
+        if callback:
+            callback(episode + 1)
+
+
+def train_polar_actor_critic(env, policy, algorithm="ppo", episodes=300, steps=15, **options):
+    """A2C or PPO for the walking game (doggame.train_ac); `options` are its other arguments."""
+    from doggame.train_ac import train_actor_critic
+
+    return train_actor_critic(env, policy, algorithm, episodes, steps, rollout=run_episode, state_dim=STATE_DIM, **options)
 
 
 def final_positions(env, policy, steps=15):

@@ -54,7 +54,7 @@ def run_convergence(seeds, path):
                 _save(path, dict(kind="convergence", architecture=architecture, seed=seed, config=index, exploitability=gap))
 
 
-def _walk_distance(env, play):
+def walk_distance(env, play):
     """Mean over sampled games of the red plus blue distance to the one-shot Nash corners."""
     nash_red, nash_blue, _ = solve_stage_nash(env.house_red, env.house_blue, env.w, Square())
     total = 0.0
@@ -71,18 +71,18 @@ def run_walking(seeds, path):
         if ("walking", "reinforce", seed, 0) not in done:
             torch.manual_seed(seed)
             policy = PolarPolicy(seed=seed)
-            before = _walk_distance(env, lambda: final_positions(env, policy))
+            before = walk_distance(env, lambda: final_positions(env, policy))
             train_polar(env, policy, episodes=300, seed=seed)
-            after = _walk_distance(env, lambda: final_positions(env, policy))
+            after = walk_distance(env, lambda: final_positions(env, policy))
             _save(path, dict(kind="walking", architecture="reinforce", seed=seed, config=0, before=before, after=after))
         if ("walking", "nash-q", seed, 0) not in done:
             random.seed(seed)
             np.random.seed(seed)
             torch.manual_seed(seed)
             untrained = NashQNetwork()
-            before = _walk_distance(env, lambda: play_greedy(env, untrained))
+            before = walk_distance(env, lambda: play_greedy(env, untrained))
             net = train_nash_dqn(env, episodes=60, seed=seed)
-            after = _walk_distance(env, lambda: play_greedy(env, net))
+            after = walk_distance(env, lambda: play_greedy(env, net))
             _save(path, dict(kind="walking", architecture="nash-q", seed=seed, config=0, before=before, after=after))
 
 

@@ -1,10 +1,11 @@
 import numpy as np
+import pytest
 import torch
 
 from doggame.env import Square
 from doggame.nash import solve_stage_nash
 from doggame.polar import PolarDogGameEnv
-from doggame.polar_agent import PolarPolicy, final_positions, train_polar
+from doggame.polar_agent import PolarPolicy, final_positions, train_polar, train_polar_actor_critic
 
 
 def test_act_returns_an_angle_and_a_unit_step_for_each_player():
@@ -44,3 +45,32 @@ def test_training_walks_the_players_to_the_nash_corners():
     train_polar(env, policy, episodes=300)
 
     assert average_distance() < 0.25 * before
+
+
+@pytest.mark.parametrize("algorithm", ["a2c", "ppo"])
+def test_actor_critic_training_also_walks_the_players_to_the_nash_corners(algorithm):
+    env = PolarDogGameEnv((0.88, 0.12), (0.3, 0.65), w=0.5, max_step=0.2)
+    nash_red, nash_blue, _ = solve_stage_nash(env.house_red, env.house_blue, env.w, Square())
+    policy = PolarPolicy(seed=0)
+
+    def average_distance():
+        total = 0.0
+        for _ in range(10):
+            red, blue = final_positions(env, policy)
+            total += np.linalg.norm(red - nash_red) + np.linalg.norm(blue - nash_blue)
+        return total / 10
+
+    before = average_distance()
+    train_polar_actor_critic(env, policy, algorithm, episodes=300)
+
+    assert average_distance() < 0.25 * before
+
+
+def test_the_walking_game_callbacks_report_the_episodes_done_so_far():
+    env = PolarDogGameEnv((0.88, 0.12), (0.3, 0.65), w=0.5, max_step=0.2)
+    reinforce, ppo = [], []
+
+    train_polar(env, PolarPolicy(seed=0), episodes=4, steps=3, callback=reinforce.append)
+    train_polar_actor_critic(env, PolarPolicy(seed=0), "ppo", episodes=4, steps=3, callback=ppo.append)
+
+    assert reinforce == ppo == [1, 2, 3, 4]
