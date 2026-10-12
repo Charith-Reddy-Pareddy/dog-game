@@ -217,6 +217,8 @@ The angle-radius version, on one house setup (red at (0.88, 0.12), blue at (0.3,
 
 ### 5.10 REINFORCE, A2C and PPO on the walking game
 
+A separate report, [WALKING_GAME_REPORT.md](WALKING_GAME_REPORT.md), covers policy gradient on the walking game in full.
+
 The same three algorithms on the walking game (Section 5.9's house setup), five seeds each (15 runs), 300 episodes, with the same 10-game score measured every 25 episodes. The chart shows the share of the five seeds whose summed distance from the Nash corners is below 0.1 (my threshold). In the table, "At N" is the mean distance after N episodes of training. The paths swing, so it also reports how many of the later checkpoints (from 150 episodes on, 7 per seed) are at the corners.
 
 {{figure:walking}}

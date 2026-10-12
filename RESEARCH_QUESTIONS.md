@@ -179,6 +179,11 @@ with the numbers and the caveats, are in [RESEARCH_REPORT.md](RESEARCH_REPORT.md
     settles (5 of 5 seeds at the corners after 900 episodes) and default PPO does not (3 of 5,
     with two seeds stuck far away). The smaller learning rate settings were not run longer.*
 
+30. **Do the walking-game findings hold on other house setups and with dog inertia?**
+    All the walking-game runs use one house setup and no inertia. *Status: open.*
+31. **Does an entropy bonus or a larger network change PPO's instability on the walking game?**
+    Neither was tried. *Status: open.*
+
 ## Where each question is answered in this repository
 
 | Questions | Evidence |
@@ -193,11 +198,12 @@ with the numbers and the caveats, are in [RESEARCH_REPORT.md](RESEARCH_REPORT.md
 | 10 | study `noise` (31 runs) |
 | 12, 18, 19 | study `inertia` (40 runs) |
 | 26 | study `walking` (15 runs) |
+| walking game, all questions | [WALKING_GAME_REPORT.md](WALKING_GAME_REPORT.md) ([PDF](docs/walking_game_report.pdf)) |
 | 24, 27, 28 | study `ppo_variants` (65 runs) |
 | 27, 28, 29 | study `ppo_long` (15 runs) |
 | 25 | study `walking_settings` (20 runs) |
 | walking game | `results/dog_game_runs.jsonl`, `results/dog_game_trajectories.json` |
 
-Questions 5b, 11, 13, 14, 19, 23 and 27 are open, and 25 is partly answered. The studies are in
+Questions 5b, 11, 13, 14, 19, 23, 27, 30 and 31 are open, and 25 is partly answered. The studies are in
 [`doggame/dog_game_studies.py`](doggame/dog_game_studies.py) and the tables are
 produced by [`doggame/dog_game_summary.py`](doggame/dog_game_summary.py).
