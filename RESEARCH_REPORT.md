@@ -1,274 +1,279 @@
-# Research Report: Solving the Dog Game
+# Solving the Dog Game
 
-**Live demo:** https://charith-reddy-pareddy.github.io/dog-game/
-**Code:** this repository (`doggame/`), reproducible with `pytest` and
-`python3 -m doggame.experiments`.
+**Live demo:** [charith-reddy-pareddy.github.io/dog-game](https://charith-reddy-pareddy.github.io/dog-game/)
 
-## 1. Background and motivation
+**Code:** [github.com/Charith-Reddy-Pareddy/dog-game](https://github.com/Charith-Reddy-Pareddy/dog-game), reproducible with `pytest` and the commands in Section 8.
 
-The broader research program is about solving multi-agent Markov
-games. Earlier work built an exact minimax-value-iteration solver for
-a grid soccer game and used it to study when equilibria involve mixed
-(randomized) strategies, and to look for game states where the optimal
-policy is non-intuitive. That work is planning, not learning: rewards
-and transitions are known exactly, so the problem is finding an
-equilibrium, not estimating one from samples.
+This report studies the dog game, a two-player, general-sum game with continuous actions, with two families of solver: policy-gradient self-play (REINFORCE, A2C and PPO) and Nash-Q on a discretized grid. It answers the research questions in [RESEARCH_QUESTIONS.md](RESEARCH_QUESTIONS.md) from saved runs, and says how many runs each claim rests on.
 
-The dog game (also called the "Battling Influencer Game" or
-"AI-dog/BIG") was introduced as a smaller, more tractable
-general-sum companion to the soccer game, specifically so two
-solution methods discussed for the soccer game — DQN-style Nash-Q
-learning and policy-gradient self-play — could be tried somewhere with
-a known, provably unique equilibrium before being applied to soccer,
-where equilibria are not unique and ground truth is harder to pin
-down.
+## Summary
+
+- **Policy-gradient self-play converges on the dog game.** 74 of 75 REINFORCE runs and 25 of 25 PPO runs reached exploitability below 0.004 within 1500 episodes. PPO needs far fewer episodes: 19 of 25 runs had converged after 100, against none for REINFORCE and A2C (Section 5.2).
+- **Self-play never finds the solver's interior equilibrium when the houses share a coordinate.** All 30 runs ended on a boundary equilibrium, one of two mirror images, split 23 to 7 and the same for every network layout (Section 5.3).
+- **Dog inertia slows training sharply.** On the harder setup 4, 5, 1 and 0 of 5 runs converged at dog weights 0, 0.3, 0.6 and 0.9 (Section 5.4).
+- **Pre-training helps or hurts depending on the source.** From a setup with the same equilibrium corners, every run was under the threshold after 100 episodes; from one with flipped corners, every run was worse than starting from scratch (Section 5.5).
+- **Nash-Q on a grid.** The stage-game error falls about as 1 over the fictitious-play iterations, and re-solving less often changes nothing in this game. The grid is exact from 5 x 5, the exact equilibrium is always a single action pair, and all of fictitious play's apparent mixing is noise (Sections 5.6 to 5.8).
+- **Walking version.** REINFORCE and the 10-direction Nash-Q network both end near the one-shot Nash corners in all 5 seeds (Section 5.9).
+- **Open:** why self-play picks the 3-to-1 split, why mismatched pre-training hurts, the equilibrium of the dynamic games (with inertia, and walking), and a PPO comparison matched on gradient steps (Section 6).
+
+## 1. Background
+
+The dog game (also called the Battling Influencers Game) is a small, general-sum, two-player game with continuous actions. It is useful as a proving ground for multi-agent learning methods because it has a closed-form equilibrium to check against: any learned policy can be scored exactly, so "did it converge?" has a number for an answer instead of an opinion.
+
+Two families of solver are studied here, side by side on the same environment:
+
+- **Policy gradient**: self-play with REINFORCE, A2C and PPO, using a Gaussian policy over continuous positions.
+- **Nash-Q**: a deep-Q style method on a discretized action grid, where every Bellman target requires solving a stage game for its Nash equilibrium, either approximately (fictitious play) or exactly (Lemke-Howson).
+
+The report answers the research questions in [RESEARCH_QUESTIONS.md](RESEARCH_QUESTIONS.md) from experiments that can be rerun from this repository. Every number below comes from a saved result file in `results/`, and every claim says how many runs it rests on.
 
 ## 2. The game
 
-Two players, red and blue, each own a house at a fixed point in a
-bounded, convex domain (a unit square). Each round, both players pick
-a point in the domain; a shared "dog" moves to the `w / (1 - w)`
-weighted average of the two picks. Each player is rewarded by the
-negative squared distance from the dog to their own house. This is a
-**general-sum** game (not zero-sum, unlike soccer), and it is
-structurally identical to two influencers each staking out an opinion
-to pull a shared audience toward them: because the domain is bounded,
-a player who wants the dog exactly on their house must *overshoot* —
-pick further out than their own house — to counteract the other
-player's pull. Implementation: [`doggame/env.py`](doggame/env.py).
+Two players, red and blue, each own a house at a fixed point in the unit square. Each round both players simultaneously pick a point in the square, and a shared dog moves to the weighted average `w * red + (1 - w) * blue` of the two picks. Each player is rewarded by the negative squared distance from the dog to their own house, and the discount is 0.9. The game is general-sum, not zero-sum. It has the same structure as two influencers each staking out an opinion to pull a shared audience toward them. Because the domain is bounded, a player who wants the dog exactly on their house has to overshoot: pick further out than their own house to counteract the other player's pull.
 
-## 3. Analytical solution
+### 2.1 Why the equilibrium sits on the boundary
 
-Solving each player's unconstrained best response and substituting one
-into the other shows there is no interior fixed point unless the two
-houses share a coordinate — the unconstrained recursion just pushes
-the action further in one direction forever. The bounded domain turns
-this into a genuine equilibrium: both players get pushed to the
-boundary. [`doggame/nash.py`](doggame/nash.py) finds this fixed point
-by iterated best response and is used throughout the rest of this repo
-as ground truth. `tests/test_nash.py` checks it against a hand-derived
-symmetric case, an identical-houses degenerate case, and a
-brute-force "no unilateral deviation helps" grid search.
+Substituting each player's unconstrained best response into the other's shows there is no interior fixed point unless the houses share a coordinate. The unconstrained recursion pushes the actions further out on every iteration. The bounded domain turns this into a genuine equilibrium: both players are pushed to the boundary and exaggerate as much as the square allows. Iterated best response (`doggame/nash.py`) reaches this fixed point in two rounds, and it is used throughout as the ground truth.
 
-## 4. Two solvers, as assigned in the planning meeting
+### 2.2 Uniqueness
 
-### 4.1 Policy gradient (self-play REINFORCE)
+The equilibrium is unique when the two houses differ in every coordinate. Each coordinate the houses share becomes a degenerate direction: any pair of actions on that axis that averages back to the shared value is equally good, so the equilibrium set is a continuum. Identical houses are the extreme case, where no exaggeration is needed at all.
 
-[`doggame/agents.py`](doggame/agents.py) and
-[`doggame/train.py`](doggame/train.py) implement a Gaussian
-policy — `TwoPlayerPolicy` — trained with REINFORCE via `torch.optim`
-(no hand-derived gradient code, per the meeting's explicit
-instruction once a training package is in play). Three network
-architectures are implemented behind one interface
-([`doggame/networks.py`](doggame/networks.py)):
+### 2.3 Two variants
 
-- **separate** — two fully independent networks.
-- **shared** — one trunk, two output heads.
-- **partial** — a shared trunk feeding two separate per-player
-  branches (equivalent to one network with the cross-player weights
-  frozen at zero, but simpler to express directly).
+- **Dog inertia.** `make_inertial_transition(w0)` gives the dog momentum: `dog' = w0 * dog + (1 - w0) * (w * red + (1 - w) * blue)`. Holding both actions fixed, the dog still ends at the same steady state as without inertia; it only gets there more slowly, at rate `w0` per round.
+- **Walking (angle-radius) version.** Each player stands somewhere in the square and picks an angle and a step length (up to 0.2), then walks from where it stands. The dog moves to the average of the two new positions. The angle comes from a von Mises distribution and the step fraction from a Beta distribution, so the angle wraps cleanly and nothing is clipped. This is one reading of "angle-radius action", described in [ASSUMPTIONS.md](ASSUMPTIONS.md).
 
-### 4.2 DQN / Nash-Q (discretized actions)
+## 3. Methods
 
-[`doggame/discretize.py`](doggame/discretize.py) turns the continuous
-square into an N x N action grid and builds both players' payoff
-matrices by calling the *same* transition/reward functions the
-continuous environment uses, so the discretized game and the
-continuous game agree on the rules by construction, not by luck.
+### 3.1 Policy gradient
 
-[`doggame/fictitious_play.py`](doggame/fictitious_play.py) solves that
-discretized stage game by iterated best response against the
-opponent's running-average strategy — the "best-response dynamics"
-approach the meeting raised as the practical alternative to an LP
-solver, at the cost of being only approximate.
+A Gaussian policy (`doggame/agents.py`) gives both players' action means through one of three network layouts, plus a learned per-player log standard deviation (initialized at -0.5, a standard deviation of about 0.61). Training is self-play, one episode of 20 rounds per update, with Adam at learning rate 0.01 through PyTorch's optimizer. Three algorithms share this setup:
 
-[`doggame/dqn.py`](doggame/dqn.py) then iterates the Nash-Q Bellman
-backup `Q = R + discount * NashV(Q)` to a fixed point. Because the dog
-game's transition never depends on the incoming state, every state
-faces an identical one-shot game, so this backup collapses to
-iterating on a single pair of payoff matrices rather than looping over
-a state space — a property specific to this game's transition, not a
-general shortcut (documented in the module's docstring, verified in
-`tests/test_dqn.py` against the closed-form fixed point this collapse
-implies: discounted value equals one-shot Nash value divided by
-`1 - discount`).
+- **REINFORCE** (`doggame/train.py`): the log-probability of each action weighted by the discounted return minus the episode's mean return.
+- **A2C** (`doggame/train_ac.py`): the same, but the baseline is a learned value function of the dog's position, one per player.
+- **PPO** (`doggame/train_ac.py`): A2C with each episode reused for 4 epochs and the probability ratio clipped at 0.2.
 
-### 4.3 Dog inertia and an exact stage-game solver
+Three network layouts sit behind one interface (`doggame/networks.py`): **separate** (two independent networks), **shared** (one trunk with two heads) and **partial** (a shared trunk feeding two separate per-player branches).
 
-A follow-up planning session raised two further refinements, both
-implemented since the findings below were first written:
+### 3.2 Nash-Q on a discretized grid
 
-- **Dog inertia.** The transition above has the dog fully re-target
-  every round. `doggame.env.make_inertial_transition(w0)` generalizes
-  it to `w0 * dog + w1 * pick_red + w2 * pick_blue` (with
-  `w1 = (1-w0)*w`, `w2 = (1-w0)*(1-w)`), so the dog only partially
-  closes the gap each round instead of teleporting to the target. Because
-  `w0, w1, w2` are a fixed convex combination every round, holding
-  both players' actions fixed still pulls the dog toward the *same*
-  steady state the two-weight version reaches in one step — inertia
-  only slows the approach (geometrically, at rate `w0` per round), it
-  does not change where the dog ends up (`tests/test_env.py`
-  confirms this by running 200 rounds with and without inertia from
-  the same start and checking they land within `1e-6` of each other).
-  The live simulator's `w0` slider demonstrates this directly.
-- **Exact stage-game solving.** `doggame/exact_nash.py` adds
-  `lemke_howson_nash` (NashPy's Lemke-Howson algorithm, exact for any
-  general-sum bimatrix game) as an alternative to fictitious play's
-  approximation, plus `zero_sum_lp_nash` (an LP via `scipy.optimize.linprog`)
-  for the zero-sum case specifically — included because it is the
-  textbook-correct exact method there, even though the dog game itself
-  never needs it (it is general-sum). `doggame.dqn.solve_discretized_nash_q`
-  now takes `solver="exact"` to use it, and a `resync_every` parameter
-  that freezes a stage-game solution across several outer Bellman
-  iterations instead of re-solving on every one — cheaper per
-  iteration, and it still converges to the same closed-form fixed
-  point (`tests/test_dqn.py`).
+`doggame/discretize.py` turns the square into an N x N grid of actions and builds both players' payoff matrices with the same transition and reward functions as the continuous game. `doggame/dqn.py` iterates the Nash-Q backup `Q = R + discount * NashV(Q)` to a fixed point. Because the dog game's transition does not depend on the incoming state, this collapses to iterating on one pair of payoff matrices, and the fixed point has a closed form: the discounted value equals the one-shot Nash value divided by `1 - discount`. That shortcut is specific to this game. The stage game is solved either by fictitious play (`doggame/fictitious_play.py`, approximate) or exactly by NashPy's Lemke-Howson algorithm (`doggame/exact_nash.py`). The exact solver is hardened: every answer is checked to be an equilibrium, retried from another starting label if not, and cut off after a fixed number of pivots, so a result never depends on how fast the machine is.
 
-## 5. Verification methodology
+### 3.3 The walking game
 
-The meeting specified the actual check to use: for a mixed strategy,
-compute the value of every action played with positive probability —
-they should all be equal — and confirm no unplayed action would do
-better. [`doggame/verify.py`](doggame/verify.py) implements two
-versions of this:
+`doggame/polar_agent.py` trains the angle-radius policy with REINFORCE. `doggame/polar_dqn.py` is a deep Nash-Q for the same game: 10 compass directions, one network giving both players' 10 x 10 Q-values, a target network, a replay buffer and an exact Nash solve at every target.
 
-- `exploitability` — for a continuous action pair, grid-search for the
-  largest one-sided improvement either player could get by deviating.
-  Used both offline (`doggame/experiments.py`) and live, in-browser,
-  on the [demo page](https://charith-reddy-pareddy.github.io/dog-game/).
-- `mixed_strategy_indifference_gap` — the discrete-strategy version of
-  the same check, with a probability floor (`tol`) tuned to fictitious
-  play's known noise floor (its running average never fully forgets
-  its random initial pick, leaving a permanent ~1/iterations residual
-  that is not a real equilibrium violation).
+## 4. Verification
 
-**A defect found and fixed while testing this module:** the floor-based
-"which actions are played" filter, `strategy_row > tol`, can select
-*zero* actions on a fine enough action grid — once the grid has more
-than `1/tol` actions, a legitimately uniform mixed strategy spreads
-every action's probability below the floor. That left
-`best_response_gap` computed against an empty array, silently
-returning `+inf` instead of a meaningful number (verified directly:
-a 1024-action uniform strategy already triggers it). The fix falls
-back to the action(s) actually holding the strategy's maximum
-probability when none clear the floor, so the check stays finite and
-usable as action-grid resolution grows — which is exactly the
-direction question 6 (discretization resolution) pushes this code.
-Covered by a regression test in `tests/test_verify.py`.
+A solved or learned policy is checked directly instead of trusting how it was produced (`doggame/verify.py`):
 
-## 6. Findings
+- **Exploitability**: for a continuous action pair, search a 101 x 101 grid for the largest gain either player could get by deviating. It is 0 at an equilibrium.
+- **Indifference gap**: for a discrete mixed strategy, every action played with positive probability should have equal value, and no unplayed action should do better. The check uses a probability floor (`tol`, 0.001) to decide what counts as played.
 
-Findings 1 and 2 below are also presented, with live figures, on the
-[GitHub Pages demo](https://charith-reddy-pareddy.github.io/dog-game/#findings);
-they are reproduced verbatim from real runs of `doggame.experiments`
-(15 runs: 5 house/weight configurations x 3 architectures, 1500
-self-play episodes each), not hand-picked or simulated for
-presentation.
+**A defect found and fixed.** On a fine enough action grid, a uniform mixed strategy spreads every probability below the floor, so the check selected no actions and silently returned infinity instead of a number. It now falls back to the most probable actions when none clear the floor. This is covered by a regression test, and it matters for the resolution question below.
 
-### Finding 1 — "can policy gradient converge?" needs a number attached to it
+## 5. Experiments
 
-14 of 15 (configuration, architecture) runs reached exploitability
-below 0.004 within 1500 episodes. The 15th — the `separate`
-architecture on `house_red=(0.8, 0.8)`, `house_blue=(0.2, 0.3)`,
-`w=0.3` — was still at 0.183, clearly unconverged. Training that exact
-run 3000 episodes further brought it to 0.004: it was not stuck in a
-bad equilibrium, just slower, because one action dimension took longer
-to get pushed out to the domain boundary than the others. This answers
-question 2 honestly rather than optimistically: self-play policy
-gradient does converge here, but "1500 episodes" is meaningless
-without naming the configuration and architecture it was measured on.
+Every experiment is a function in [`doggame/dog_game_studies.py`](doggame/dog_game_studies.py) or [`doggame/dog_game_study.py`](doggame/dog_game_study.py). Raw results are in `results/dog_game_runs.jsonl` and `results/dog_game_studies.jsonl`, one line per run, and the tables below are produced from them by `doggame/dog_game_summary.py`. A run counts as **converged** when its exploitability is below 0.004. That threshold is my choice, so each table also shows the median.
 
-### Finding 2 — multiple equilibria are real, not a training bug
+### 5.1 Does policy-gradient self-play converge?
 
-When both houses share a y-coordinate (`house_red=(0.95, 0.5)`,
-`house_blue=(0.05, 0.5)`), the y-axis of the stage game becomes
-degenerate: any pair of y-actions that averages back to 0.5 is equally
-optimal. `doggame.nash`'s iterated best response lands on the "obvious"
-solution (both players at y = 0.5 exactly); policy-gradient training
-instead consistently found a boundary-cancellation solution (red near
-y = 1, blue near y = 0, `0.5*1 + 0.5*0 = 0.5`) in every architecture.
-Checking both with `exploitability` confirms they are both genuinely
-unexploitable (< 0.0002) — two different, equally valid equilibria,
-directly matching the degenerate case raised in question 8, not a
-training failure. This is why `doggame.verify` checks optimality
-directly rather than distance to one precomputed candidate.
+REINFORCE self-play, 1500 episodes, five house setups and three network layouts, five seeds each (75 runs). Each cell is the number of runs under 0.004 with the median exploitability.
 
-### Finding 3 — network architecture did not change *whether* training converged
+| House setup | separate | shared | partial |
+|---|---|---|---|
+| (0.9, 0.2) / (0.1, 0.8), w = 0.5 | 5 of 5 (median 0.0002) | 5 of 5 (median 0.0002) | 5 of 5 (median 0.0004) |
+| (0.8, 0.8) / (0.2, 0.3), w = 0.3 | 4 of 5 (median 0.0007) | 5 of 5 (median 0.0006) | 5 of 5 (median 0.0008) |
+| (0.7, 0.1) / (0.6, 0.9), w = 0.7 | 5 of 5 (median 0.0003) | 5 of 5 (median 0.0003) | 5 of 5 (median 0.0008) |
+| (0.95, 0.5) / (0.05, 0.5), w = 0.5 | 5 of 5 (median 0.0001) | 5 of 5 (median 0.0001) | 5 of 5 (median 0.0002) |
+| (0.6, 0.6) / (0.4, 0.4), w = 0.5 | 5 of 5 (median 0.0001) | 5 of 5 (median 0.0001) | 5 of 5 (median 0.0002) |
 
-Across the same 15 runs, `separate`, `shared`, and `partial`
-architectures converged to equivalently low exploitability on 14 of
-15 configurations; the one slow case above was slow specifically for
-`separate`, while `shared` and `partial` converged on it within the
-same 1500 episodes. That is a single data point, not a general
-architecture ranking (question 7 remains open on *why*), but it is
-evidence that parameter sharing does not obviously hurt convergence in
-this game, and may help on harder configurations.
+- 74 of 75 runs converged. The one miss is the `separate` layout on setup 2, seed 0, at 0.18. The other four seeds of that setup converge. An earlier single-seed note said that training the same run 3000 episodes longer brought it to 0.004; that was not rerun here.
+- The three layouts do not separate: `separate` 24 of 25, `shared` 25 of 25, `partial` 25 of 25. The one miss belongs to `separate`, but a single run cannot rank architectures.
+- The threshold matters: the closest passing run is at 0.0039 (`shared`, setup 2, seed 0), so the count depends on where the line sits.
 
-## 7. Open questions
+### 5.2 REINFORCE, A2C and PPO
 
-The following questions from `RESEARCH_QUESTIONS.md` are not yet
-answered by this repository:
+The same five setups and seeds, the `separate` layout, 1500 episodes, scored at five points during training (25 runs per algorithm). The chart shows the share of runs under 0.004 by episodes trained.
 
-- **Pre-training** (question 3): not yet tested — no experiment here
-  initializes a policy from a related configuration before self-play.
-- **Equilibrium selection consistency** (question 4): Finding 2 shows
-  policy gradient can consistently prefer a boundary-cancellation
-  equilibrium over the analytical solver's, but this has only been
-  checked on one degenerate configuration; whether the *same*
-  non-obvious equilibrium is selected across seeds, or only across
-  architectures, is untested.
-- **Stage-game solution quality vs. outer convergence** (question 5b):
-  `doggame.dqn` now offers an *exact* stage-game solver
-  (`solver="exact"`) as well as fictitious play, and can freeze either
-  one across several outer iterations (`resync_every`), but the
-  general question — how much stage-game solution error the outer
-  Bellman iteration tolerates before it stops converging correctly —
-  is still open. What exists now is the tooling to actually measure
-  it (compare `solver="fictitious_play"` at various
-  `fictitious_play_iterations`, or `resync_every > 1`, against
-  `solver="exact"`, `resync_every=1` as ground truth), not the
-  measurement itself.
-- **Resolution vs. solution quality trade-off** (question 6):
-  `tests/test_dqn.py` checks two resolutions (5 and 9); no systematic
-  sweep exists yet, though the fix in Section 5 specifically removes a
-  correctness blocker for testing much finer grids, and
-  `lemke_howson_nash` was spot-checked up to a 289-action grid without
-  trouble.
-- **Clean vs. noisy mixed probabilities** (question 10): partially
-  addressed from a different angle than originally planned —
-  `lemke_howson_nash` is *exact*, so it has no fictitious-play-style
-  noise floor to clean up in the first place. The fictitious-play path
-  still has it, and no rounding/cleanup pass exists for that path.
-- **Transfer to the soccer game** (question 11): entirely open. The
-  dog game's state-independent transition is explicitly called out in
-  `doggame/dqn.py` as a simplification that a soccer game (state
-  depends on ball possession) would not have, so the Nash-Q backup
-  collapse this repo relies on would not directly apply there.
-  `zero_sum_lp_nash` (Section 4.3) is a first concrete piece of
-  transfer-ready groundwork, since soccer's stage games are zero-sum
-  and an LP is the textbook-exact method there — but it has not been
-  exercised against anything but toy examples (matching pennies,
-  rock-paper-scissors) in this repo.
-- **Dog inertia's effect on training, not just analysis** (question
-  12): Section 4.3 shows inertia does not change the analytical
-  fixed point, and the live simulator demonstrates it does not change
-  where best-response iteration ends up either. Whether it changes
-  anything for the *policy-gradient* side — e.g. whether self-play
-  converges faster or slower, or finds a different equilibrium in the
-  degenerate case from Finding 2, when the dog has momentum — is
-  untested; `doggame.train` and `doggame.experiments` do not yet
-  accept an inertial transition.
-- **Vertex-Nash equilibrium selection for multi-state games**
-  (question 13): open, and not really answerable within the dog game
-  as implemented, since its Nash-Q backup collapses to a single
-  stage game with (empirically) one equilibrium — there is no
-  multi-equilibrium, multi-state setting here to select *among* yet.
-- **LLM-as-bounded-rational-player and inverse-RL-style reward
-  recovery** (question 14): out of scope for this repository — it
-  belongs to a separate research thread about LLMs playing repeated
-  games, not the dog game's code.
-- **Continuous soccer action space** (question 15): out of scope for
-  this repository specifically because it is about the soccer game,
-  which this codebase does not implement; noted here as the concrete
-  next design question for whichever codebase takes on that
-  extension.
+{{figure:convergence}}
+
+| Algorithm | 100 episodes | 250 episodes | 500 episodes | 1000 episodes | 1500 episodes | Median at the end |
+|---|---|---|---|---|---|---|
+| REINFORCE | 0 of 25 | 13 of 25 | 24 of 25 | 24 of 25 | 24 of 25 | 0.0002 |
+| A2C | 0 of 25 | 13 of 25 | 24 of 25 | 25 of 25 | 25 of 25 | 0.0001 |
+| PPO | 19 of 25 | 24 of 25 | 25 of 25 | 25 of 25 | 25 of 25 | 0.0000 |
+
+- **PPO is much faster per episode.** 19 of 25 PPO runs converged after 100 episodes, against none for REINFORCE and A2C, and all 25 converged by 500.
+- **A2C is not faster than REINFORCE** for the first 500 episodes, but it converged on all 25 runs by 1000 episodes, including the slow run that REINFORCE left unconverged.
+- **The comparison is matched on episodes, not on gradient steps.** PPO takes four gradient steps on each episode and REINFORCE takes one, so part of PPO's lead may be extra optimization rather than a better update. A comparison matched on gradient steps was not run.
+
+### 5.3 Which equilibrium does self-play find?
+
+In the setup whose houses share a y-coordinate, the equilibrium set has a continuum of members. Iterated best response (`doggame/nash.py`) returns the interior point with both players at y = 0.5. Thirty REINFORCE runs (ten seeds per layout) ended here:
+
+| Layout | red top, blue bottom | red bottom, blue top | both at y = 0.5 | other | Median exploitability |
+|---|---|---|---|---|---|
+| separate | 8 of 10 | 2 of 10 | 0 of 10 | 0 of 10 | 0.00009 |
+| shared | 7 of 10 | 3 of 10 | 0 of 10 | 0 of 10 | 0.00008 |
+| partial | 8 of 10 | 2 of 10 | 0 of 10 | 0 of 10 | 0.00018 |
+
+- **Never the interior point.** All 30 runs ended with one player at the top edge and the other at the bottom edge. Both are exact equilibria (exploitability below 0.0002), as is the interior point.
+- **Two mirror equilibria, split about 3 to 1.** 23 runs ended with red at the top and 7 with red at the bottom. The layouts do not differ (8, 7 and 8 of 10).
+- **The exact solver agrees with the learners.** Lemke-Howson on the discretized game also returns a boundary equilibrium for this setup, at every grid size (Section 5.7).
+- **Why is not tested.** One hypothesis is that the policy's initial standard deviation (about 0.61, large for a unit square) pushes early samples onto the boundary, where clipping removes any gradient along the degenerate axis. Nothing here tests that.
+
+### 5.4 Does dog inertia change the outcome?
+
+REINFORCE, five seeds, 1500 episodes, with the dog's own weight `w0` set to 0, 0.3, 0.6 or 0.9, on the easiest setup and on the setup that was slowest in Section 5.1. Policies are scored against the one-shot game.
+
+| House setup | w0 = 0.0 | w0 = 0.3 | w0 = 0.6 | w0 = 0.9 |
+|---|---|---|---|---|
+| (0.9, 0.2) / (0.1, 0.8), w = 0.5 | 5 of 5 (median 0.0002) | 5 of 5 (median 0.0002) | 5 of 5 (median 0.0002) | 5 of 5 (median 0.0006) |
+| (0.8, 0.8) / (0.2, 0.3), w = 0.3 | 4 of 5 (median 0.0007) | 5 of 5 (median 0.0016) | 1 of 5 (median 0.0102) | 0 of 5 (median 0.0295) |
+
+- **Inertia slows training a great deal on the hard setup.** 4, 5, 1 and 0 of 5 runs converged within 1500 episodes at `w0` = 0, 0.3, 0.6 and 0.9. On the easy setup every run converged at every `w0`, with a slightly higher median at 0.9.
+- **The unconverged runs look unfinished, not different.** Their median distance to the one-shot equilibrium stays small (0.0016, 0.0011, 0.0072 and 0.0176 over all runs at each `w0`), but the worst runs at `w0` of 0.6 and 0.9 are about 1.0 away, meaning one player is still far from its corner. Whether more episodes fix them was not tested.
+- **What this does not say.** Policies are scored against the one-shot equilibrium, which is the steady state of the dynamic game. Whether the equilibrium of the full game with inertia is the same is not solved here.
+
+### 5.5 Does pre-training help?
+
+REINFORCE on setup 2, the slowest one, five seeds. "Pre-trained" means 1500 self-play episodes on another setup first, then training on setup 2. Equilibrium corners from the exact solver: setup 1 has red at bottom-right and blue at top-left; setups 2 and 5 have red at top-right and blue at bottom-left.
+
+| Starting point | after 100 episodes | after 300 episodes |
+|---|---|---|
+| from scratch | 0 of 5 (median 0.0599) | 2 of 5 (median 0.0048) |
+| pre-trained on setup 1 | 0 of 5 (median 0.1599) | 0 of 5 (median 0.2289) |
+| pre-trained on setup 5 | 5 of 5 (median 0.0002) | 4 of 5 (median 0.0002) |
+
+- **It depends on the source.** Pre-training on setup 5, which has the same corners as setup 2, put all 5 runs under 0.004 after 100 episodes, where training from scratch had none.
+- **It can hurt.** Pre-training on setup 1, whose corners are flipped, left every run worse than scratch after 300 episodes (median 0.23 against 0.0048).
+- **One target setup and five seeds.** The mechanism is not tested; a plausible one is that the network has to un-learn a boundary direction it already committed to.
+
+### 5.6 How precisely must the stage game be solved?
+
+Nash-Q on the 9 x 9 grid of setup 1, discount 0.9. Fictitious play replaces the exact solver with a given number of iterations, and the stage game is re-solved every 1, 5 or 25 outer iterations. Each cell is the median error of the fixed point's Q-values against the exact solution, and the median gap (the most either player could gain by switching to a single action) of the final strategy. Five seeds per cell.
+
+| Fictitious-play iterations | re-solve every 1: Q error / gap | re-solve every 5: Q error / gap | re-solve every 25: Q error / gap |
+|---|---|---|---|
+| 10 | 0.3612 / 0.0583 | 0.3612 / 0.0583 | 0.3612 / 0.0583 |
+| 30 | 0.1311 / 0.0215 | 0.1311 / 0.0215 | 0.1311 / 0.0215 |
+| 100 | 0.0406 / 0.0067 | 0.0406 / 0.0067 | 0.0406 / 0.0067 |
+| 300 | 0.0136 / 0.0023 | 0.0136 / 0.0023 | 0.0136 / 0.0023 |
+| 1000 | 0.0041 / 0.0007 | 0.0041 / 0.0007 | 0.0041 / 0.0007 |
+| 3000 | 0.0014 / 0.0002 | 0.0014 / 0.0002 | 0.0014 / 0.0002 |
+
+- **The error falls about as 1 over the number of iterations.** It is 0.36 at 10 iterations and 0.0014 at 3000, so a given Q error can be bought with a predictable number of iterations.
+- **Re-solving less often changes nothing here.** Every column is the same. In this game the transition does not depend on the state, so each Q matrix is the payoff matrix plus a constant, and adding a constant never moves an equilibrium. This will not hold in a game where the continuation value varies by state.
+
+### 5.7 Does grid resolution matter?
+
+The exact (Lemke-Howson) solution of the discretized stage game on five grid sizes, for all five setups (25 games).
+
+| Grid | Actions per player | Matrix entries | Setups with a unique equilibrium found (of 4) | Shared-y setup: distance to the solver's equilibrium | Equilibrium is one action pair | Seconds (median) |
+|---|---|---|---|---|---|---|
+| 3 x 3 | 9 | 81 | 2 | 1.00 | yes | 0.003 |
+| 5 x 5 | 25 | 625 | 4 | 1.00 | yes | 0.031 |
+| 9 x 9 | 81 | 6,561 | 4 | 1.00 | yes | 0.356 |
+| 13 x 13 | 169 | 28,561 | 4 | 1.00 | yes | 2.017 |
+| 17 x 17 | 289 | 83,521 | 4 | 1.00 | yes | 116.625 |
+
+- **Quality stops improving at 5 x 5.** The equilibrium sits on the boundary, and every grid contains the corners, so a finer grid finds nothing new. A 3 x 3 grid is too coarse: for some setups it picks a different corner.
+- **Cost grows steeply.** The payoff matrices have the square of the number of actions as entries, and the exact solve time grows at least as fast. These timings come from a heavily loaded machine, so only the growth matters, not the absolute seconds.
+- **Ties make it far slower than the median shows.** On the setup with the most tied payoffs (houses on a diagonal), the exact solve took 17 seconds at 9 x 9, 338 seconds at 13 x 13 and about 43 minutes at 17 x 17, because most starting labels end in an error and are retried from another label. The other setups took seconds at the same sizes.
+- **The equilibrium is always one action pair.** In all 25 games the exact solution has support 1 x 1.
+- **The shared-y setup returns a boundary equilibrium** at every size, 1.0 away from the interior point the best-response solver reports. Both are valid (Section 5.3).
+
+### 5.8 How much of fictitious play's mixing is noise?
+
+Fictitious play on the same game for a range of iteration counts, five seeds each, scored with the indifference check at its default floor of 0.001.
+
+| Fictitious-play iterations | Indifference spread | Actions counted as played | Weight on the leftover first pick |
+|---|---|---|---|
+| 30 | 0.6415 | 2 | 0.03226 |
+| 100 | 0.6496 | 2 | 0.00990 |
+| 300 | 0.6519 | 2 | 0.00332 |
+| 1000 | 0.0000 | 1 | 0.00100 |
+| 3000 | 0.0000 | 1 | 0.00033 |
+| 10000 | 0.0000 | 1 | 0.00010 |
+| exact (Lemke-Howson) | 0.0000 | 1 | 0.00000 |
+
+- **The exact equilibrium is one action pair, so none of the mixing is real.** What fictitious play shows is the weight of its first random pick, which decays as 1 over the number of iterations plus one.
+- **The check hides it only once it falls below the floor.** At 300 iterations or fewer the leftover weight is above 0.001, so a second action counts as played and the indifference spread is about 0.65. From 1000 iterations the weight is at or below 0.001 and the spread is exactly 0.
+- **A structural fix is available.** Dropping the first pick's weight from the running average would remove the noise instead of filtering it. It is not implemented.
+
+### 5.9 The walking game
+
+The angle-radius version, on one house setup (red at (0.88, 0.12), blue at (0.3, 0.65), w = 0.5, maximum step 0.2). The score is the sum of both players' distances from the one-shot Nash corners at the end of a 15-step game, averaged over 10 sampled games, over five seeds. REINFORCE trains 300 episodes and the Nash-Q network 60.
+
+| Method | Distance before training | Distance after training | Seeds that improved |
+|---|---|---|---|
+| REINFORCE (angle and step) | 1.49 | 0.04 | 5 of 5 |
+| Nash-Q (10 directions) | 1.95 | 0.01 | 5 of 5 |
+
+- **Both methods walk to the corners.** The saved paths for five seeds are on the [live site](https://charith-reddy-pareddy.github.io/dog-game/) with a step slider and a play button.
+- **What this does not show.** The one-shot corners are the equilibrium of the one-shot game. The walking game itself has not been solved, so this shows the players heading to the one-shot corners, not that those corners are an equilibrium of the walking game. One untrained REINFORCE policy (seed 4) started near the corners anyway.
+
+## 6. Research questions and answers
+
+The statuses are the same as in [RESEARCH_QUESTIONS.md](RESEARCH_QUESTIONS.md).
+
+**Q1. Can self-play policy gradient converge to a Nash equilibrium in a general-sum game?** *Answered for the dog game; open in general.* 74 of 75 REINFORCE runs and 25 of 25 PPO runs converged (Sections 5.1, 5.2). Independent policy gradient can cycle in general-sum games, so this should not be read as a general result. The dog game is favorable: each best response is an affine function of the other player's action, and the bounded domain turns the recursion into a contraction toward the boundary.
+
+**Q2. Does the number of episodes depend on the configuration?** *Answered.* Yes, and on the algorithm. At 250 episodes REINFORCE had 13 of 25 runs converged overall, but 0 of 5 on setup 3 and 5 of 5 on setup 5. Any episode count needs the setup and algorithm it was measured on.
+
+**Q3. Does pre-training help?** *Answered for one target.* Section 5.5: it helps when the source has the same equilibrium corners and hurts when it does not.
+
+**Q4. Which equilibrium does self-play find?** *Answered for the shared-y setup.* Section 5.3: never the interior point, always one of two mirror boundary equilibria, about 3 to 1, regardless of layout.
+
+**Q5. How precisely must the stage game be solved?** *Answered for the dog game.* Section 5.6: the error falls about as 1 over the iterations, and re-solving less often does not matter when the transition is state-independent. **Q5b** (the literature) is not surveyed here.
+
+**Q6. How does resolution trade off against quality?** *Answered.* Section 5.7: quality is exact from 5 x 5, cost grows steeply, and the equilibrium is always a single action pair. A function approximator becomes attractive when the action set grows past a few hundred actions, which is where the exact solve already takes seconds to minutes.
+
+**Q7. Which network architecture?** *Partly answered.* All three converge (24, 25 and 25 of 25). Cross-play between independently trained layouts is untested.
+
+**Q8. When is the equilibrium unique?** *Answered.* When the houses differ in every coordinate; each shared coordinate opens a continuum (Section 2.2, confirmed by Section 5.3).
+
+**Q9. How is an equilibrium verified?** *Answered.* Exploitability for continuous actions and the indifference check for mixed strategies (Section 4).
+
+**Q10. How much non-clean mixing is real?** *Answered for the dog game.* None of it: the exact equilibrium is one action pair, and the mixing fictitious play shows is the leftover of its first random pick (Section 5.8).
+
+**Q11. What transfers to harder games?** *Open.* The state-independent transition (which collapses Nash-Q to one stage game), the unique equilibrium and the one-shot payoffs are dog-game specific. The solver hardening and the verification checks are game-agnostic.
+
+**Q12. Does inertia change anything besides how long it takes?** *Partly answered.* The steady state is unchanged, but policy-gradient training slows sharply on the hard setup (Section 5.4). Whether the equilibrium of the dynamic game changes is untested (Q19).
+
+**Q13-Q15.** Q13 (vertex Nash for multi-state games) is open because the dog game has one state. Q14 (LLM play and inverse reward recovery) is a separate research thread. Q15 (disk-shaped action spaces) is partly addressed by the walking version's angle and step length.
+
+**Q16. Do A2C and PPO beat REINFORCE?** *Partly answered.* PPO is much faster per episode; A2C is not faster than REINFORCE. PPO takes four gradient steps per episode, so a step-matched comparison is open (Section 5.2, Q24).
+
+**Q17-Q20.** Q17 (why the outcome is 3 to 1 and never interior) and Q20 (why mismatched pre-training hurts) have measured patterns but untested mechanisms. Q18 is answered (Section 5.4). Q19 (the equilibrium of the dynamic game with inertia) is open.
+
+**Q21. Does re-solving less often change the fixed point?** *Answered.* No, in this game (Section 5.6).
+
+**Q22. Is the exact equilibrium always one action pair?** *Answered.* Yes, in all 25 games (Section 5.7).
+
+**Q23-Q25.** Whether the one-shot corners are an equilibrium of the walking game, a compute-matched PPO comparison, and the effect of step length and discount are open.
+
+## 7. Limits
+
+- Most results rest on five seeds, and the equilibrium-selection study on ten per layout. Percentages are counts out of those, not estimates with error bars.
+- The convergence threshold (0.004) and the pre-training and inertia setups are my choices. Training settings (learning rate 0.01, one episode per update) were not tuned for each algorithm.
+- PPO and A2C are compared on episodes, not on gradient steps or wall-clock time.
+- Policies trained with inertia are scored against the one-shot equilibrium. The walking game is scored against the one-shot corners. Neither is the equilibrium of its own dynamic game.
+- The pre-training study has a single target setup. The walking study has a single house setup.
+- Timings in the resolution table were taken on a heavily loaded machine and show growth, not absolute cost.
+- The Gaussian policy clips actions to the square before taking the log-probability, which biases the gradient slightly. Every algorithm shares this.
+
+## 8. Reproducing
+
+```
+python3 -m pytest                          # the test suite
+python3 -m doggame.experiments             # the original convergence study
+python3 -m doggame.dog_game_study          # five-seed convergence and walking runs
+python3 -m doggame.dog_game_studies        # the seven studies in Section 5 (resumable, shardable)
+python3 -m doggame.dog_game_summary        # print every table as Markdown
+python3 -m doggame.research_report_pdf     # build research_report.pdf from this file
+```
+
+The studies write one line per finished run, so a stopped run keeps its results and a rerun skips what is done.

@@ -12,6 +12,8 @@ def kit():
     body = ParagraphStyle("body", parent=sheet["BodyText"], fontSize=10, leading=14, spaceAfter=6)
     h1 = ParagraphStyle("h1", parent=sheet["Heading1"], fontSize=18, spaceAfter=4)
     h2 = ParagraphStyle("h2", parent=sheet["Heading2"], fontSize=13, spaceBefore=12, spaceAfter=4, keepWithNext=1)
+    h3 = ParagraphStyle("h3", parent=sheet["Heading3"], fontSize=11, spaceBefore=8, spaceAfter=3, keepWithNext=1)
+    quote = ParagraphStyle("quote", parent=body, leftIndent=14, textColor=colors.HexColor("#444444"), fontName="Helvetica-Oblique")
     small = ParagraphStyle("small", parent=body, fontSize=8.5, leading=11, textColor=colors.HexColor("#555555"))
     bullet = ParagraphStyle("bullet", parent=body, leftIndent=14, bulletIndent=2, spaceAfter=3)
     cell = ParagraphStyle("cell", parent=body, fontSize=8.5, leading=10.5, spaceAfter=0)
@@ -27,5 +29,5 @@ def kit():
         return t
 
     return SimpleNamespace(
-        h1=lambda t: Paragraph(t, h1), h2=lambda t: Paragraph(t, h2), text=lambda t: Paragraph(t, body),
-        small=lambda t: Paragraph(t, small), point=lambda t: Paragraph(t, bullet, bulletText="•"), table=table)
+        h1=lambda t: Paragraph(t, h1), h2=lambda t: Paragraph(t, h2), h3=lambda t: Paragraph(t, h3), quote=lambda t: Paragraph(t, quote), text=lambda t: Paragraph(t, body),
+        small=lambda t: Paragraph(t, small), point=lambda t, mark="•": Paragraph(t, bullet, bulletText=mark), table=table)
