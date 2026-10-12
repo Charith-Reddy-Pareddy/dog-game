@@ -44,7 +44,7 @@ def run_episode(env, policy, steps):
     return states, actions_red, actions_blue, rewards_red, rewards_blue
 
 
-def train_self_play(env, policy, episodes=500, steps_per_episode=20, lr=0.01, seed=0):
+def train_self_play(env, policy, episodes=500, steps_per_episode=20, lr=0.01, seed=0, callback=None):
     torch.manual_seed(seed)
     optimizer = torch.optim.Adam(policy.parameters(), lr=lr)
     history = []
@@ -73,6 +73,8 @@ def train_self_play(env, policy, episodes=500, steps_per_episode=20, lr=0.01, se
         optimizer.step()
 
         history.append((np.mean(rewards_red), np.mean(rewards_blue)))
+        if callback:
+            callback(len(history))
 
     return history
 
