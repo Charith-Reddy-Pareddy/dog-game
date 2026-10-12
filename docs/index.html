@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <title>Dog Game</title>
-<meta name="description" content="An interactive, general-sum two-player game with a live Nash-equilibrium simulator and policy-gradient / DQN training metrics." />
+<meta name="description" content="The dog game: a general-sum two-player game with a live Nash-equilibrium simulator, REINFORCE / A2C / PPO and Nash-Q experiments, the walking game, and the research questions they answer." />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <style>
   :root {
@@ -125,6 +125,10 @@
   .traj-read b { color: var(--ink); }
   .traj-legend { font-size: 0.78rem; color: var(--muted); line-height: 1.5; }
 
+  .nav { display: flex; flex-wrap: wrap; gap: 6px 16px; margin: 14px 0 0; font-size: 0.85rem; }
+  .nav a { text-decoration: none; font-weight: 600; }
+  .nav a:hover { text-decoration: underline; }
+  html { scroll-behavior: smooth; }
   .traj-chart svg { width: 100%; height: auto; display: block; margin: 6px 0 10px; background: #fbf9f4; border: 1px solid var(--line); border-radius: 12px; }
   .chip { display: inline-block; font-size: 0.68rem; font-weight: 700; letter-spacing: 0.03em; padding: 2px 8px; border-radius: 999px; margin-left: 8px; vertical-align: middle; text-transform: uppercase; }
   .chip.answered { background: #e3efe6; color: #2f5d3d; }
@@ -165,9 +169,20 @@
       training code:
       <a href="https://github.com/Charith-Reddy-Pareddy/dog-game" target="_blank" rel="noopener">github.com/Charith-Reddy-Pareddy/dog-game</a>.
     </p>
-  </header>
+  
+    <p class="nav">
+      <a href="#simulator">Simulator</a>
+      <a href="#findings">Training results</a>
+      <a href="#experiments">More experiments</a>
+      <a href="#trajectories">Walking game</a>
+      <a href="#questions">Research questions</a>
+      <a href="#assumptions">Assumptions</a>
+      <a href="https://github.com/Charith-Reddy-Pareddy/dog-game/blob/main/research_report.pdf" target="_blank" rel="noopener">Research report (PDF)</a>
+      <a href="https://github.com/Charith-Reddy-Pareddy/dog-game/blob/main/dog_game_results.pdf" target="_blank" rel="noopener">Results (PDF)</a>
+    </p>
+</header>
 
-  <section class="card">
+  <section class="card" id="simulator">
     <h2>Live simulator</h2>
     <div class="layout">
       <div class="stage-wrap">
@@ -484,7 +499,7 @@
       <li>The simulator updates players one after the other (red responds, then blue responds to the new red), not at the same time.</li>
     </ul>
 
-    <h3>Angle-radius version</h3>
+    <h3>The walking game (angle-radius version)</h3>
     <ul>
       <li>I read (&theta;, r) as a move from the player's current position, with r capped at the max step. This is a guess at what the notes mean.</li>
       <li>The angle comes from a von Mises distribution and the step fraction from a Beta, so the angle wraps cleanly and nothing is clipped.</li>
@@ -493,7 +508,7 @@
 
     <h3>Solvers and evidence</h3>
     <ul>
-      <li>The dog game's own policy gradient is REINFORCE with a mean-return baseline.</li>
+      <li>The dog game's policy gradient is REINFORCE with a mean-return baseline, plus A2C and PPO with a learned value function of the dog's position.</li>
       <li>The original dog-game "DQN" is tabular Nash-Q on a single state, with no neural network. The angle-radius game has a real deep Nash-Q: 10 compass directions, a target network and a replay buffer.</li>
       <li>Each Nash-Q stage game is solved exactly, but the solver can cycle on some games, so answers are checked and retried from another starting point.</li>
       <li>The continuous best-response methods (bisection, finite-difference gradient, quadratic fit) are for DQN. Policy gradient handles continuous actions directly.</li>
@@ -511,7 +526,7 @@
   </section>
 
   <footer>
-    <a href="https://github.com/Charith-Reddy-Pareddy/dog-game" target="_blank" rel="noopener">source on GitHub</a>
+    <a href="https://github.com/Charith-Reddy-Pareddy/dog-game" target="_blank" rel="noopener">source on GitHub</a> &middot; <a href="https://github.com/Charith-Reddy-Pareddy/dog-game/blob/main/RESEARCH_REPORT.md" target="_blank" rel="noopener">research report</a> &middot; <a href="https://github.com/Charith-Reddy-Pareddy/dog-game/blob/main/LICENSE" target="_blank" rel="noopener">MIT license</a>
   </footer>
 </div>
 
