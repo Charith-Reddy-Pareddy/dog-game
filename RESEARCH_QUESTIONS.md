@@ -13,6 +13,22 @@ something untested. **Open** means nothing here tests it yet. The answers,
 with the numbers and the caveats, are in [RESEARCH_REPORT.md](RESEARCH_REPORT.md)
 ([PDF](research_report.pdf)).
 
+## Terms used
+
+- **The dog game.** Two players each own a house. Each round both pick a point in the unit
+  square, and a shared dog moves to the weighted average of the two points. Each player is
+  rewarded for the dog being close to their own house.
+- **The walking game** (the angle-radius version). Each player has a position and each
+  round picks a direction and a step length of up to 0.2, then walks that way. The dog moves
+  to the average of the two new positions.
+- **Exploitability.** How much either player could gain by switching to a better action. It
+  is 0 at an equilibrium. A run is called *converged* when it is below 0.004.
+- **Stage game.** The one-round game at each step of a learning method such as Nash-Q, whose
+  equilibrium the method needs to solve.
+- **Fictitious play and Lemke-Howson.** An approximate and an exact way to find a stage-game
+  equilibrium.
+- **Inertia (`w0`).** The share of the dog's old position the dog keeps each round.
+
 ## Policy gradient (REINFORCE, A2C, PPO)
 
 1. **Can self-play policy gradient converge to a Nash equilibrium in a

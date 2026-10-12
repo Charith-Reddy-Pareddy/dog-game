@@ -300,3 +300,5 @@ python3 -m doggame.research_report_pdf     # build research_report.pdf from this
 ```
 
 The studies write one line per finished run, so a stopped run keeps its results and a rerun skips what is done.
+
+The code, results and this report are released under the [MIT license](https://github.com/Charith-Reddy-Pareddy/dog-game/blob/main/LICENSE).
