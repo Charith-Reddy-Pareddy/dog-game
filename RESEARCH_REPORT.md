@@ -8,12 +8,12 @@ This report studies the dog game, a two-player, general-sum game with continuous
 
 ## Summary
 
-- **Policy-gradient self-play converges on the dog game.** 74 of 75 REINFORCE runs and 25 of 25 PPO runs reached exploitability below 0.004 within 1500 episodes. PPO needs far fewer episodes: 19 of 25 runs had converged after 100, against none for REINFORCE and A2C (Section 5.2).
+- **Policy-gradient self-play converges on the dog game.** 74 of 75 REINFORCE runs and 25 of 25 PPO runs reached exploitability below 0.004 within 1500 episodes. PPO needs far fewer episodes: 19 of 25 runs had converged after 100, against none for REINFORCE and A2C (Section 5.2), though on the walking game PPO is the least stable of the three (Section 5.10).
 - **Self-play never finds the solver's interior equilibrium when the houses share a coordinate.** All 30 runs ended on a boundary equilibrium, one of two mirror images, split 23 to 7 and the same for every network layout (Section 5.3).
 - **Dog inertia slows training sharply.** On the harder setup 4, 5, 1 and 0 of 5 runs converged at dog weights 0, 0.3, 0.6 and 0.9 (Section 5.4).
 - **Pre-training helps or hurts depending on the source.** From a setup with the same equilibrium corners, every run was under the threshold after 100 episodes; from one with flipped corners, every run was worse than starting from scratch (Section 5.5).
 - **Nash-Q on a grid.** The stage-game error falls about as 1 over the fictitious-play iterations, and re-solving less often changes nothing in this game. The grid is exact from 5 x 5, the exact equilibrium is always a single action pair, and all of fictitious play's apparent mixing is noise (Sections 5.6 to 5.8).
-- **Walking version.** REINFORCE and the 10-direction Nash-Q network both end near the one-shot Nash corners in all 5 seeds (Section 5.9).
+- **Walking game.** REINFORCE and the 10-direction Nash-Q network both end near the one-shot Nash corners in all 5 seeds (Section 5.9). With A2C and PPO added, the ranking changes: A2C is the most reliable (5 of 5 seeds at the corners), while PPO is the fastest to get there but swings away again in 3 of 5 seeds (Section 5.10).
 - **Open:** why self-play picks the 3-to-1 split, why mismatched pre-training hurts, the equilibrium of the dynamic games (with inertia, and walking), and a PPO comparison matched on gradient steps (Section 6).
 
 ## 1. Background
@@ -42,7 +42,7 @@ The equilibrium is unique when the two houses differ in every coordinate. Each c
 ### 2.3 Two variants
 
 - **Dog inertia.** `make_inertial_transition(w0)` gives the dog momentum: `dog' = w0 * dog + (1 - w0) * (w * red + (1 - w) * blue)`. Holding both actions fixed, the dog still ends at the same steady state as without inertia; it only gets there more slowly, at rate `w0` per round.
-- **Walking (angle-radius) version.** Each player stands somewhere in the square and picks an angle and a step length (up to 0.2), then walks from where it stands. The dog moves to the average of the two new positions. The angle comes from a von Mises distribution and the step fraction from a Beta distribution, so the angle wraps cleanly and nothing is clipped. This is one reading of "angle-radius action", described in [ASSUMPTIONS.md](ASSUMPTIONS.md).
+- **The walking game (the angle-radius version).** In the main game a player jumps straight to any point it likes. In the walking game each player has a position, starting on its own house, and each round picks a direction (an angle) and a step length of up to 0.2, then walks that way from where it stands, stopping at the edge of the square. The dog moves to the average of the two players' new positions, and each player is rewarded by the negative squared distance from the dog to its own house, as before. The state is therefore the dog's position plus both players' positions, and an action is a polar pair (angle, step length) instead of a point. The angle comes from a von Mises distribution and the step fraction from a Beta distribution, so the angle wraps cleanly and nothing is clipped. This is one reading of "angle-radius action", described in [ASSUMPTIONS.md](ASSUMPTIONS.md).
 
 ## 3. Methods
 
@@ -62,7 +62,7 @@ Three network layouts sit behind one interface (`doggame/networks.py`): **separa
 
 ### 3.3 The walking game
 
-`doggame/polar_agent.py` trains the angle-radius policy with REINFORCE. `doggame/polar_dqn.py` is a deep Nash-Q for the same game: 10 compass directions, one network giving both players' 10 x 10 Q-values, a target network, a replay buffer and an exact Nash solve at every target.
+`doggame/polar_agent.py` trains the walking game's policy with REINFORCE, A2C or PPO (the actor-critic loop of `doggame/train_ac.py` is shared with the main game). `doggame/polar_dqn.py` is a deep Nash-Q for the same game: 10 compass directions, one network giving both players' 10 x 10 Q-values, a target network, a replay buffer and an exact Nash solve at every target.
 
 ## 4. Verification
 
@@ -215,6 +215,24 @@ The angle-radius version, on one house setup (red at (0.88, 0.12), blue at (0.3,
 - **Both methods walk to the corners.** The saved paths for five seeds are on the [live site](https://charith-reddy-pareddy.github.io/dog-game/) with a step slider and a play button.
 - **What this does not show.** The one-shot corners are the equilibrium of the one-shot game. The walking game itself has not been solved, so this shows the players heading to the one-shot corners, not that those corners are an equilibrium of the walking game. One untrained REINFORCE policy (seed 4) started near the corners anyway.
 
+### 5.10 REINFORCE, A2C and PPO on the walking game
+
+The same three algorithms on the walking game (Section 5.9's house setup), five seeds each (15 runs), 300 episodes, with the same 10-game score measured every 25 episodes. The chart shows the share of the five seeds whose summed distance from the Nash corners is below 0.1 (my threshold). In the table, "At N" is the mean distance after N episodes of training. The paths swing, so it also reports how many of the later checkpoints (from 150 episodes on, 7 per seed) are at the corners.
+
+{{figure:walking}}
+
+| Algorithm | Before training | At 50 | At 100 | At 200 | At 300 | Late checkpoints at the corners (from 150) | Seeds at the corners at the end |
+|---|---|---|---|---|---|---|---|
+| REINFORCE | 1.49 | 0.696 | 0.341 | 0.130 | 0.055 | 24 of 35 | 4 of 5 |
+| A2C | 1.49 | 0.731 | 0.199 | 0.032 | 0.011 | 34 of 35 | 5 of 5 |
+| PPO | 1.49 | 0.263 | 0.127 | 0.500 | 0.371 | 14 of 35 | 2 of 5 |
+
+- **The ranking is not the main game's.** On the main game PPO was the fastest and most reliable. On the walking game **A2C is the most reliable**: all 5 seeds end at the corners and 34 of its 35 later checkpoints are under 0.1.
+- **REINFORCE is slower and more variable.** It reaches the corners later (mean distance 0.34 at 100 episodes against 0.20 for A2C) and spends 24 of 35 later checkpoints there; one seed stays near 0.2.
+- **PPO is the fastest to get there and the worst at staying.** It has the lowest distance at 50 and 100 episodes, but seeds 1, 2 and 4 leave the corners again later (their distance climbs back to about 1.0, meaning a player has left its corner), and it spends only 14 of 35 later checkpoints at the corners.
+- **A single end-of-training number would mislead.** A first run of this study, scored only at 50, 100, 200 and 300 episodes, gave the same order but different per-seed outcomes (PPO seed 3 ended at 1.4 there and at 0.0 here), because evaluating the policy draws random numbers and so changes the training run. The paths are sensitive, which is why this study records every 25 episodes and reports the share of checkpoints.
+- **Why PPO is unstable here is not tested.** Possible causes are four epochs on a 15-step batch, a learning rate of 0.01 and advantage normalization over so few samples. Whether a smaller learning rate or fewer epochs fixes it was not run.
+
 ## 6. Research questions and answers
 
 The statuses are the same as in [RESEARCH_QUESTIONS.md](RESEARCH_QUESTIONS.md).
@@ -245,7 +263,7 @@ The statuses are the same as in [RESEARCH_QUESTIONS.md](RESEARCH_QUESTIONS.md).
 
 **Q13-Q15.** Q13 (vertex Nash for multi-state games) is open because the dog game has one state. Q14 (LLM play and inverse reward recovery) is a separate research thread. Q15 (disk-shaped action spaces) is partly addressed by the walking version's angle and step length.
 
-**Q16. Do A2C and PPO beat REINFORCE?** *Partly answered.* PPO is much faster per episode; A2C is not faster than REINFORCE. PPO takes four gradient steps per episode, so a step-matched comparison is open (Section 5.2, Q24).
+**Q16. Do A2C and PPO beat REINFORCE?** *Partly answered.* On the main game PPO is much faster per episode and A2C is not faster than REINFORCE (Section 5.2). On the walking game the order changes: A2C is the most reliable and PPO is fast but unstable (Section 5.10, Q26). PPO also takes four gradient steps per episode, so a step-matched comparison is open (Q24).
 
 **Q17-Q20.** Q17 (why the outcome is 3 to 1 and never interior) and Q20 (why mismatched pre-training hurts) have measured patterns but untested mechanisms. Q18 is answered (Section 5.4). Q19 (the equilibrium of the dynamic game with inertia) is open.
 
@@ -255,6 +273,10 @@ The statuses are the same as in [RESEARCH_QUESTIONS.md](RESEARCH_QUESTIONS.md).
 
 **Q23-Q25.** Whether the one-shot corners are an equilibrium of the walking game, a compute-matched PPO comparison, and the effect of step length and discount are open.
 
+**Q26. Do A2C and PPO beat REINFORCE on the walking game?** *Answered for one house setup (15 runs).* A2C is the most reliable, REINFORCE is slower, and PPO is the fastest but does not stay at the corners (Section 5.10).
+
+**Q27-Q28.** Why PPO is unstable on the walking game, and whether a smaller learning rate or fewer epochs fixes it, are open.
+
 ## 7. Limits
 
 - Most results rest on five seeds, and the equilibrium-selection study on ten per layout. Percentages are counts out of those, not estimates with error bars.
@@ -262,6 +284,7 @@ The statuses are the same as in [RESEARCH_QUESTIONS.md](RESEARCH_QUESTIONS.md).
 - PPO and A2C are compared on episodes, not on gradient steps or wall-clock time.
 - Policies trained with inertia are scored against the one-shot equilibrium. The walking game is scored against the one-shot corners. Neither is the equilibrium of its own dynamic game.
 - The pre-training study has a single target setup. The walking study has a single house setup.
+- The walking-game scores use 10 sampled games per checkpoint and five seeds, and the paths are noisy, so small differences between algorithms should not be read as a ranking.
 - Timings in the resolution table were taken on a heavily loaded machine and show growth, not absolute cost.
 - The Gaussian policy clips actions to the square before taking the log-probability, which biases the gradient slightly. Every algorithm shares this.
 
@@ -271,7 +294,7 @@ The statuses are the same as in [RESEARCH_QUESTIONS.md](RESEARCH_QUESTIONS.md).
 python3 -m pytest                          # the test suite
 python3 -m doggame.experiments             # the original convergence study
 python3 -m doggame.dog_game_study          # five-seed convergence and walking runs
-python3 -m doggame.dog_game_studies        # the seven studies in Section 5 (resumable, shardable)
+python3 -m doggame.dog_game_studies        # the eight studies in Section 5 (resumable, shardable)
 python3 -m doggame.dog_game_summary        # print every table as Markdown
 python3 -m doggame.research_report_pdf     # build research_report.pdf from this file
 ```
