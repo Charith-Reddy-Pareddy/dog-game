@@ -10,6 +10,7 @@ import numpy as np
 from doggame import dog_game_summary
 from doggame.experiments import DEFAULT_CONFIGS
 from doggame.pdf_kit import kit
+from doggame.walking_figures import trajectory_figure
 
 RESULTS = "results/dog_game_runs.jsonl"
 STUDIES = "results/dog_game_studies.jsonl"
@@ -97,35 +98,6 @@ def build(path=OUTPUT, results=RESULTS, trajectories=TRAJECTORIES, studies=STUDI
         d.add(String(10, 160, "distance to the Nash corners", fontSize=8))
         return d
 
-    RED, BLUE = colors.HexColor("#c0392b"), colors.HexColor("#1f5fa8")
-
-    def panel(d, x, y, size, title, path):
-        """One unit square at (x, y): houses, Nash corners and the three paths."""
-        at = lambda p: (x + p[0] * size, y + p[1] * size)
-        d.add(Rect(x, y, size, size, strokeColor=colors.HexColor("#b8c2cc"), fillColor=colors.HexColor("#fafbfc")))
-        d.add(String(x, y + size + 5, title, fontSize=8))
-        for house, color in ((walk["house_red"], RED), (walk["house_blue"], BLUE)):
-            hx, hy = at(house)
-            d.add(Rect(hx - 4, hy - 4, 8, 8, fillColor=color, strokeColor=color, fillOpacity=0.25))
-        for corner, color in ((walk["nash_red"], RED), (walk["nash_blue"], BLUE)):
-            cx, cy = at(corner)
-            for dx, dy in ((1, 1), (1, -1)):
-                d.add(Line(cx - 4 * dx, cy - 4 * dy, cx + 4 * dx, cy + 4 * dy, strokeColor=color, strokeWidth=1.2))
-        for name, color, dash in (("dog", colors.HexColor("#555555"), [2, 2]), ("red", RED, None), ("blue", BLUE, None)):
-            points = [c for p in path[name] for c in at(p)]
-            d.add(PolyLine(points, strokeColor=color, strokeWidth=1.3, strokeDashArray=dash))
-            d.add(Circle(*at(path[name][0]), 2.5, strokeColor=color, fillColor=colors.white))
-            d.add(Circle(*at(path[name][-1]), 2.5, strokeColor=color, fillColor=color))
-
-    def trajectory_figure():
-        d = Drawing(440, 450)
-        size = 170
-        for row, (key, label) in enumerate((("reinforce", "REINFORCE"), ("nash_q", "Nash-Q"))):
-            for col, when in enumerate(("before", "after")):
-                panel(d, 30 + col * 215, 245 - row * 215 + 0, size, f"{label}, {when} training", example[key][when])
-        d.add(String(30, 8, "square = house, X = one-shot Nash corner, open circle = start, filled circle = end; dashed gray = dog", fontSize=7.5))
-        return d
-
     near = [r for r in walking if r["before"] < 0.5]  # untrained policies that already started close to the corners
     closest = max((r for r in convergence if r["exploitability"] < CONVERGED), key=lambda r: r["exploitability"])
     miss_text = "; ".join(f"{r['architecture']} architecture, house setup {r['config'] + 1}, seed {r['seed']} ({r['exploitability']:.2f})" for r in misses)
@@ -183,7 +155,7 @@ def build(path=OUTPUT, results=RESULTS, trajectories=TRAJECTORIES, studies=STUDI
         KeepTogether([k.h2("Trajectories"),
                       k.text(f"One sampled 15-step game for seed {example['seed']}, before and after training, on the same house setup. "
                              "Red and blue walk from their own houses; the dog moves to the average of their positions."),
-                      trajectory_figure(), k.small("Paths of red, blue and the dog. Before training the walks wander; "
+                      trajectory_figure(walk), k.small("Paths of red, blue and the dog. Before training the walks wander; "
                       "after training both players end at or near their Nash corners and the dog settles near the middle.")]),
         k.h2("Limits"),
         k.point("The corners are the equilibrium of the one-shot game. The walking game itself has not been solved, so this shows the players heading to the one-shot "
