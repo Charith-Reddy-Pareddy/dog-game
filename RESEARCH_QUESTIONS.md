@@ -153,26 +153,31 @@ with the numbers and the caveats, are in [RESEARCH_REPORT.md](RESEARCH_REPORT.md
     *Status: answered for the main game (75 runs of PPO with 1, 2 and 4 epochs).
     No clear lead per gradient step. After 100 episodes 1, 9 and 19 of 25 runs had
     converged with 1, 2 and 4 epochs, and one-epoch PPO is no faster than REINFORCE.*
-25. **How does the walking game change with the maximum step length and with
-    the discount?** *Status: open; only a step of 0.2 and a discount of 0.9
-    were run.*
-
+25. **How does the walking game change with the maximum step length and with the discount?**
+    *Status: partly answered for A2C on one house setup (20 runs). A lower discount
+    makes learning faster (0.5: 5 of 5 seeds, 35 of 35 later checkpoints at the corners)
+    and a higher one slower (0.99: 4 of 5, 22 of 35); a longer step (0.4) costs nothing, and
+    a shorter one (0.1) is slower (3 of 5, 20 of 35) within 300 episodes. The one-shot corners
+    do not depend on either, so this is about how fast the players get there, not where.*
 26. **Do A2C and PPO beat REINFORCE on the walking game?**
     *Status: answered for one house setup (15 runs). A2C is the most reliable
     (5 of 5 seeds at the corners at the end, 34 of 35 later checkpoints under
     0.1); REINFORCE is slower (4 of 5, 24 of 35); PPO gets there fastest but
     does not stay (2 of 5, 14 of 35).*
 27. **Why is PPO unstable on the walking game?**
-    *Status: open on the mechanism. A smaller learning rate does not help and fewer
-    epochs help partly, so it is not simply the step size; reusing each episode seems
-    to contribute, but that is a hypothesis.*
+    *Status: open on the mechanism. A smaller learning rate does not help, fewer epochs
+    help, and default PPO's failures persist (two of five seeds never return to the corners
+    in 900 episodes), so it is not just slow; reusing each episode seems to contribute, but that
+    is a hypothesis.*
 28. **Does a smaller learning rate or fewer epochs make PPO reliable on the walking game?**
-    *Status: answered for the settings tried (15 runs). Fewer epochs help partly (4 of 5
-    seeds at the corners, 21 of 35 later checkpoints, against 2 of 5 and 14 of 35 for the
-    default), a smaller learning rate does not (1 of 5 and 2 of 5), and nothing matches A2C
-    (5 of 5, 34 of 35).*
-29. **Do the slower PPO settings settle with more than 300 episodes?** Several runs
-    were still far from the corners when training stopped. *Status: open.*
+    *Status: answered for the settings tried. Fewer epochs help (4 of 5 seeds after 300
+    episodes, 5 of 5 after 900), a smaller learning rate does not (1 of 5 and 2 of 5 after 300),
+    and one-epoch PPO is still much slower than A2C (0.12 against 0.011 mean distance after 300
+    episodes).*
+29. **Do the slower PPO settings settle with more than 300 episodes?**
+    *Status: answered for one-epoch PPO and the default (30 runs with A2C). One-epoch PPO
+    settles (5 of 5 seeds at the corners after 900 episodes) and default PPO does not (3 of 5,
+    with two seeds stuck far away). The smaller learning rate settings were not run longer.*
 
 ## Where each question is answered in this repository
 
@@ -189,8 +194,10 @@ with the numbers and the caveats, are in [RESEARCH_REPORT.md](RESEARCH_REPORT.md
 | 12, 18, 19 | study `inertia` (40 runs) |
 | 26 | study `walking` (15 runs) |
 | 24, 27, 28 | study `ppo_variants` (65 runs) |
+| 27, 28, 29 | study `ppo_long` (15 runs) |
+| 25 | study `walking_settings` (20 runs) |
 | walking game | `results/dog_game_runs.jsonl`, `results/dog_game_trajectories.json` |
 
-Questions 5b, 11, 13, 14, 19, 23, 25, 27 and 29 are open. The studies are in
+Questions 5b, 11, 13, 14, 19, 23 and 27 are open, and 25 is partly answered. The studies are in
 [`doggame/dog_game_studies.py`](doggame/dog_game_studies.py) and the tables are
 produced by [`doggame/dog_game_summary.py`](doggame/dog_game_summary.py).

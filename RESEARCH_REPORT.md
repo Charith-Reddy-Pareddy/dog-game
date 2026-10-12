@@ -13,7 +13,7 @@ This report studies the dog game, a two-player, general-sum game with continuous
 - **Dog inertia slows training sharply.** On the harder setup 4, 5, 1 and 0 of 5 runs converged at dog weights 0, 0.3, 0.6 and 0.9 (Section 5.4).
 - **Pre-training helps or hurts depending on the source.** From a setup with the same equilibrium corners, every run was under the threshold after 100 episodes; from one with flipped corners, every run was worse than starting from scratch (Section 5.5).
 - **Nash-Q on a grid.** The stage-game error falls about as 1 over the fictitious-play iterations, and re-solving less often changes nothing in this game. The grid is exact from 5 x 5, the exact equilibrium is always a single action pair, and all of fictitious play's apparent mixing is noise (Sections 5.6 to 5.8).
-- **Walking game.** REINFORCE and the 10-direction Nash-Q network both end near the one-shot Nash corners in all 5 seeds (Section 5.9). With A2C and PPO added, the ranking changes: A2C is the most reliable (5 of 5 seeds at the corners), while PPO is the fastest to get there but swings away again in 3 of 5 seeds. A smaller learning rate does not fix it and fewer epochs only help partly (Sections 5.10 and 5.11).
+- **Walking game.** REINFORCE and the 10-direction Nash-Q network both end near the one-shot Nash corners in all 5 seeds (Section 5.9). With A2C and PPO added, the ranking changes: A2C is the most reliable (5 of 5 seeds at the corners), while PPO is the fastest to get there but swings away again in 3 of 5 seeds. A smaller learning rate does not fix it. One epoch does, but only given three times more training, and default PPO still has two seeds stuck far from the corners after 900 episodes (Sections 5.10 to 5.12). A lower discount makes the walking game easier to learn and a higher one harder (Section 5.12).
 - **Open:** why self-play picks the 3-to-1 split, why mismatched pre-training hurts, the equilibrium of the dynamic games (with inertia, and walking), and a PPO comparison matched on gradient steps (Section 6).
 
 ## 1. Background
@@ -265,6 +265,36 @@ Two follow-ups to Sections 5.2 and 5.10, 65 more runs.
 - **None matches A2C**, which has 5 of 5 seeds and 34 of 35 later checkpoints at the corners. The instability is therefore not just a step-size problem, and reusing each episode seems to contribute, but why is not tested.
 - Five seeds per setting and a 300-episode horizon, so small differences between settings should not be read as a ranking.
 
+### 5.12 Longer training, and a different step length or discount, on the walking game
+
+**Training three times longer.** A2C, PPO with the default 4 epochs and PPO with one epoch, five seeds each, 900 episodes, scored every 25 episodes (late checkpoints are from 450 episodes on):
+
+| Setting | Before training | At 300 | At 600 | At 900 | Late checkpoints at the corners (from 450) | Seeds at the corners at the end |
+|---|---|---|---|---|---|---|
+| A2C | 1.49 | 0.011 | 0.003 | 0.003 | 95 of 95 | 5 of 5 |
+| PPO, 4 epochs (default) | 1.49 | 0.371 | 0.499 | 0.669 | 50 of 95 | 3 of 5 |
+| PPO, 1 epoch | 1.49 | 0.123 | 0.033 | 0.007 | 77 of 95 | 5 of 5 |
+
+- **A2C stays at the corners**, at every late checkpoint and in all five seeds.
+- **One-epoch PPO settles.** It ends with 5 of 5 seeds at the corners, though it takes longer than A2C (mean distance 0.12 after 300 episodes against 0.011).
+- **Default PPO does not settle.** It ends with 3 of 5 seeds at the corners and 50 of 95 late checkpoints. Two seeds leave the corners and do not return within 900 episodes (their distance is about 1.0 and over 2 at the end), so the instability is not just a slow start.
+- The two PPO settings with a learning rate of 0.003 were not run longer.
+
+**A different step length or discount.** A2C on the walking game with the maximum step at 0.1 or 0.4, or the discount at 0.5 or 0.99, five seeds each, 300 episodes, next to the default (0.2 and 0.9):
+
+| Setting | Before training | At 50 | At 100 | At 200 | At 300 | Late checkpoints at the corners (from 150) | Seeds at the corners at the end |
+|---|---|---|---|---|---|---|---|
+| max step 0.1, discount 0.9 | 1.08 | 0.439 | 0.386 | 0.234 | 0.184 | 20 of 35 | 3 of 5 |
+| max step 0.2, discount 0.9 (default) | 1.49 | 0.731 | 0.199 | 0.032 | 0.011 | 34 of 35 | 5 of 5 |
+| max step 0.4, discount 0.9 | 1.67 | 0.509 | 0.182 | 0.036 | 0.028 | 32 of 35 | 5 of 5 |
+| max step 0.2, discount 0.5 | 1.49 | 0.409 | 0.088 | 0.009 | 0.003 | 35 of 35 | 5 of 5 |
+| max step 0.2, discount 0.99 | 1.49 | 0.836 | 0.442 | 0.102 | 0.056 | 22 of 35 | 4 of 5 |
+
+- **A lower discount makes learning faster and a higher one slower.** A discount of 0.5 gets 5 of 5 seeds to the corners and 35 of 35 late checkpoints, and 0.99 gets 4 of 5 and 22 of 35.
+- **A longer step costs nothing and a shorter one is slower.** A step of 0.4 is as reliable as the default (5 of 5, 32 of 35). A step of 0.1 gets 3 of 5 seeds and 20 of 35 late checkpoints within 300 episodes; more episodes might close the gap, which was not run.
+- **These change how fast the players get to the corners, not where.** The one-shot Nash corners do not depend on the step length or the discount.
+- A2C only, one house setup and five seeds, so these are patterns and not a ranking.
+
 ## 6. Research questions and answers
 
 The statuses are the same as in [RESEARCH_QUESTIONS.md](RESEARCH_QUESTIONS.md).
@@ -303,13 +333,17 @@ The statuses are the same as in [RESEARCH_QUESTIONS.md](RESEARCH_QUESTIONS.md).
 
 **Q22. Is the exact equilibrium always one action pair?** *Answered.* Yes, in all 25 games (Section 5.7).
 
-**Q23 and Q25.** Whether the one-shot corners are an equilibrium of the walking game, and the effect of step length and discount, are open.
+**Q23.** Whether the one-shot corners are an equilibrium of the walking game is open.
+
+**Q25. How does the walking game change with the step length and the discount?** *Partly answered for A2C on one setup.* A lower discount makes learning faster, a higher one slower, a longer step costs nothing and a shorter one is slower within 300 episodes (Section 5.12). The corners themselves do not depend on either.
 
 **Q24. Does PPO stay ahead when matched on gradient steps?** *Answered for the main game.* No clear lead per step: with one epoch PPO is no faster than REINFORCE, and with 4 epochs it is in line with REINFORCE given the same number of steps (Section 5.11).
 
 **Q26. Do A2C and PPO beat REINFORCE on the walking game?** *Answered for one house setup (15 runs).* A2C is the most reliable, REINFORCE is slower, and PPO is the fastest but does not stay at the corners (Section 5.10).
 
-**Q27-Q29.** Why PPO is unstable on the walking game is open on the mechanism: a smaller learning rate does not help and fewer epochs help partly (Q28, Section 5.11). Whether the slower settings settle with more than 300 episodes (Q29) is open.
+**Q27. Why is PPO unstable on the walking game?** *Open on the mechanism.* A smaller learning rate does not help and fewer epochs do; default PPO's failures persist for two seeds in 900 episodes (Sections 5.11 and 5.12).
+
+**Q28-Q29.** *Answered for the settings tried.* One-epoch PPO becomes reliable (4 of 5 seeds after 300 episodes and 5 of 5 after 900) but stays slower than A2C; a smaller learning rate does not help; default PPO does not settle with more training (Sections 5.11 and 5.12). The smaller-learning-rate settings were not run longer.
 
 ## 7. Limits
 
@@ -317,7 +351,7 @@ The statuses are the same as in [RESEARCH_QUESTIONS.md](RESEARCH_QUESTIONS.md).
 - The convergence threshold (0.004) and the pre-training and inertia setups are my choices. Training settings (learning rate 0.01, one episode per update) were not tuned for each algorithm.
 - PPO and A2C are compared mainly on episodes. Section 5.11 adds a comparison on gradient steps for the main game. Wall-clock time was not compared.
 - Policies trained with inertia are scored against the one-shot equilibrium. The walking game is scored against the one-shot corners. Neither is the equilibrium of its own dynamic game.
-- The pre-training study has a single target setup. The walking study has a single house setup.
+- The pre-training study has a single target setup. The walking studies share a single house setup, and the step-length and discount study uses A2C only.
 - The walking-game scores use 10 sampled games per checkpoint and five seeds, and the paths are noisy, so small differences between algorithms should not be read as a ranking.
 - Timings in the resolution table were taken on a heavily loaded machine and show growth, not absolute cost.
 - The Gaussian policy clips actions to the square before taking the log-probability, which biases the gradient slightly. Every algorithm shares this.
@@ -328,7 +362,7 @@ The statuses are the same as in [RESEARCH_QUESTIONS.md](RESEARCH_QUESTIONS.md).
 python3 -m pytest                          # the test suite
 python3 -m doggame.experiments             # the original convergence study
 python3 -m doggame.dog_game_study          # five-seed convergence and walking runs
-python3 -m doggame.dog_game_studies        # the nine studies in Section 5 (resumable, shardable)
+python3 -m doggame.dog_game_studies        # the eleven studies in Section 5 (resumable, shardable)
 python3 -m doggame.dog_game_summary        # print every table as Markdown
 python3 -m doggame.research_report_pdf     # build research_report.pdf from this file
 ```
