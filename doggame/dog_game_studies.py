@@ -8,6 +8,7 @@ to do only the second of four shards.
 
 - algorithms:   REINFORCE vs A2C vs PPO, how fast each gets near the equilibrium
 - walking:      the same three algorithms on the angle-radius (walking) game
+- ppo_variants: PPO with fewer epochs or a smaller learning rate, on both games
 - selection:    which equilibrium self-play finds when the houses share a coordinate
 - inertia:      does giving the dog momentum (w0) change where training ends up
 - pretraining:  does starting from a policy trained on another setup help
@@ -67,7 +68,7 @@ def score(policy, env):
                 red=red.tolist(), blue=blue.tolist())
 
 
-def train_with_curve(env, policy, algorithm, episodes, checkpoints, seed):
+def train_with_curve(env, policy, algorithm, episodes, checkpoints, seed, **options):
     """Train, scoring the policy at each checkpoint. Returns {episodes so far: exploitability}."""
     curve = {}
 
@@ -78,7 +79,7 @@ def train_with_curve(env, policy, algorithm, episodes, checkpoints, seed):
     if algorithm == "reinforce":
         train_self_play(env, policy, episodes=episodes, seed=seed, callback=record)
     else:
-        train_actor_critic(env, policy, algorithm, episodes=episodes, seed=seed, callback=record)
+        train_actor_critic(env, policy, algorithm, episodes=episodes, seed=seed, callback=record, **options)
     return curve
 
 
@@ -94,28 +95,50 @@ def study_algorithms(seeds):
                 yield dict(config=config_index, algorithm=algorithm, seed=seed), run
 
 
+WALK_CHECKPOINTS = tuple(range(25, 301, 25))  # finely, because the walking policies' paths swing
+
+
+def walking_run(algorithm, seed, **options):
+    """Train one walking-game policy for 300 episodes, scoring it every 25: how far the players end from the one-shot Nash corners."""
+    env = PolarDogGameEnv(*WALK_HOUSES, w=0.5, max_step=0.2)
+    torch.manual_seed(seed)
+    policy = PolarPolicy(seed=seed)
+    distance = lambda: walk_distance(env, lambda: final_positions(env, policy))
+    start, curve = distance(), {}
+
+    def record(done):
+        if done in WALK_CHECKPOINTS:
+            curve[done] = distance()
+
+    if algorithm == "reinforce":
+        train_polar(env, policy, episodes=300, seed=seed, callback=record, **options)
+    else:
+        train_polar_actor_critic(env, policy, algorithm, episodes=300, seed=seed, callback=record, **options)
+    return dict(start=start, curve=curve)
+
+
 def study_walking(seeds):
-    """REINFORCE, A2C and PPO on the walking game: how far the players end from the one-shot Nash corners."""
-    checkpoints = tuple(range(25, 301, 25))  # finely, because the walking policies' paths swing
+    """REINFORCE, A2C and PPO on the walking game."""
     for algorithm in ("reinforce", "a2c", "ppo"):
         for seed in seeds:
-            def run(algorithm=algorithm, seed=seed):
-                env = PolarDogGameEnv(*WALK_HOUSES, w=0.5, max_step=0.2)
-                torch.manual_seed(seed)
-                policy = PolarPolicy(seed=seed)
-                distance = lambda: walk_distance(env, lambda: final_positions(env, policy))
-                start, curve = distance(), {}
+            yield dict(algorithm=algorithm, seed=seed), lambda algorithm=algorithm, seed=seed: walking_run(algorithm, seed)
 
-                def record(done):
-                    if done in checkpoints:
-                        curve[done] = distance()
 
-                if algorithm == "reinforce":
-                    train_polar(env, policy, episodes=300, seed=seed, callback=record)
-                else:
-                    train_polar_actor_critic(env, policy, algorithm, episodes=300, seed=seed, callback=record)
-                return dict(start=start, curve=curve)
-            yield dict(algorithm=algorithm, seed=seed), run
+def study_ppo_variants(seeds):
+    """Is PPO's speed from reusing each episode, and does a gentler PPO fix its instability on the walking game?"""
+    checkpoints = (100, 250, 500, 1000, 1500)
+    for epochs in (1, 2):  # 4 epochs, the default, is in the `algorithms` study
+        for config_index, config in enumerate(DEFAULT_CONFIGS):
+            for seed in seeds:
+                def run(config=config, epochs=epochs, seed=seed):
+                    env = make_env(config)
+                    policy = TwoPlayerPolicy(env.domain, architecture="separate", seed=seed)
+                    return dict(curve=train_with_curve(env, policy, "ppo", EPISODES, checkpoints, seed, ppo_epochs=epochs))
+                yield dict(game="main", epochs=epochs, lr=0.01, config=config_index, seed=seed), run
+    for lr, epochs in ((0.01, 1), (0.003, 4), (0.003, 1)):  # lr 0.01 with 4 epochs is in the `walking` study
+        for seed in seeds:
+            yield (dict(game="walking", epochs=epochs, lr=lr, seed=seed),
+                   lambda lr=lr, epochs=epochs, seed=seed: walking_run("ppo", seed, lr=lr, ppo_epochs=epochs))
 
 
 def study_selection(seeds):
@@ -212,7 +235,7 @@ def study_noise(seeds, resolution=9):
     yield dict(iterations="exact", seed=0), lambda: dict(spread=float(spread), gap=float(gap), support=int((exact_red > 1e-3).sum()), top=float(exact_red.max()))
 
 
-STUDIES = dict(algorithms=study_algorithms, walking=study_walking, selection=study_selection, inertia=study_inertia, pretraining=study_pretraining,
+STUDIES = dict(algorithms=study_algorithms, walking=study_walking, ppo_variants=study_ppo_variants, selection=study_selection, inertia=study_inertia, pretraining=study_pretraining,
                stage_solver=study_stage_solver, resolution=study_resolution, noise=study_noise)
 
 

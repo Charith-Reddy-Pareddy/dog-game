@@ -72,3 +72,13 @@ def test_shards_split_the_runs_between_processes_without_overlap(tmp_path, monke
 
     seeds = [json.loads(line)["key"]["seed"] for line in open(path)]
     assert seeds == [1, 4, 0, 3]  # shard 1 of 3 did runs 1 and 4, shard 0 did runs 0 and 3, nobody did 2 or 5
+
+
+def test_the_ppo_variants_study_covers_both_games_with_distinct_settings():
+    keys = [key for key, _ in studies.study_ppo_variants(range(5))]
+
+    main = [k for k in keys if k["game"] == "main"]
+    walking = [k for k in keys if k["game"] == "walking"]
+    assert len(main) == 2 * 5 * 5 and {k["epochs"] for k in main} == {1, 2}   # 1 and 2 epochs, 5 setups, 5 seeds
+    assert sorted({(k["lr"], k["epochs"]) for k in walking}) == [(0.003, 1), (0.003, 4), (0.01, 1)] and len(walking) == 15
+    assert len({json.dumps(k, sort_keys=True) for k in keys}) == len(keys)  # no run is listed twice
