@@ -21,3 +21,19 @@ def test_players_never_leave_the_square():
 
     for name in ("red", "blue", "dog"):
         assert np.all(np.asarray(path[name]) >= 0.0) and np.all(np.asarray(path[name]) <= 1.0)
+
+
+def test_saved_trajectories_cover_every_seed_method_and_step():
+    import json
+
+    with open("results/dog_game_trajectories.json") as f:
+        saved = json.load(f)
+
+    assert [s["seed"] for s in saved["seeds"]] == list(range(5))
+    for entry in saved["seeds"]:
+        for method in ("reinforce", "nash_q"):
+            for when in ("before", "after"):
+                for name in ("red", "blue", "dog"):
+                    points = np.asarray(entry[method][when][name])
+                    assert points.shape == (16, 2)  # the start and 15 steps
+                    assert points.min() >= 0.0 and points.max() <= 1.0

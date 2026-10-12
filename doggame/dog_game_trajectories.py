@@ -1,6 +1,6 @@
 """Paths of the two players and the dog in the angle-radius game, before and
-after training, for one seed. Saved to results/dog_game_trajectories.json and
-drawn by doggame.dog_game_report. Run with `python3 -m doggame.dog_game_trajectories`."""
+after training, for several seeds. Saved to results/dog_game_trajectories.json,
+drawn by doggame.dog_game_report and animated on the live site. Run with `python3 -m doggame.dog_game_trajectories`."""
 
 import json
 import random
@@ -32,9 +32,8 @@ def record(env, choose_moves, steps=STEPS):
     return path
 
 
-def trajectories(seed=0):
-    env = PolarDogGameEnv(*WALK_HOUSES, w=0.5, max_step=0.2)
-    nash_red, nash_blue, _ = solve_stage_nash(env.house_red, env.house_blue, env.w, Square())
+def play_seed(env, seed):
+    """Train both methods from this seed and record one game before and after training."""
 
     def seeded():
         random.seed(seed)
@@ -59,10 +58,23 @@ def trajectories(seed=0):
     net = train_nash_dqn(env, episodes=60, seed=seed)
     nash_q["after"] = record(env, nash_q_moves(net))
 
-    return dict(seed=seed, house_red=env.house_red.tolist(), house_blue=env.house_blue.tolist(),
-                nash_red=nash_red.tolist(), nash_blue=nash_blue.tolist(), reinforce=reinforce, nash_q=nash_q)
+    return dict(seed=seed, reinforce=reinforce, nash_q=nash_q)
+
+
+def trajectories(seeds=range(5), path=OUTPUT):
+    """Record every seed and save after each one, so a stopped run keeps what it finished."""
+    env = PolarDogGameEnv(*WALK_HOUSES, w=0.5, max_step=0.2)
+    nash_red, nash_blue, _ = solve_stage_nash(env.house_red, env.house_blue, env.w, Square())
+    result = dict(house_red=env.house_red.tolist(), house_blue=env.house_blue.tolist(),
+                  nash_red=nash_red.tolist(), nash_blue=nash_blue.tolist(), seeds=[])
+    for seed in seeds:
+        result["seeds"].append(play_seed(env, seed))
+        with open(path, "w") as f:
+            json.dump(result, f)
+        print(f"seed {seed} recorded", flush=True)
+    return result
 
 
 if __name__ == "__main__":
-    with open(OUTPUT, "w") as f:
-        json.dump(trajectories(), f)
+    torch.set_num_threads(1)
+    trajectories()
