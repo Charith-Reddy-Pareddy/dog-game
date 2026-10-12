@@ -89,6 +89,8 @@ from the saved runs in `results/`:
 - **A gentler PPO settles, the default does not.** With one epoch PPO reaches the corners in 5 of 5 seeds
   after 900 episodes; default PPO still has two seeds stuck far away. A lower discount makes the
   walking game easier to learn.
+- **The walking-game ranking holds on other house setups.** A2C is again the most reliable wherever
+  learning works, and one setup is much harder (no algorithm learns it in 300 episodes).
 - **PPO's speed comes from reusing each episode.** With one epoch (one gradient step per
   episode, like REINFORCE) it is no faster than REINFORCE.
 
@@ -174,7 +176,7 @@ env = DogGameEnv(house_red=(0.9, 0.2), house_blue=(0.1, 0.8), w=0.5,
 ```bash
 python3 -m doggame.experiments        # the original 15-run convergence study
 python3 -m doggame.dog_game_study     # five-seed convergence and walking runs
-python3 -m doggame.dog_game_studies   # the eleven studies in the report (resumable; add 0/4 to shard)
+python3 -m doggame.dog_game_studies   # the thirteen studies in the report (resumable; add 0/4 to shard)
 python3 -m doggame.dog_game_summary   # print every table as Markdown
 python3 -m doggame.research_report_pdf   # rebuild research_report.pdf from RESEARCH_REPORT.md
 ```
@@ -227,7 +229,7 @@ run keeps what it finished and a rerun skips it.
 
 - `doggame/dog_game_study.py`, `doggame/dog_game_trajectories.py` -- the five-seed
   convergence and walking runs, and the recorded paths of the players and the dog.
-- `doggame/dog_game_studies.py`, `doggame/dog_game_summary.py` -- eleven experiments
+- `doggame/dog_game_studies.py`, `doggame/dog_game_summary.py` -- thirteen experiments
   that answer open research questions, and the tables built from their saved results.
 - `doggame/dog_game_report.py`, `doggame/research_report_pdf.py`, `doggame/walking_figures.py`,
   `doggame/pdf_kit.py` -- build `dog_game_results.pdf`, `research_report.pdf` and
@@ -250,7 +252,7 @@ run keeps what it finished and a rerun skips it.
 
 ## Tests
 
-`python3 -m pytest` runs the whole suite (178 tests). Defects found while testing are fixed
+`python3 -m pytest` runs the whole suite (182 tests). Defects found while testing are fixed
 in commits labelled "debug", each with a regression test.
 
 ## License
