@@ -102,8 +102,8 @@ solver to check both against, and a browser visualization.
   PDF built from them.
 - `doggame/train_ac.py` -- A2C and PPO self-play for the dog game, as alternatives
   to REINFORCE in `train.py`.
-- `doggame/dog_game_studies.py`, `doggame/dog_game_summary.py` -- seven experiments
-  that answer open research questions (algorithms, equilibrium selection, inertia,
+- `doggame/dog_game_studies.py`, `doggame/dog_game_summary.py` -- eight experiments
+  that answer open research questions (algorithms on both games, equilibrium selection, inertia,
   pre-training, stage-solver precision, grid resolution, fictitious-play noise), and
   the tables built from their saved results.
 - `doggame/research_report_pdf.py` -- builds `research_report.pdf` from

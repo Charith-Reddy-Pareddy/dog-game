@@ -304,6 +304,12 @@ At round 800, per seed:
   fictitious play with 10 to 3000 iterations against the exact solver. PPO and
   A2C are compared with REINFORCE on episodes, not gradient steps.
 - Timings in the resolution study were taken on a heavily loaded machine.
+- The walking-game comparison (study `walking`) uses the same house setup as the
+  other walking runs, 300 episodes, 5 seeds, and scores each checkpoint (every 25
+  episodes) as the mean of 10 sampled games. "At the corners" means a summed distance
+  from the one-shot Nash corners under 0.1, which is my threshold. A first run scored
+  only at 4 checkpoints gave different per-seed outcomes, because evaluating a policy
+  draws random numbers and so changes the training run, so the paths are sensitive.
 - The explanations in the research report for why PG picks one
   equilibrium over another are hypotheses, not tested results.
 
