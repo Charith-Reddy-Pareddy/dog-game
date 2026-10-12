@@ -9,6 +9,8 @@ to do only the second of four shards.
 - algorithms:   REINFORCE vs A2C vs PPO, how fast each gets near the equilibrium
 - walking:      the same three algorithms on the angle-radius (walking) game
 - ppo_variants: PPO with fewer epochs or a smaller learning rate, on both games
+- ppo_long:     the PPO settings trained three times longer on the walking game
+- walking_settings: the walking game with a shorter or longer step and a lower or higher discount
 - selection:    which equilibrium self-play finds when the houses share a coordinate
 - inertia:      does giving the dog momentum (w0) change where training ends up
 - pretraining:  does starting from a policy trained on another setup help
@@ -95,25 +97,23 @@ def study_algorithms(seeds):
                 yield dict(config=config_index, algorithm=algorithm, seed=seed), run
 
 
-WALK_CHECKPOINTS = tuple(range(25, 301, 25))  # finely, because the walking policies' paths swing
-
-
-def walking_run(algorithm, seed, **options):
-    """Train one walking-game policy for 300 episodes, scoring it every 25: how far the players end from the one-shot Nash corners."""
-    env = PolarDogGameEnv(*WALK_HOUSES, w=0.5, max_step=0.2)
+def walking_run(algorithm, seed, episodes=300, every=25, max_step=0.2, discount=0.9, **options):
+    """Train one walking-game policy, scoring it every `every` episodes (finely, because the walking policies'
+    paths swing): how far the players end from the one-shot Nash corners, which do not depend on the step or the discount."""
+    env = PolarDogGameEnv(*WALK_HOUSES, w=0.5, max_step=max_step, discount=discount)
     torch.manual_seed(seed)
     policy = PolarPolicy(seed=seed)
     distance = lambda: walk_distance(env, lambda: final_positions(env, policy))
     start, curve = distance(), {}
 
     def record(done):
-        if done in WALK_CHECKPOINTS:
+        if done % every == 0:
             curve[done] = distance()
 
     if algorithm == "reinforce":
-        train_polar(env, policy, episodes=300, seed=seed, callback=record, **options)
+        train_polar(env, policy, episodes=episodes, seed=seed, callback=record, **options)
     else:
-        train_polar_actor_critic(env, policy, algorithm, episodes=300, seed=seed, callback=record, **options)
+        train_polar_actor_critic(env, policy, algorithm, episodes=episodes, seed=seed, callback=record, **options)
     return dict(start=start, curve=curve)
 
 
@@ -139,6 +139,22 @@ def study_ppo_variants(seeds):
         for seed in seeds:
             yield (dict(game="walking", epochs=epochs, lr=lr, seed=seed),
                    lambda lr=lr, epochs=epochs, seed=seed: walking_run("ppo", seed, lr=lr, ppo_epochs=epochs))
+
+
+def study_ppo_long(seeds):
+    """Do the slow or unstable PPO settings settle when trained three times longer (900 episodes)?"""
+    for label, algorithm, options in (("a2c", "a2c", {}), ("ppo4", "ppo", {}), ("ppo1", "ppo", {"ppo_epochs": 1})):
+        for seed in seeds:
+            yield (dict(setting=label, seed=seed),
+                   lambda algorithm=algorithm, seed=seed, options=options: walking_run(algorithm, seed, episodes=900, every=25, **options))
+
+
+def study_walking_settings(seeds):
+    """A2C on the walking game with a shorter or longer maximum step, or a lower or higher discount."""
+    for max_step, discount in ((0.1, 0.9), (0.4, 0.9), (0.2, 0.5), (0.2, 0.99)):
+        for seed in seeds:
+            yield (dict(max_step=max_step, discount=discount, seed=seed),
+                   lambda max_step=max_step, discount=discount, seed=seed: walking_run("a2c", seed, max_step=max_step, discount=discount))
 
 
 def study_selection(seeds):
@@ -235,7 +251,8 @@ def study_noise(seeds, resolution=9):
     yield dict(iterations="exact", seed=0), lambda: dict(spread=float(spread), gap=float(gap), support=int((exact_red > 1e-3).sum()), top=float(exact_red.max()))
 
 
-STUDIES = dict(algorithms=study_algorithms, walking=study_walking, ppo_variants=study_ppo_variants, selection=study_selection, inertia=study_inertia, pretraining=study_pretraining,
+STUDIES = dict(algorithms=study_algorithms, walking=study_walking, ppo_variants=study_ppo_variants, ppo_long=study_ppo_long,
+               walking_settings=study_walking_settings, selection=study_selection, inertia=study_inertia, pretraining=study_pretraining,
                stage_solver=study_stage_solver, resolution=study_resolution, noise=study_noise)
 
 

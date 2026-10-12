@@ -82,3 +82,11 @@ def test_the_ppo_variants_study_covers_both_games_with_distinct_settings():
     assert len(main) == 2 * 5 * 5 and {k["epochs"] for k in main} == {1, 2}   # 1 and 2 epochs, 5 setups, 5 seeds
     assert sorted({(k["lr"], k["epochs"]) for k in walking}) == [(0.003, 1), (0.003, 4), (0.01, 1)] and len(walking) == 15
     assert len({json.dumps(k, sort_keys=True) for k in keys}) == len(keys)  # no run is listed twice
+
+
+def test_the_walking_studies_define_the_expected_runs_without_overlap():
+    long_keys = [k for k, _ in studies.study_ppo_long(range(5))]
+    settings = [k for k, _ in studies.study_walking_settings(range(5))]
+
+    assert sorted({k["setting"] for k in long_keys}) == ["a2c", "ppo1", "ppo4"] and len(long_keys) == 15
+    assert sorted({(k["max_step"], k["discount"]) for k in settings}) == [(0.1, 0.9), (0.2, 0.5), (0.2, 0.99), (0.4, 0.9)] and len(settings) == 20
