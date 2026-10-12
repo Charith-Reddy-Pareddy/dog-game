@@ -1,0 +1,16 @@
+cff-version: 1.2.0
+message: "If you use this repository, please cite it as below."
+title: "Dog Game: policy-gradient and Nash-Q experiments on a general-sum game"
+authors:
+  - family-names: Pareddy
+    given-names: Charith Reddy
+repository-code: "https://github.com/Charith-Reddy-Pareddy/dog-game"
+url: "https://charith-reddy-pareddy.github.io/dog-game/"
+license: MIT
+date-released: 2026-10-12
+keywords:
+  - game theory
+  - Nash equilibrium
+  - reinforcement learning
+  - policy gradient
+  - multi-agent
