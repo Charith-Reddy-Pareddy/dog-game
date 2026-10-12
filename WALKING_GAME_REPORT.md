@@ -14,6 +14,7 @@ This report asks one question: how well do policy-gradient methods, REINFORCE, A
 - **PPO is the fastest to get there and the worst at staying.** It has the lowest distance after 50 and 100 episodes, but three of its five seeds leave the corners again later (Section 4.1).
 - **A smaller learning rate does not fix PPO. One epoch does, given three times more training.** One-epoch PPO has 5 of 5 seeds at the corners after 900 episodes, while default PPO still has two seeds stuck far away (Sections 4.3 and 4.4).
 - **A lower discount makes the game easier to learn and a higher one harder.** A longer step costs nothing and a shorter one is slower (Section 4.5).
+- **The ranking holds on other house setups, but some setups are much harder.** On three other setups A2C is again the most reliable wherever any algorithm learns the game, PPO is the least reliable or tied for least, and on one setup none of them gets more than 1 of 5 seeds to the corners in 300 episodes. Dog inertia slows learning (Section 4.7).
 - **Scores are noisy.** Evaluating a policy changes the random numbers in training, so the paths are sensitive, and a single end-of-training number would mislead (Section 4.6).
 - **Not shown:** that the one-shot corners are an equilibrium of the walking game itself. The game has not been solved (Section 6).
 
@@ -55,7 +56,7 @@ All three use Adam at learning rate 0.01 and one self-play episode per update, w
 
 ## 4. Results
 
-Every number comes from `results/dog_game_studies.jsonl` (the `walking`, `ppo_variants`, `ppo_long` and `walking_settings` studies) and `results/dog_game_runs.jsonl`, and the tables are produced by `doggame/dog_game_summary.py`.
+Every number comes from `results/dog_game_studies.jsonl` (the `walking`, `ppo_variants`, `ppo_long`, `walking_settings`, `walking_houses` and `walking_inertia` studies) and `results/dog_game_runs.jsonl`, and the tables are produced by `doggame/dog_game_summary.py`.
 
 ### 4.1 Three algorithms, 300 episodes
 
@@ -138,9 +139,44 @@ A2C with the maximum step at 0.1 or 0.4, or the discount at 0.5 or 0.99, five se
 
 A first run of this comparison was scored only at 50, 100, 200 and 300 episodes. It gave the same order of algorithms but different outcomes for individual seeds (PPO seed 3 ended at 1.4 there and at 0.0 in the run above), because evaluating a policy samples games and so draws random numbers, which changes the rest of training. The paths are sensitive. A trace of one PPO seed showed its distance moving between 0.0 and 1.0 and back during training. That is why this report scores every 25 episodes and reports how many of the later checkpoints are at the corners, not just the last one.
 
+### 4.7 Other house setups and dog inertia
+
+**Other house setups.** The three algorithms on the default setup and on three others (the first three house setups of the main game), five seeds each, 300 episodes. Each setup has its own one-shot Nash corners, and the score is the distance from those:
+
+| House setup | Algorithm | Before training | At 100 | At 300 | Late checkpoints at the corners (from 150) | Seeds at the corners at the end |
+|---|---|---|---|---|---|---|
+| default: (0.88, 0.12) / (0.3, 0.65), w = 0.5 | REINFORCE | 1.49 | 0.341 | 0.055 | 24 of 35 | 4 of 5 |
+| default: (0.88, 0.12) / (0.3, 0.65), w = 0.5 | A2C | 1.49 | 0.199 | 0.011 | 34 of 35 | 5 of 5 |
+| default: (0.88, 0.12) / (0.3, 0.65), w = 0.5 | PPO | 1.49 | 0.127 | 0.371 | 14 of 35 | 2 of 5 |
+| (0.9, 0.2) / (0.1, 0.8), w = 0.5 | REINFORCE | 1.41 | 0.569 | 0.168 | 14 of 35 | 2 of 5 |
+| (0.9, 0.2) / (0.1, 0.8), w = 0.5 | A2C | 1.41 | 0.275 | 0.070 | 22 of 35 | 3 of 5 |
+| (0.9, 0.2) / (0.1, 0.8), w = 0.5 | PPO | 1.41 | 0.836 | 0.515 | 14 of 35 | 2 of 5 |
+| (0.8, 0.8) / (0.2, 0.3), w = 0.3 | REINFORCE | 1.31 | 0.707 | 0.239 | 18 of 35 | 4 of 5 |
+| (0.8, 0.8) / (0.2, 0.3), w = 0.3 | A2C | 1.31 | 0.429 | 0.036 | 29 of 35 | 5 of 5 |
+| (0.8, 0.8) / (0.2, 0.3), w = 0.3 | PPO | 1.31 | 0.974 | 0.932 | 9 of 35 | 1 of 5 |
+| (0.7, 0.1) / (0.6, 0.9), w = 0.7 | REINFORCE | 1.55 | 0.897 | 0.848 | 2 of 35 | 0 of 5 |
+| (0.7, 0.1) / (0.6, 0.9), w = 0.7 | A2C | 1.55 | 0.842 | 0.688 | 4 of 35 | 0 of 5 |
+| (0.7, 0.1) / (0.6, 0.9), w = 0.7 | PPO | 1.55 | 0.838 | 1.153 | 4 of 35 | 1 of 5 |
+
+- **A2C is again the most reliable wherever learning works.** It has the most late checkpoints at the corners on the default setup (34 of 35) and on the (0.9, 0.2) / (0.1, 0.8) and (0.8, 0.8) / (0.2, 0.3) setups (22 and 29 of 35, against 14 and 18 for REINFORCE and 14 and 9 for PPO).
+- **PPO is the least reliable, or tied for least, on the three setups where learning works.** Its early lead on the default setup does not carry over: on the other two it has the highest mean distance after 100 episodes.
+- **Some setups are much harder.** On (0.7, 0.1) / (0.6, 0.9) with w = 0.7 no algorithm gets more than 1 of 5 seeds to the corners in 300 episodes, and the mean distances at the end are 0.69 to 1.15. Whether more episodes would fix it was not run.
+
+**Dog inertia.** A2C when the dog keeps part of its old position each round (`w0` of 0.3 and 0.6), on the default setup:
+
+| Setting | Before training | At 50 | At 100 | At 200 | At 300 | Late checkpoints at the corners (from 150) | Seeds at the corners at the end |
+|---|---|---|---|---|---|---|---|
+| w0 = 0 (default) | 1.49 | 0.731 | 0.199 | 0.032 | 0.011 | 34 of 35 | 5 of 5 |
+| w0 = 0.3 | 1.50 | 0.880 | 0.459 | 0.088 | 0.015 | 31 of 35 | 5 of 5 |
+| w0 = 0.6 | 1.51 | 0.995 | 0.513 | 0.187 | 0.114 | 25 of 35 | 4 of 5 |
+
+- **Inertia slows learning**, as it did on the main game. The mean distance after 100 episodes is 0.20, 0.46 and 0.51 at `w0` of 0, 0.3 and 0.6, and 5, 5 and 4 of 5 seeds end at the corners.
+- The one-shot corners do not depend on `w0`, since they are the steady state, so this is about how fast the players get there.
+- Inertia was tried with A2C only.
+
 ## 5. What this does and does not show
 
-- **One house setup.** All the walking-game runs use red at (0.88, 0.12), blue at (0.3, 0.65) and w = 0.5, with no dog inertia.
+- **Four house setups, one of them much harder.** Most runs use red at (0.88, 0.12), blue at (0.3, 0.65), w = 0.5 and no dog inertia. Section 4.7 adds three other setups for all three algorithms, and inertia for A2C only.
 - **Five seeds per setting.** The counts are out of five, so small differences between settings are patterns, not a ranking. The step-length and discount study uses A2C only.
 - **The corners are the one-shot equilibrium.** Heading to them shows the players learning a sensible behavior, not that they play an equilibrium of the walking game. That game has not been solved.
 - **My choices.** The 0.1 threshold, the 300-episode budget, the learning rate and the network sizes were not tuned for each algorithm.
@@ -152,13 +188,13 @@ These are the walking-game questions in [RESEARCH_QUESTIONS.md](RESEARCH_QUESTIO
 
 - **Q23.** Is the one-shot corner pair an equilibrium of the walking game?
 - **Q27.** Why is PPO unstable here? (A smaller learning rate does not help and fewer epochs do.)
-- **Q30.** Do these findings hold on other house setups and with dog inertia?
+- **Q30.** Do these findings hold on other house setups and with dog inertia? Partly answered (Section 4.7); other step lengths, PPO with inertia and longer training on the hard setup were not run.
 - **Q31.** Does an entropy bonus or a larger network change PPO's instability?
 
 ## 7. Reproducing
 
 ```
-python3 -m doggame.dog_game_studies walking ppo_variants ppo_long walking_settings   # the runs (resumable, shardable)
+python3 -m doggame.dog_game_studies walking ppo_variants ppo_long walking_settings walking_houses walking_inertia   # the runs (resumable, shardable)
 python3 -m doggame.dog_game_summary                                                  # print every table
 python3 -m doggame.research_report_pdf WALKING_GAME_REPORT.md docs/walking_game_report.pdf
 ```

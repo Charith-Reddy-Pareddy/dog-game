@@ -180,7 +180,12 @@ with the numbers and the caveats, are in [RESEARCH_REPORT.md](RESEARCH_REPORT.md
     with two seeds stuck far away). The smaller learning rate settings were not run longer.*
 
 30. **Do the walking-game findings hold on other house setups and with dog inertia?**
-    All the walking-game runs use one house setup and no inertia. *Status: open.*
+    *Status: partly answered (45 runs on three other setups, 10 with inertia). A2C is again the
+    most reliable wherever any algorithm learns the game, and PPO is the least reliable or tied
+    for least, with no early lead on the other setups. One setup is much harder: no algorithm
+    gets more than 1 of 5 seeds to the corners in 300 episodes. Inertia slows A2C (4 of 5 seeds
+    at 0.6). Other step lengths, PPO with inertia and longer training on the hard setup were not
+    run.*
 31. **Does an entropy bonus or a larger network change PPO's instability on the walking game?**
     Neither was tried. *Status: open.*
 
@@ -202,8 +207,9 @@ with the numbers and the caveats, are in [RESEARCH_REPORT.md](RESEARCH_REPORT.md
 | 24, 27, 28 | study `ppo_variants` (65 runs) |
 | 27, 28, 29 | study `ppo_long` (15 runs) |
 | 25 | study `walking_settings` (20 runs) |
+| 30 | studies `walking_houses` (45 runs) and `walking_inertia` (10 runs) |
 | walking game | `results/dog_game_runs.jsonl`, `results/dog_game_trajectories.json` |
 
-Questions 5b, 11, 13, 14, 19, 23, 27, 30 and 31 are open, and 25 is partly answered. The studies are in
+Questions 5b, 11, 13, 14, 19, 23, 27 and 31 are open, and 25 and 30 are partly answered. The studies are in
 [`doggame/dog_game_studies.py`](doggame/dog_game_studies.py) and the tables are
 produced by [`doggame/dog_game_summary.py`](doggame/dog_game_summary.py).

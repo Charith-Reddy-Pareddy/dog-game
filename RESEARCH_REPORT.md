@@ -297,6 +297,35 @@ Two follow-ups to Sections 5.2 and 5.10, 65 more runs.
 - **These change how fast the players get to the corners, not where.** The one-shot Nash corners do not depend on the step length or the discount.
 - A2C only, one house setup and five seeds, so these are patterns and not a ranking.
 
+### 5.13 Other house setups and dog inertia on the walking game
+
+The walking-game runs above use one house setup. Here the three algorithms are run on three others, and A2C with dog inertia (see the [walking-game report](WALKING_GAME_REPORT.md), Section 4.7, for the discussion):
+
+| House setup | Algorithm | Before training | At 100 | At 300 | Late checkpoints at the corners (from 150) | Seeds at the corners at the end |
+|---|---|---|---|---|---|---|
+| default: (0.88, 0.12) / (0.3, 0.65), w = 0.5 | REINFORCE | 1.49 | 0.341 | 0.055 | 24 of 35 | 4 of 5 |
+| default: (0.88, 0.12) / (0.3, 0.65), w = 0.5 | A2C | 1.49 | 0.199 | 0.011 | 34 of 35 | 5 of 5 |
+| default: (0.88, 0.12) / (0.3, 0.65), w = 0.5 | PPO | 1.49 | 0.127 | 0.371 | 14 of 35 | 2 of 5 |
+| (0.9, 0.2) / (0.1, 0.8), w = 0.5 | REINFORCE | 1.41 | 0.569 | 0.168 | 14 of 35 | 2 of 5 |
+| (0.9, 0.2) / (0.1, 0.8), w = 0.5 | A2C | 1.41 | 0.275 | 0.070 | 22 of 35 | 3 of 5 |
+| (0.9, 0.2) / (0.1, 0.8), w = 0.5 | PPO | 1.41 | 0.836 | 0.515 | 14 of 35 | 2 of 5 |
+| (0.8, 0.8) / (0.2, 0.3), w = 0.3 | REINFORCE | 1.31 | 0.707 | 0.239 | 18 of 35 | 4 of 5 |
+| (0.8, 0.8) / (0.2, 0.3), w = 0.3 | A2C | 1.31 | 0.429 | 0.036 | 29 of 35 | 5 of 5 |
+| (0.8, 0.8) / (0.2, 0.3), w = 0.3 | PPO | 1.31 | 0.974 | 0.932 | 9 of 35 | 1 of 5 |
+| (0.7, 0.1) / (0.6, 0.9), w = 0.7 | REINFORCE | 1.55 | 0.897 | 0.848 | 2 of 35 | 0 of 5 |
+| (0.7, 0.1) / (0.6, 0.9), w = 0.7 | A2C | 1.55 | 0.842 | 0.688 | 4 of 35 | 0 of 5 |
+| (0.7, 0.1) / (0.6, 0.9), w = 0.7 | PPO | 1.55 | 0.838 | 1.153 | 4 of 35 | 1 of 5 |
+
+| Setting | Before training | At 50 | At 100 | At 200 | At 300 | Late checkpoints at the corners (from 150) | Seeds at the corners at the end |
+|---|---|---|---|---|---|---|---|
+| w0 = 0 (default) | 1.49 | 0.731 | 0.199 | 0.032 | 0.011 | 34 of 35 | 5 of 5 |
+| w0 = 0.3 | 1.50 | 0.880 | 0.459 | 0.088 | 0.015 | 31 of 35 | 5 of 5 |
+| w0 = 0.6 | 1.51 | 0.995 | 0.513 | 0.187 | 0.114 | 25 of 35 | 4 of 5 |
+
+- **A2C is the most reliable wherever learning works, and PPO the least or tied for least.** PPO's early lead on the default setup does not carry over to the others.
+- **One setup is much harder:** on (0.7, 0.1) / (0.6, 0.9) with w = 0.7 no algorithm gets more than 1 of 5 seeds to the corners in 300 episodes. More episodes were not tried.
+- **Dog inertia slows A2C** (5 and 4 of 5 seeds at the corners at `w0` of 0.3 and 0.6, against 5 of 5 without it).
+
 ## 6. Research questions and answers
 
 The statuses are the same as in [RESEARCH_QUESTIONS.md](RESEARCH_QUESTIONS.md).
@@ -343,6 +372,8 @@ The statuses are the same as in [RESEARCH_QUESTIONS.md](RESEARCH_QUESTIONS.md).
 
 **Q26. Do A2C and PPO beat REINFORCE on the walking game?** *Answered for one house setup (15 runs).* A2C is the most reliable, REINFORCE is slower, and PPO is the fastest but does not stay at the corners (Section 5.10).
 
+**Q30. Do the walking-game findings hold on other house setups and with inertia?** *Partly answered.* A2C stays the most reliable where learning works, one setup is much harder, and inertia slows learning (Section 5.13). **Q31.** Whether an entropy bonus or a larger network changes PPO's instability is open.
+
 **Q27. Why is PPO unstable on the walking game?** *Open on the mechanism.* A smaller learning rate does not help and fewer epochs do; default PPO's failures persist for two seeds in 900 episodes (Sections 5.11 and 5.12).
 
 **Q28-Q29.** *Answered for the settings tried.* One-epoch PPO becomes reliable (4 of 5 seeds after 300 episodes and 5 of 5 after 900) but stays slower than A2C; a smaller learning rate does not help; default PPO does not settle with more training (Sections 5.11 and 5.12). The smaller-learning-rate settings were not run longer.
@@ -353,7 +384,7 @@ The statuses are the same as in [RESEARCH_QUESTIONS.md](RESEARCH_QUESTIONS.md).
 - The convergence threshold (0.004) and the pre-training and inertia setups are my choices. Training settings (learning rate 0.01, one episode per update) were not tuned for each algorithm.
 - PPO and A2C are compared mainly on episodes. Section 5.11 adds a comparison on gradient steps for the main game. Wall-clock time was not compared.
 - Policies trained with inertia are scored against the one-shot equilibrium. The walking game is scored against the one-shot corners. Neither is the equilibrium of its own dynamic game.
-- The pre-training study has a single target setup. The walking studies share a single house setup, and the step-length and discount study uses A2C only.
+- The pre-training study has a single target setup. Most walking studies use one house setup (Section 5.13 adds three), and the step-length, discount and inertia studies use A2C only.
 - The walking-game scores use 10 sampled games per checkpoint and five seeds, and the paths are noisy, so small differences between algorithms should not be read as a ranking.
 - Timings in the resolution table were taken on a heavily loaded machine and show growth, not absolute cost.
 - The Gaussian policy clips actions to the square before taking the log-probability, which biases the gradient slightly. Every algorithm shares this.
@@ -364,7 +395,7 @@ The statuses are the same as in [RESEARCH_QUESTIONS.md](RESEARCH_QUESTIONS.md).
 python3 -m pytest                          # the test suite
 python3 -m doggame.experiments             # the original convergence study
 python3 -m doggame.dog_game_study          # five-seed convergence and walking runs
-python3 -m doggame.dog_game_studies        # the eleven studies in Section 5 (resumable, shardable)
+python3 -m doggame.dog_game_studies        # the thirteen studies in Section 5 (resumable, shardable)
 python3 -m doggame.dog_game_summary        # print every table as Markdown
 python3 -m doggame.research_report_pdf     # build research_report.pdf from this file
 ```
