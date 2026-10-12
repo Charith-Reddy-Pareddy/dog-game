@@ -145,6 +145,9 @@
   @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
   .highlights { margin: 0; padding-left: 20px; font-size: 0.9rem; line-height: 1.6; }
   .highlights li { margin-bottom: 6px; }
+  .report-links { display: flex; flex-wrap: wrap; gap: 10px; margin: 12px 0; }
+  .report-link { display: inline-block; padding: 10px 16px; border-radius: 10px; border: 1px solid var(--line); font-weight: 600; font-size: 0.9rem; text-decoration: none; color: var(--ink); }
+  .report-link.primary { background: var(--ink); color: #fdfbf7; border-color: var(--ink); }
   .traj-chart svg { width: 100%; height: auto; display: block; margin: 6px 0 10px; background: #fbf9f4; border: 1px solid var(--line); border-radius: 12px; }
   .chip { display: inline-block; font-size: 0.68rem; font-weight: 700; letter-spacing: 0.03em; padding: 2px 8px; border-radius: 999px; margin-left: 8px; vertical-align: middle; text-transform: uppercase; }
   .chip.answered { background: #e3efe6; color: #2f5d3d; }
@@ -192,10 +195,12 @@
       <a href="#findings">Training results</a>
       <a href="#experiments">More experiments</a>
       <a href="#trajectories">Walking game</a>
+      <a href="#walking-report">Walking-game report</a>
       <a href="#questions">Research questions</a>
       <a href="#assumptions">Assumptions</a>
       <a href="https://github.com/Charith-Reddy-Pareddy/dog-game/blob/main/research_report.pdf" target="_blank" rel="noopener">Research report (PDF)</a>
       <a href="https://github.com/Charith-Reddy-Pareddy/dog-game/blob/main/dog_game_results.pdf" target="_blank" rel="noopener">Results (PDF)</a>
+      <a href="walking_game_report.pdf" target="_blank" rel="noopener">Walking-game report (PDF)</a>
     </p>
 </header>
 
@@ -205,8 +210,8 @@
     <ul class="highlights">
       <li><b>Self-play policy gradient converges on the dog game.</b> It does so for every algorithm tried, though how many episodes it needs depends on the algorithm and the setup. <a href="#findings">Training results</a></li>
       <li><b>PPO is fast because it reuses each episode.</b> With one epoch it is no faster than REINFORCE. <a href="#experiments">More experiments</a></li>
-      <li><b>The walking game reverses the ranking.</b> A2C is the most reliable there, and PPO is fast but swings away from the corners again; a gentler PPO settles with more training. <a href="#trajectories">Walking game</a></li>
-      <li><b>17 of 30 research questions are answered, 4 partly, 9 still open.</b> <a href="#questions">Research questions</a></li>
+      <li><b>The walking game reverses the ranking.</b> A2C is the most reliable there, and PPO is fast but swings away from the corners again; a gentler PPO settles with more training. <a href="#trajectories">Walking game</a> &middot; <a href="#walking-report">Report</a></li>
+      <li><b>17 of 32 research questions are answered, 4 partly, 11 still open.</b> <a href="#questions">Research questions</a></li>
     </ul>
   </section>
 
@@ -507,6 +512,26 @@
     </p>
   </section>
 
+  <section class="card" id="walking-report">
+    <h2>Report: policy gradient on the walking game</h2>
+    <p class="sub">
+      A separate report on one question: how well do the policy-gradient methods
+      REINFORCE, A2C and PPO learn the walking game, the angle-radius version of the dog
+      game? It covers the policy, the three algorithms, five experiments and what they
+      do and do not show, and says how many runs each claim rests on.
+    </p>
+    <p class="report-links">
+      <a class="report-link primary" href="walking_game_report.pdf" target="_blank" rel="noopener">Open the PDF</a>
+      <a class="report-link" href="https://github.com/Charith-Reddy-Pareddy/dog-game/blob/main/WALKING_GAME_REPORT.md" target="_blank" rel="noopener">Read it on GitHub</a>
+    </p>
+    <ul class="highlights">
+      <li><b>All three learn to walk to the corners, but not equally reliably.</b> After 300 episodes A2C has 5 of 5 seeds at the corners, REINFORCE 4 of 5 and PPO 2 of 5.</li>
+      <li><b>PPO is the fastest to get there and the worst at staying:</b> it spends only 14 of 35 later checkpoints at the corners, against 34 of 35 for A2C.</li>
+      <li><b>A gentler PPO settles, the default does not.</b> With one epoch and three times more training PPO reaches the corners in 5 of 5 seeds; a smaller learning rate does not help.</li>
+      <li><b>A lower discount makes the game easier to learn, a higher one harder;</b> the scores are noisy, so the report tracks many checkpoints.</li>
+    </ul>
+  </section>
+
   <section class="card notes" id="questions">
     <h2>Research questions</h2>
     <p class="sub" style="margin-bottom:6px">
@@ -552,6 +577,8 @@
     <details class="q"><summary><span class="q-num">Q27</span>Why is PPO unstable on the walking game?<span class="chip open">Open</span></summary><p><b>Status:</b> Open on the mechanism. A smaller learning rate does not help, fewer epochs help, and default PPO&#x27;s failures persist (two of five seeds never return to the corners in 900 episodes), so it is not just slow; reusing each episode seems to contribute, but that is a hypothesis.</p></details>
     <details class="q"><summary><span class="q-num">Q28</span>Does a smaller learning rate or fewer epochs make PPO reliable on the walking game?<span class="chip answered">Answered</span></summary><p><b>Status:</b> Answered for the settings tried. Fewer epochs help (4 of 5 seeds after 300 episodes, 5 of 5 after 900), a smaller learning rate does not (1 of 5 and 2 of 5 after 300), and one-epoch PPO is still much slower than A2C (0.12 against 0.011 mean distance after 300 episodes).</p></details>
     <details class="q"><summary><span class="q-num">Q29</span>Do the slower PPO settings settle with more than 300 episodes?<span class="chip answered">Answered</span></summary><p><b>Status:</b> Answered for one-epoch PPO and the default (30 runs with A2C). One-epoch PPO settles (5 of 5 seeds at the corners after 900 episodes) and default PPO does not (3 of 5, with two seeds stuck far away). The smaller learning rate settings were not run longer.</p></details>
+    <details class="q"><summary><span class="q-num">Q30</span>Do the walking-game findings hold on other house setups and with dog inertia?<span class="chip open">Open</span></summary><p>All the walking-game runs use one house setup and no inertia.</p><p><b>Status:</b> Open.</p></details>
+    <details class="q"><summary><span class="q-num">Q31</span>Does an entropy bonus or a larger network change PPO&#x27;s instability on the walking game?<span class="chip open">Open</span></summary><p>Neither was tried.</p><p><b>Status:</b> Open.</p></details>
   </section>
 
   <section class="card notes" id="assumptions">
