@@ -211,7 +211,7 @@
       <li><b>Self-play policy gradient converges on the dog game.</b> It does so for every algorithm tried, though how many episodes it needs depends on the algorithm and the setup. <a href="#findings">Training results</a></li>
       <li><b>PPO is fast because it reuses each episode.</b> With one epoch it is no faster than REINFORCE. <a href="#experiments">More experiments</a></li>
       <li><b>The walking game reverses the ranking.</b> A2C is the most reliable there, and PPO is fast but swings away from the corners again; a gentler PPO settles with more training. <a href="#trajectories">Walking game</a> &middot; <a href="#walking-report">Report</a></li>
-      <li><b>17 of 32 research questions are answered, 4 partly, 11 still open.</b> <a href="#questions">Research questions</a></li>
+      <li><b>17 of 32 research questions are answered, 5 partly, 10 still open.</b> <a href="#questions">Research questions</a></li>
     </ul>
   </section>
 
@@ -329,7 +329,7 @@
     <h2>More experiments</h2>
     <p class="sub" style="margin-bottom:6px">
       Each experiment below answers one of the open research questions with saved
-      runs (<code>results/dog_game_studies.jsonl</code>, 421 runs in all); the
+      runs (<code>results/dog_game_studies.jsonl</code>, 476 runs in all); the
       code is <code>doggame/dog_game_studies.py</code>. A run counts as converged
       below 0.004 exploitability, which is my threshold, so the medians are shown too.
     </p>
@@ -402,6 +402,26 @@
     <ul>
       <li>A lower discount makes learning faster and a higher one slower; a longer step costs nothing and a shorter one is slower within 300 episodes.</li>
       <li>These change how fast the players get to the corners, not where: the one-shot Nash corners do not depend on either.</li>
+    </ul>
+
+    <h3>Other house setups and dog inertia on the walking game</h3>
+    <p class="hint" style="margin:0 0 6px">The three algorithms on the default setup and three others, 5 seeds each, 300 episodes. Each setup has its own Nash corners.</p>
+    <p class="hint scroll-hint">Swipe the table sideways to see every column.</p>
+    <div class="table-scroll">
+    <table><thead><tr><th>House setup</th><th>Algorithm</th><th>Before training</th><th>At 100</th><th>At 300</th><th>Late checkpoints at the corners (from 150)</th><th>Seeds at the corners at the end</th></tr></thead><tbody><tr><td>default: (0.88, 0.12) / (0.3, 0.65), w = 0.5</td><td>REINFORCE</td><td>1.49</td><td>0.341</td><td>0.055</td><td>24 of 35</td><td>4 of 5</td></tr><tr><td>default: (0.88, 0.12) / (0.3, 0.65), w = 0.5</td><td>A2C</td><td>1.49</td><td>0.199</td><td>0.011</td><td>34 of 35</td><td>5 of 5</td></tr><tr><td>default: (0.88, 0.12) / (0.3, 0.65), w = 0.5</td><td>PPO</td><td>1.49</td><td>0.127</td><td>0.371</td><td>14 of 35</td><td>2 of 5</td></tr><tr><td>(0.9, 0.2) / (0.1, 0.8), w = 0.5</td><td>REINFORCE</td><td>1.41</td><td>0.569</td><td>0.168</td><td>14 of 35</td><td>2 of 5</td></tr><tr><td>(0.9, 0.2) / (0.1, 0.8), w = 0.5</td><td>A2C</td><td>1.41</td><td>0.275</td><td>0.070</td><td>22 of 35</td><td>3 of 5</td></tr><tr><td>(0.9, 0.2) / (0.1, 0.8), w = 0.5</td><td>PPO</td><td>1.41</td><td>0.836</td><td>0.515</td><td>14 of 35</td><td>2 of 5</td></tr><tr><td>(0.8, 0.8) / (0.2, 0.3), w = 0.3</td><td>REINFORCE</td><td>1.31</td><td>0.707</td><td>0.239</td><td>18 of 35</td><td>4 of 5</td></tr><tr><td>(0.8, 0.8) / (0.2, 0.3), w = 0.3</td><td>A2C</td><td>1.31</td><td>0.429</td><td>0.036</td><td>29 of 35</td><td>5 of 5</td></tr><tr><td>(0.8, 0.8) / (0.2, 0.3), w = 0.3</td><td>PPO</td><td>1.31</td><td>0.974</td><td>0.932</td><td>9 of 35</td><td>1 of 5</td></tr><tr><td>(0.7, 0.1) / (0.6, 0.9), w = 0.7</td><td>REINFORCE</td><td>1.55</td><td>0.897</td><td>0.848</td><td>2 of 35</td><td>0 of 5</td></tr><tr><td>(0.7, 0.1) / (0.6, 0.9), w = 0.7</td><td>A2C</td><td>1.55</td><td>0.842</td><td>0.688</td><td>4 of 35</td><td>0 of 5</td></tr><tr><td>(0.7, 0.1) / (0.6, 0.9), w = 0.7</td><td>PPO</td><td>1.55</td><td>0.838</td><td>1.153</td><td>4 of 35</td><td>1 of 5</td></tr></tbody></table>
+    </div>
+    <ul>
+      <li>A2C is again the most reliable wherever learning works, and PPO the least reliable or tied for least; PPO&#x27;s early lead on the default setup does not carry over.</li>
+      <li>One setup, (0.7, 0.1) / (0.6, 0.9) with w = 0.7, is much harder: no algorithm gets more than 1 of 5 seeds to the corners in 300 episodes.</li>
+    </ul>
+
+    <p class="hint" style="margin:10px 0 6px">A2C with dog inertia (w&#8320;), default setup, 5 seeds each.</p>
+    <p class="hint scroll-hint">Swipe the table sideways to see every column.</p>
+    <div class="table-scroll">
+    <table><thead><tr><th>Setting</th><th>Before training</th><th>At 50</th><th>At 100</th><th>At 200</th><th>At 300</th><th>Late checkpoints at the corners (from 150)</th><th>Seeds at the corners at the end</th></tr></thead><tbody><tr><td>w0 = 0 (default)</td><td>1.49</td><td>0.731</td><td>0.199</td><td>0.032</td><td>0.011</td><td>34 of 35</td><td>5 of 5</td></tr><tr><td>w0 = 0.3</td><td>1.50</td><td>0.880</td><td>0.459</td><td>0.088</td><td>0.015</td><td>31 of 35</td><td>5 of 5</td></tr><tr><td>w0 = 0.6</td><td>1.51</td><td>0.995</td><td>0.513</td><td>0.187</td><td>0.114</td><td>25 of 35</td><td>4 of 5</td></tr></tbody></table>
+    </div>
+    <ul>
+      <li>Inertia slows learning, as on the main game; the corners do not depend on it.</li>
     </ul>
 
     <h3>Which equilibrium does self-play find?</h3>
@@ -528,7 +548,7 @@
       <li><b>All three learn to walk to the corners, but not equally reliably.</b> After 300 episodes A2C has 5 of 5 seeds at the corners, REINFORCE 4 of 5 and PPO 2 of 5.</li>
       <li><b>PPO is the fastest to get there and the worst at staying:</b> it spends only 14 of 35 later checkpoints at the corners, against 34 of 35 for A2C.</li>
       <li><b>A gentler PPO settles, the default does not.</b> With one epoch and three times more training PPO reaches the corners in 5 of 5 seeds; a smaller learning rate does not help.</li>
-      <li><b>A lower discount makes the game easier to learn, a higher one harder;</b> the scores are noisy, so the report tracks many checkpoints.</li>
+      <li><b>A lower discount makes the game easier to learn, a higher one harder.</b> The ranking holds on three other house setups, though one is much harder; the scores are noisy, so the report tracks many checkpoints.</li>
     </ul>
   </section>
 
@@ -577,7 +597,7 @@
     <details class="q"><summary><span class="q-num">Q27</span>Why is PPO unstable on the walking game?<span class="chip open">Open</span></summary><p><b>Status:</b> Open on the mechanism. A smaller learning rate does not help, fewer epochs help, and default PPO&#x27;s failures persist (two of five seeds never return to the corners in 900 episodes), so it is not just slow; reusing each episode seems to contribute, but that is a hypothesis.</p></details>
     <details class="q"><summary><span class="q-num">Q28</span>Does a smaller learning rate or fewer epochs make PPO reliable on the walking game?<span class="chip answered">Answered</span></summary><p><b>Status:</b> Answered for the settings tried. Fewer epochs help (4 of 5 seeds after 300 episodes, 5 of 5 after 900), a smaller learning rate does not (1 of 5 and 2 of 5 after 300), and one-epoch PPO is still much slower than A2C (0.12 against 0.011 mean distance after 300 episodes).</p></details>
     <details class="q"><summary><span class="q-num">Q29</span>Do the slower PPO settings settle with more than 300 episodes?<span class="chip answered">Answered</span></summary><p><b>Status:</b> Answered for one-epoch PPO and the default (30 runs with A2C). One-epoch PPO settles (5 of 5 seeds at the corners after 900 episodes) and default PPO does not (3 of 5, with two seeds stuck far away). The smaller learning rate settings were not run longer.</p></details>
-    <details class="q"><summary><span class="q-num">Q30</span>Do the walking-game findings hold on other house setups and with dog inertia?<span class="chip open">Open</span></summary><p>All the walking-game runs use one house setup and no inertia.</p><p><b>Status:</b> Open.</p></details>
+    <details class="q"><summary><span class="q-num">Q30</span>Do the walking-game findings hold on other house setups and with dog inertia?<span class="chip partly">Partly</span></summary><p><b>Status:</b> Partly answered (45 runs on three other setups, 10 with inertia). A2C is again the most reliable wherever any algorithm learns the game, and PPO is the least reliable or tied for least, with no early lead on the other setups. One setup is much harder: no algorithm gets more than 1 of 5 seeds to the corners in 300 episodes. Inertia slows A2C (4 of 5 seeds at 0.6). Other step lengths, PPO with inertia and longer training on the hard setup were not run.</p></details>
     <details class="q"><summary><span class="q-num">Q31</span>Does an entropy bonus or a larger network change PPO&#x27;s instability on the walking game?<span class="chip open">Open</span></summary><p>Neither was tried.</p><p><b>Status:</b> Open.</p></details>
   </section>
 
