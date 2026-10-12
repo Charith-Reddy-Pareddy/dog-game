@@ -78,6 +78,40 @@ def algorithms_table(rows):
     return table
 
 
+WALKED = 0.1  # summed distance to the two corners below this counts as having walked there (my threshold)
+
+
+def walking_algorithms_table(rows, late=150):
+    """Mean distance from the one-shot Nash corners on the walking game, "At N" being after N episodes of training,
+    and how much of the later training (checkpoints from `late` episodes on) each algorithm spends at the corners
+    (summed distance under WALKED). The paths swing, so one end-of-training number would mislead."""
+    runs = study(rows, "walking")
+    shown = [e for e in (50, 100, 200, 300) if any(str(e) in r["curve"] for r in runs)]
+    last = str(max(int(e) for r in runs for e in r["curve"])) if runs else ""
+    table = [["Algorithm", "Before training"] + [f"At {e}" for e in shown]
+             + [f"Late checkpoints at the corners (from {late})", "Seeds at the corners at the end"]]
+    for name, label in ALGORITHM_NAMES.items():
+        mine = [r for r in runs if r["key"]["algorithm"] == name]
+        if not mine:
+            continue
+        later = [v < WALKED for r in mine for e, v in r["curve"].items() if int(e) >= late]
+        table.append([label, fmt(np.mean([r["start"] for r in mine]), 2)]
+                     + [fmt(np.mean([r["curve"][str(e)] for r in mine]), 3) for e in shown]
+                     + [f"{sum(later)} of {len(later)}", f"{sum(r['curve'][last] < WALKED for r in mine)} of {len(mine)}"])
+    return table
+
+
+def walking_share_series(rows):
+    """For each algorithm, (episodes, share of seeds under the walking threshold) at every checkpoint."""
+    runs = study(rows, "walking")
+    series = {}
+    for name in ALGORITHM_NAMES:
+        mine = [r for r in runs if r["key"]["algorithm"] == name]
+        if mine:
+            series[name] = [(e, float(np.mean([r["curve"][str(e)] < WALKED for r in mine]))) for e in sorted(int(k) for k in mine[0]["curve"])]
+    return series
+
+
 def selection_outcome(red, blue):
     """Which equilibrium of the shared-y setup a learned policy is at."""
     if red[1] > 0.9 and blue[1] < 0.1:
@@ -197,7 +231,7 @@ if __name__ == "__main__":
     studies, runs = load(STUDIES), load(RUNS)
     for name, table in (("convergence", convergence_table(runs)), ("algorithms", algorithms_table(studies)), ("selection", selection_table(studies)),
                         ("inertia", inertia_table(studies)), ("pretraining", pretraining_table(studies)), ("stage solver", stage_solver_table(studies)),
-                        ("resolution", resolution_table(studies)), ("noise", noise_table(studies)), ("walking", walking_table(runs))):
+                        ("resolution", resolution_table(studies)), ("noise", noise_table(studies)), ("walking", walking_table(runs)), ("walking algorithms", walking_algorithms_table(studies))):
         print(f"\n### {name}\n\n{markdown(table)}")
     print("\nconvergence counts:", convergence_counts(runs))
     print("inertia median distance:", inertia_distances(studies))

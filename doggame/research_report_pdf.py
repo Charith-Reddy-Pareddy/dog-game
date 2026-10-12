@@ -96,9 +96,9 @@ def parse(markdown):
 
 
 def column_widths(rows, total):
-    """Split `total` between the columns in proportion to their longest cell: at least 12 characters (16 for the
+    """Split `total` between the columns in proportion to their longest cell: at least 12 characters (20 for the
     first column) and at most 28, so a long heading wraps instead of squeezing the other columns."""
-    longest = [min(28, max(16 if col == 0 else 12, max(len(row[col]) for row in rows))) for col in range(len(rows[0]))]
+    longest = [min(28, max(20 if col == 0 else 12, max(len(row[col]) for row in rows))) for col in range(len(rows[0]))]
     return [total * n / sum(longest) for n in longest]
 
 
@@ -137,7 +137,37 @@ def convergence_figure():
     return d
 
 
-FIGURES = {"convergence": convergence_figure}
+def walking_figure():
+    """Share of the five seeds at the Nash corners after each number of training episodes, on the walking game."""
+    from reportlab.graphics.charts.lineplots import LinePlot
+    from reportlab.graphics.shapes import Drawing, String
+    from reportlab.graphics.widgets.markers import makeMarker
+    from reportlab.lib import colors
+
+    from doggame import dog_game_summary as summary
+
+    series = summary.walking_share_series(summary.load(STUDIES))
+    styles = (("reinforce", "REINFORCE", "#1f5fa8", None, 3.2), ("a2c", "A2C", "#c0392b", [4, 3], 1.6), ("ppo", "PPO", "#2e8b57", None, 1.8))
+    d = Drawing(440, 215)
+    plot = LinePlot()
+    plot.x, plot.y, plot.width, plot.height = 45, 35, 380, 145
+    plot.data = [series[name] for name, *_ in styles]
+    for i, (_, label, color, dash, width) in enumerate(styles):
+        plot.lines[i].strokeColor, plot.lines[i].strokeWidth, plot.lines[i].strokeDashArray = colors.HexColor(color), width, dash
+        plot.lines[i].symbol = makeMarker("FilledCircle", size=3, fillColor=colors.HexColor(color), strokeColor=colors.HexColor(color))
+        d.add(String(70 + i * 110, 200, label, fontSize=8, fillColor=colors.HexColor(color)))
+    plot.xValueAxis.valueMin, plot.xValueAxis.valueMax, plot.xValueAxis.valueStep = 0, 300, 50
+    plot.yValueAxis.valueMin, plot.yValueAxis.valueMax, plot.yValueAxis.valueStep = 0, 1, 0.2
+    plot.yValueAxis.labelTextFormat = "%.1f"
+    plot.xValueAxis.labels.fontSize = plot.yValueAxis.labels.fontSize = 8
+    plot.yValueAxis.gridStrokeColor, plot.yValueAxis.visibleGrid = colors.HexColor("#dde3ea"), 1
+    d.add(plot)
+    d.add(String(235, 8, "training episodes", fontSize=8, textAnchor="middle"))
+    d.add(String(10, 185, "share of seeds at the corners", fontSize=8))
+    return d
+
+
+FIGURES = {"convergence": convergence_figure, "walking": walking_figure}
 
 
 def build(source=SOURCE, path=OUTPUT):

@@ -54,7 +54,7 @@ def test_column_widths_are_proportional_to_the_longest_cell_and_add_up_to_the_to
     widths = column_widths([["a", "a much longer heading"], ["1", "2"]], 100)
 
     assert abs(sum(widths) - 100) < 1e-9
-    assert widths[1] > widths[0] and widths[0] == 100 * 16 / (16 + len("a much longer heading"))
+    assert widths[1] > widths[0] and widths[0] == 100 * 20 / (20 + len("a much longer heading"))
 
 
 def test_italics_are_converted_but_stars_around_spaces_and_inside_code_are_not():

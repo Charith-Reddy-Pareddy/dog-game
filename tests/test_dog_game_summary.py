@@ -1,5 +1,5 @@
-from doggame.dog_game_summary import (algorithms_table, convergence_counts, markdown, noise_table, walking_table, resolution_table,
-                                      selection_outcome, selection_table)
+from doggame.dog_game_summary import (algorithms_table, convergence_counts, markdown, noise_table, resolution_table,
+                                      selection_outcome, selection_table, walking_algorithms_table, walking_share_series, walking_table)
 
 
 def run(study, key, **fields):
@@ -68,3 +68,20 @@ def test_walking_table_averages_each_method_over_its_seeds():
 
     assert table[1] == ["REINFORCE (angle and step)", "1.50", "0.20", "2 of 2"]
     assert table[2] == ["Nash-Q (10 directions)", "1.00", "1.50", "0 of 1"]
+
+
+def test_walking_algorithms_table_averages_distances_and_counts_time_at_the_corners():
+    curves = [{"100": 0.5, "150": 0.02, "300": 0.03}, {"100": 0.3, "150": 0.5, "300": 0.2}]
+    rows = [run("walking", dict(algorithm="ppo", seed=s), start=1.5, curve=curve) for s, curve in enumerate(curves)]
+
+    table = walking_algorithms_table(rows)
+
+    assert table[0][:4] == ["Algorithm", "Before training", "At 100", "At 300"]
+    assert table[1] == ["PPO", "1.50", "0.400", "0.115", "2 of 4", "1 of 2"]  # 150 and 300 for each seed: 0.02 and 0.03 are under 0.1
+
+
+def test_the_share_series_shows_a_seed_leaving_the_corners_again():
+    rows = [run("walking", dict(algorithm="ppo", seed=0), start=1.0, curve={"50": 0.01, "100": 0.02}),
+            run("walking", dict(algorithm="ppo", seed=1), start=1.0, curve={"50": 0.02, "100": 0.9})]
+
+    assert walking_share_series(rows) == {"ppo": [(50, 1.0), (100, 0.5)]}
