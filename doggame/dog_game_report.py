@@ -7,10 +7,12 @@ from collections import defaultdict
 
 import numpy as np
 
+from doggame import dog_game_summary
 from doggame.experiments import DEFAULT_CONFIGS
 from doggame.pdf_kit import kit
 
 RESULTS = "results/dog_game_runs.jsonl"
+STUDIES = "results/dog_game_studies.jsonl"
 TRAJECTORIES = "results/dog_game_trajectories.json"
 OUTPUT = "dog_game_results.pdf"
 CONVERGED = 0.004  # exploitability below this counts as converged (my threshold)
@@ -29,7 +31,7 @@ def describe(config):
     return f"red ({rx}, {ry}), blue ({bx}, {by}), w = {config['w']}"
 
 
-def build(path=OUTPUT, results=RESULTS, trajectories=TRAJECTORIES):
+def build(path=OUTPUT, results=RESULTS, trajectories=TRAJECTORIES, studies=STUDIES):
     from reportlab.graphics.charts.barcharts import VerticalBarChart
     from reportlab.graphics.shapes import Circle, Drawing, Line, PolyLine, Rect, String
     from reportlab.lib import colors
@@ -37,8 +39,12 @@ def build(path=OUTPUT, results=RESULTS, trajectories=TRAJECTORIES):
     from reportlab.lib.units import inch
     from reportlab.platypus import KeepTogether, SimpleDocTemplate, Spacer
 
+    from doggame.research_report_pdf import column_widths, walking_figure
+
     k = kit()
     convergence, walking = load(results)
+    algorithms = dog_game_summary.walking_algorithms_table(dog_game_summary.load(studies))
+    by_name = {row[0]: row for row in algorithms[1:]}
     with open(trajectories) as f:
         walk = json.load(f)
     example = walk["seeds"][0]  # the figure shows the first seed; the live site lets you pick
@@ -130,6 +136,8 @@ def build(path=OUTPUT, results=RESULTS, trajectories=TRAJECTORIES):
         k.point("The three architectures do not separate: " + ", ".join(f"{a} {sum(v < CONVERGED for v in vs)} of {len(vs)}" for a, vs in per_architecture.items()) + "."),
         k.point(f"In the angle-radius game, both REINFORCE and the 10-direction Nash-Q network move the players toward the one-shot Nash corners "
                 f"(mean distance {mean('reinforce', 'before'):.2f} to {mean('reinforce', 'after'):.2f} and {mean('nash-q', 'before'):.2f} to {mean('nash-q', 'after'):.2f})."),
+        k.point(f"With A2C and PPO added to the walking game, A2C is the most reliable ({by_name['A2C'][-1]} seeds at the corners), and PPO is the "
+                f"fastest to get there but the least stable ({by_name['PPO'][-1]} seeds at the end)."),
         k.h2("The game"),
         k.text("Two houses sit at fixed points in the unit square. Each round, both players pick a point and the dog moves to the weighted average "
                "w * red + (1 - w) * blue. Each player is rewarded by the negative squared distance from the dog to their own house, with discount 0.9. "
@@ -151,6 +159,15 @@ def build(path=OUTPUT, results=RESULTS, trajectories=TRAJECTORIES):
         Spacer(1, 8),
         KeepTogether([k.text("Per seed:"), k.table(seed_rows, [0.7 * inch, 2.6 * inch, 2.6 * inch])]),
         Spacer(1, 6),
+        KeepTogether([k.h2("REINFORCE, A2C and PPO on the walking game"),
+                      k.text("The same three algorithms on the walking game, five seeds each, 300 episodes, scored every 25 episodes. "
+                             "\"At N\" is the mean distance after N episodes. A seed is at the corners when the summed distance is under "
+                             f"{dog_game_summary.WALKED} (my threshold). The chart shows the share of seeds at the corners."),
+                      walking_figure(), k.table(algorithms, column_widths(algorithms, 6.9 * inch))]),
+        k.point(f"A2C is the most reliable: {by_name['A2C'][-1]} seeds at the corners at the end, and {by_name['A2C'][-2]} later checkpoints."),
+        k.point(f"REINFORCE is slower and more variable ({by_name['REINFORCE'][-1]} seeds, {by_name['REINFORCE'][-2]} later checkpoints)."),
+        k.point(f"PPO is the fastest to get there but does not stay: {by_name['PPO'][-1]} seeds at the end and {by_name['PPO'][-2]} later checkpoints. "
+                "This is the opposite of the main game, where PPO was the fastest and most reliable. Why is not tested."),
         KeepTogether([k.h2("Trajectories"),
                       k.text(f"One sampled 15-step game for seed {example['seed']}, before and after training, on the same house setup. "
                              "Red and blue walk from their own houses; the dog moves to the average of their positions."),
