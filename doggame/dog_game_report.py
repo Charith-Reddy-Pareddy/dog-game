@@ -45,6 +45,8 @@ def build(path=OUTPUT, results=RESULTS, trajectories=TRAJECTORIES, studies=STUDI
     convergence, walking = load(results)
     algorithms = dog_game_summary.walking_algorithms_table(dog_game_summary.load(studies))
     by_name = {row[0]: row for row in algorithms[1:]}
+    ppo_settings = dog_game_summary.ppo_walking_table(dog_game_summary.load(studies))
+    by_setting = {row[0]: row for row in ppo_settings[1:]}
     with open(trajectories) as f:
         walk = json.load(f)
     example = walk["seeds"][0]  # the figure shows the first seed; the live site lets you pick
@@ -168,6 +170,10 @@ def build(path=OUTPUT, results=RESULTS, trajectories=TRAJECTORIES, studies=STUDI
         k.point(f"REINFORCE is slower and more variable ({by_name['REINFORCE'][-1]} seeds, {by_name['REINFORCE'][-2]} later checkpoints)."),
         k.point(f"PPO is the fastest to get there but does not stay: {by_name['PPO'][-1]} seeds at the end and {by_name['PPO'][-2]} later checkpoints. "
                 "This is the opposite of the main game, where PPO was the fastest and most reliable. Why is not tested."),
+        KeepTogether([k.text("Can PPO be made reliable on the walking game? PPO with one epoch and/or a smaller learning rate, five seeds each, "
+                             "scored the same way:"), k.table(ppo_settings, column_widths(ppo_settings, 6.9 * inch))]),
+        k.point(f"Fewer epochs helps partly ({by_setting['PPO, lr 0.01, 1 epoch'][-1]} seeds at the corners, against {by_setting['PPO, lr 0.01, 4 epochs (default)'][-1]} for the default), "
+                f"a smaller learning rate does not, and nothing matches A2C ({by_name['A2C'][-1]}). Why is not tested."),
         KeepTogether([k.h2("Trajectories"),
                       k.text(f"One sampled 15-step game for seed {example['seed']}, before and after training, on the same house setup. "
                              "Red and blue walk from their own houses; the dog moves to the average of their positions."),
