@@ -92,10 +92,11 @@ def lemke_howson_nash(payoff_red, payoff_blue, initial_dropped_label=0, epsilon=
     given; `epsilon > 0` adds a small uniform-random perturbation
     (seeded, so it is reproducible) to both matrices first.
 
-    NashPy's pivoting can overflow or cycle forever on some games, so
-    each answer is checked to be a real equilibrium. If it isn't (or the
-    attempt needs more than `max_pivots` pivots, by default ten times the
-    number of actions), the next starting label is tried, and a
+    NashPy's pivoting can overflow, cycle forever or fail with "could not
+    find dropped label" on some games, so each answer is checked to be a real
+    equilibrium. If it isn't (or the attempt fails, or needs more than
+    `max_pivots` pivots, by default ten times the number of actions), the
+    next starting label is tried, and a
     RuntimeError is raised if none of them work. The result depends only on
     the payoffs, never on how fast the machine is.
     """
@@ -114,7 +115,7 @@ def lemke_howson_nash(payoff_red, payoff_blue, initial_dropped_label=0, epsilon=
             with warnings.catch_warnings():
                 warnings.simplefilter("ignore", RuntimeWarning)  # overflow noise from failed pivots
                 strategy_red, strategy_blue = _capped_lemke_howson(payoff_red, payoff_blue, label, max_pivots)
-        except _TooManyPivots:
+        except (_TooManyPivots, ValueError):  # NashPy raises ValueError on some tied games
             continue
         if _is_equilibrium(strategy_red, strategy_blue, payoff_red, payoff_blue):
             return strategy_red, strategy_blue

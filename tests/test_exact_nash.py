@@ -152,3 +152,16 @@ def test_lemke_howson_always_returns_a_real_equilibrium_on_random_games():
         value_blue = strategy_red @ payoff_blue @ strategy_blue
         assert (payoff_red @ strategy_blue).max() <= value_red + 1e-6
         assert (strategy_red @ payoff_blue).max() <= value_blue + 1e-6
+
+
+def test_a_starting_label_where_nashpy_cannot_find_the_dropped_label_does_not_stop_the_solve():
+    # the dog game on a 5 x 5 grid with houses (0.6, 0.6) and (0.4, 0.4) has many tied payoffs;
+    # NashPy fails with "could not find dropped label" when it starts from label 0
+    domain = Square(0.0, 1.0)
+    payoff_red, payoff_blue = payoff_matrices(action_grid(domain, 5), (0.6, 0.6), (0.4, 0.4), 0.5, domain,
+                                              weighted_average_transition, negative_squared_distance_reward)
+
+    strategy_red, strategy_blue = lemke_howson_nash(payoff_red, payoff_blue, initial_dropped_label=0)
+
+    assert strategy_red @ payoff_red @ strategy_blue >= (payoff_red @ strategy_blue).max() - 1e-6
+    assert strategy_red @ payoff_blue @ strategy_blue >= (strategy_red @ payoff_blue).max() - 1e-6
