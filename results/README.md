@@ -24,6 +24,8 @@ experiment keeps what it finished and a rerun skips it. Print every table with
   - `ppo_variants`: PPO with 1 or 2 epochs (main game) or a smaller learning rate / fewer epochs (walking game).
   - `ppo_long`: A2C and PPO on the walking game for 900 episodes.
   - `walking_settings`: A2C on the walking game with another maximum step or discount.
+  - `walking_houses`: the three algorithms on the walking game with three other house setups.
+  - `walking_inertia`: A2C on the walking game with dog inertia (`w0` of 0.3 and 0.6).
   - `selection`: where self-play ends when the houses share a y-coordinate (`red`, `blue`, `exploitability`).
   - `inertia`: training with the dog's own weight `w0` set to 0, 0.3, 0.6 or 0.9.
   - `pretraining`: training on a setup after starting from another one (`curve`).
