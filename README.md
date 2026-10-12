@@ -1,5 +1,7 @@
 # Dog Game
 
+[![tests](https://github.com/Charith-Reddy-Pareddy/dog-game/actions/workflows/tests.yml/badge.svg)](https://github.com/Charith-Reddy-Pareddy/dog-game/actions/workflows/tests.yml)
+
 **Live demo:** https://charith-reddy-pareddy.github.io/dog-game/
 **Research report:** [RESEARCH_REPORT.md](RESEARCH_REPORT.md) ([PDF](research_report.pdf), built from it)
 **Research questions:** [RESEARCH_QUESTIONS.md](RESEARCH_QUESTIONS.md), with the status of each
@@ -81,7 +83,10 @@ from the saved runs in `results/`:
 - **The walking game reverses the ranking.** REINFORCE and the 10-direction Nash-Q
   network both end near the one-shot Nash corners. With A2C and PPO added, A2C is the
   most reliable (5 of 5 seeds at the corners), while PPO is the fastest to get there but
-  swings away again in three of five seeds.
+  swings away again in three of five seeds. A smaller learning rate does not fix PPO, and
+  fewer epochs only help partly.
+- **PPO's speed comes from reusing each episode.** With one epoch (one gradient step per
+  episode, like REINFORCE) it is no faster than REINFORCE.
 
 ## Quick start
 
@@ -152,7 +157,7 @@ env = DogGameEnv(house_red=(0.9, 0.2), house_blue=(0.1, 0.8), w=0.5,
 ```bash
 python3 -m doggame.experiments        # the original 15-run convergence study
 python3 -m doggame.dog_game_study     # five-seed convergence and walking runs
-python3 -m doggame.dog_game_studies   # the eight studies in the report (resumable; add 0/4 to shard)
+python3 -m doggame.dog_game_studies   # the nine studies in the report (resumable; add 0/4 to shard)
 python3 -m doggame.dog_game_summary   # print every table as Markdown
 python3 -m doggame.research_report_pdf   # rebuild research_report.pdf from RESEARCH_REPORT.md
 ```
@@ -205,7 +210,7 @@ run keeps what it finished and a rerun skips it.
 
 - `doggame/dog_game_study.py`, `doggame/dog_game_trajectories.py` -- the five-seed
   convergence and walking runs, and the recorded paths of the players and the dog.
-- `doggame/dog_game_studies.py`, `doggame/dog_game_summary.py` -- eight experiments
+- `doggame/dog_game_studies.py`, `doggame/dog_game_summary.py` -- nine experiments
   that answer open research questions, and the tables built from their saved results.
 - `doggame/dog_game_report.py`, `doggame/research_report_pdf.py`, `doggame/pdf_kit.py` --
   build `dog_game_results.pdf` and `research_report.pdf`.
@@ -226,7 +231,7 @@ run keeps what it finished and a rerun skips it.
 
 ## Tests
 
-`python3 -m pytest` runs the whole suite (169 tests). Defects found while testing are fixed
+`python3 -m pytest` runs the whole suite (172 tests). Defects found while testing are fixed
 in commits labelled "debug", each with a regression test.
 
 ## License
