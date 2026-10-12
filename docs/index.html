@@ -11,7 +11,11 @@
 <meta property="og:title" content="Dog Game" />
 <meta property="og:description" content="A general-sum two-player game with a live simulator, REINFORCE / A2C / PPO and Nash-Q experiments, the walking game, and the research questions they answer." />
 <meta property="og:url" content="https://charith-reddy-pareddy.github.io/dog-game/" />
-<meta name="twitter:card" content="summary" />
+<meta property="og:image" content="https://charith-reddy-pareddy.github.io/dog-game/preview.png" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:image" content="https://charith-reddy-pareddy.github.io/dog-game/preview.png" />
 <style>
   :root {
     --red: #d8555f;
@@ -132,11 +136,15 @@
   .traj-read b { color: var(--ink); }
   .traj-legend { font-size: 0.78rem; color: var(--muted); line-height: 1.5; }
 
+  header.card p.sub { overflow-wrap: anywhere; }
+  code { overflow-wrap: anywhere; }
   .nav { display: flex; flex-wrap: wrap; gap: 6px 16px; margin: 14px 0 0; font-size: 0.85rem; }
   .nav a { text-decoration: none; font-weight: 600; }
   .nav a:hover { text-decoration: underline; }
   html { scroll-behavior: smooth; }
   @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+  .highlights { margin: 0; padding-left: 20px; font-size: 0.9rem; line-height: 1.6; }
+  .highlights li { margin-bottom: 6px; }
   .traj-chart svg { width: 100%; height: auto; display: block; margin: 6px 0 10px; background: #fbf9f4; border: 1px solid var(--line); border-radius: 12px; }
   .chip { display: inline-block; font-size: 0.68rem; font-weight: 700; letter-spacing: 0.03em; padding: 2px 8px; border-radius: 999px; margin-left: 8px; vertical-align: middle; text-transform: uppercase; }
   .chip.answered { background: #e3efe6; color: #2f5d3d; }
@@ -179,6 +187,7 @@
     </p>
   
     <p class="nav">
+      <a href="#highlights">Key results</a>
       <a href="#simulator">Simulator</a>
       <a href="#findings">Training results</a>
       <a href="#experiments">More experiments</a>
@@ -189,6 +198,17 @@
       <a href="https://github.com/Charith-Reddy-Pareddy/dog-game/blob/main/dog_game_results.pdf" target="_blank" rel="noopener">Results (PDF)</a>
     </p>
 </header>
+
+  <section class="card" id="highlights">
+    <h2>Key results</h2>
+    <div class="stat-grid"><div class="stat"><div class="num">74/75</div><div class="lbl">REINFORCE runs converged</div></div><div class="stat"><div class="num">25/25</div><div class="lbl">PPO runs converged</div></div><div class="stat"><div class="num">19/25</div><div class="lbl">PPO runs converged after 100 episodes</div></div><div class="stat"><div class="num">5/5</div><div class="lbl">walking-game seeds at the corners (A2C)</div></div></div>
+    <ul class="highlights">
+      <li><b>Self-play policy gradient converges on the dog game.</b> It does so for every algorithm tried, though how many episodes it needs depends on the algorithm and the setup. <a href="#findings">Training results</a></li>
+      <li><b>PPO is fast because it reuses each episode.</b> With one epoch it is no faster than REINFORCE. <a href="#experiments">More experiments</a></li>
+      <li><b>The walking game reverses the ranking.</b> A2C is the most reliable there, and PPO is fast but swings away from the corners again; a gentler PPO settles with more training. <a href="#trajectories">Walking game</a></li>
+      <li><b>17 of 30 research questions are answered, 4 partly, 9 still open.</b> <a href="#questions">Research questions</a></li>
+    </ul>
+  </section>
 
   <section class="card" id="simulator">
     <h2>Live simulator</h2>
@@ -304,7 +324,7 @@
     <h2>More experiments</h2>
     <p class="sub" style="margin-bottom:6px">
       Each experiment below answers one of the open research questions with saved
-      runs (<code>results/dog_game_studies.jsonl</code>, 386 runs in all); the
+      runs (<code>results/dog_game_studies.jsonl</code>, 421 runs in all); the
       code is <code>doggame/dog_game_studies.py</code>. A run counts as converged
       below 0.004 exploitability, which is my threshold, so the medians are shown too.
     </p>
@@ -356,6 +376,27 @@
       <li>Fewer epochs helps but does not fix it: 4 of 5 seeds at the corners and 21 of 35 later checkpoints, against 2 of 5 and 14 of 35 for the default, but slower early.</li>
       <li>A smaller learning rate does not help (1 of 5 and 2 of 5 seeds), and some runs were still far from the corners at 300 episodes. None matches A2C (5 of 5, 34 of 35).</li>
       <li>Why PPO is unstable here is still untested; five seeds per setting and a 300-episode horizon.</li>
+    </ul>
+
+    <h3>Longer training, and another step length or discount, on the walking game</h3>
+    <p class="hint" style="margin:0 0 6px">A2C and two PPO settings trained for 900 episodes (late checkpoints from 450), 5 seeds each.</p>
+    <p class="hint scroll-hint">Swipe the table sideways to see every column.</p>
+    <div class="table-scroll">
+    <table><thead><tr><th>Setting</th><th>Before training</th><th>At 300</th><th>At 600</th><th>At 900</th><th>Late checkpoints at the corners (from 450)</th><th>Seeds at the corners at the end</th></tr></thead><tbody><tr><td>A2C</td><td>1.49</td><td>0.011</td><td>0.003</td><td>0.003</td><td>95 of 95</td><td>5 of 5</td></tr><tr><td>PPO, 4 epochs (default)</td><td>1.49</td><td>0.371</td><td>0.499</td><td>0.669</td><td>50 of 95</td><td>3 of 5</td></tr><tr><td>PPO, 1 epoch</td><td>1.49</td><td>0.123</td><td>0.033</td><td>0.007</td><td>77 of 95</td><td>5 of 5</td></tr></tbody></table>
+    </div>
+    <ul>
+      <li>A2C stays at the corners. One-epoch PPO settles (5 of 5 seeds after 900 episodes) but is slower than A2C.</li>
+      <li>Default PPO does not settle: two seeds leave the corners and do not return within 900 episodes.</li>
+    </ul>
+
+    <p class="hint" style="margin:10px 0 6px">A2C with another maximum step or discount, 300 episodes, 5 seeds each.</p>
+    <p class="hint scroll-hint">Swipe the table sideways to see every column.</p>
+    <div class="table-scroll">
+    <table><thead><tr><th>Setting</th><th>Before training</th><th>At 50</th><th>At 100</th><th>At 200</th><th>At 300</th><th>Late checkpoints at the corners (from 150)</th><th>Seeds at the corners at the end</th></tr></thead><tbody><tr><td>max step 0.1, discount 0.9</td><td>1.08</td><td>0.439</td><td>0.386</td><td>0.234</td><td>0.184</td><td>20 of 35</td><td>3 of 5</td></tr><tr><td>max step 0.2, discount 0.9 (default)</td><td>1.49</td><td>0.731</td><td>0.199</td><td>0.032</td><td>0.011</td><td>34 of 35</td><td>5 of 5</td></tr><tr><td>max step 0.4, discount 0.9</td><td>1.67</td><td>0.509</td><td>0.182</td><td>0.036</td><td>0.028</td><td>32 of 35</td><td>5 of 5</td></tr><tr><td>max step 0.2, discount 0.5</td><td>1.49</td><td>0.409</td><td>0.088</td><td>0.009</td><td>0.003</td><td>35 of 35</td><td>5 of 5</td></tr><tr><td>max step 0.2, discount 0.99</td><td>1.49</td><td>0.836</td><td>0.442</td><td>0.102</td><td>0.056</td><td>22 of 35</td><td>4 of 5</td></tr></tbody></table>
+    </div>
+    <ul>
+      <li>A lower discount makes learning faster and a higher one slower; a longer step costs nothing and a shorter one is slower within 300 episodes.</li>
+      <li>These change how fast the players get to the corners, not where: the one-shot Nash corners do not depend on either.</li>
     </ul>
 
     <h3>Which equilibrium does self-play find?</h3>
@@ -506,11 +547,11 @@
     <details class="q"><summary><span class="q-num">Q22</span>Is the exact equilibrium of the discretized game always a single action pair?<span class="chip answered">Answered</span></summary><p><b>Status:</b> Answered for the five setups and five grid sizes tested (25 games). Yes.</p></details>
     <details class="q"><summary><span class="q-num">Q23</span>Is the one-shot corner pair also an equilibrium of the walking game?<span class="chip open">Open</span></summary><p>The walking experiments check that players head to the one-shot corners, not that those corners are an equilibrium of the walking game.</p><p><b>Status:</b> Open.</p></details>
     <details class="q"><summary><span class="q-num">Q24</span>Does PPO stay ahead when matched on gradient steps rather than episodes?<span class="chip answered">Answered</span></summary><p><b>Status:</b> Answered for the main game (75 runs of PPO with 1, 2 and 4 epochs). No clear lead per gradient step. After 100 episodes 1, 9 and 19 of 25 runs had converged with 1, 2 and 4 epochs, and one-epoch PPO is no faster than REINFORCE.</p></details>
-    <details class="q"><summary><span class="q-num">Q25</span>How does the walking game change with the maximum step length and with the discount?<span class="chip open">Open</span></summary><p><b>Status:</b> Open; only a step of 0.2 and a discount of 0.9 were run.</p></details>
+    <details class="q"><summary><span class="q-num">Q25</span>How does the walking game change with the maximum step length and with the discount?<span class="chip partly">Partly</span></summary><p><b>Status:</b> Partly answered for A2C on one house setup (20 runs). A lower discount makes learning faster (0.5: 5 of 5 seeds, 35 of 35 later checkpoints at the corners) and a higher one slower (0.99: 4 of 5, 22 of 35); a longer step (0.4) costs nothing, and a shorter one (0.1) is slower (3 of 5, 20 of 35) within 300 episodes. The one-shot corners do not depend on either, so this is about how fast the players get there, not where.</p></details>
     <details class="q"><summary><span class="q-num">Q26</span>Do A2C and PPO beat REINFORCE on the walking game?<span class="chip answered">Answered</span></summary><p><b>Status:</b> Answered for one house setup (15 runs). A2C is the most reliable (5 of 5 seeds at the corners at the end, 34 of 35 later checkpoints under 0.1); REINFORCE is slower (4 of 5, 24 of 35); PPO gets there fastest but does not stay (2 of 5, 14 of 35).</p></details>
-    <details class="q"><summary><span class="q-num">Q27</span>Why is PPO unstable on the walking game?<span class="chip open">Open</span></summary><p><b>Status:</b> Open on the mechanism. A smaller learning rate does not help and fewer epochs help partly, so it is not simply the step size; reusing each episode seems to contribute, but that is a hypothesis.</p></details>
-    <details class="q"><summary><span class="q-num">Q28</span>Does a smaller learning rate or fewer epochs make PPO reliable on the walking game?<span class="chip answered">Answered</span></summary><p><b>Status:</b> Answered for the settings tried (15 runs). Fewer epochs help partly (4 of 5 seeds at the corners, 21 of 35 later checkpoints, against 2 of 5 and 14 of 35 for the default), a smaller learning rate does not (1 of 5 and 2 of 5), and nothing matches A2C (5 of 5, 34 of 35).</p></details>
-    <details class="q"><summary><span class="q-num">Q29</span>Do the slower PPO settings settle with more than 300 episodes?<span class="chip open">Open</span></summary><p>Several runs were still far from the corners when training stopped.</p><p><b>Status:</b> Open.</p></details>
+    <details class="q"><summary><span class="q-num">Q27</span>Why is PPO unstable on the walking game?<span class="chip open">Open</span></summary><p><b>Status:</b> Open on the mechanism. A smaller learning rate does not help, fewer epochs help, and default PPO&#x27;s failures persist (two of five seeds never return to the corners in 900 episodes), so it is not just slow; reusing each episode seems to contribute, but that is a hypothesis.</p></details>
+    <details class="q"><summary><span class="q-num">Q28</span>Does a smaller learning rate or fewer epochs make PPO reliable on the walking game?<span class="chip answered">Answered</span></summary><p><b>Status:</b> Answered for the settings tried. Fewer epochs help (4 of 5 seeds after 300 episodes, 5 of 5 after 900), a smaller learning rate does not (1 of 5 and 2 of 5 after 300), and one-epoch PPO is still much slower than A2C (0.12 against 0.011 mean distance after 300 episodes).</p></details>
+    <details class="q"><summary><span class="q-num">Q29</span>Do the slower PPO settings settle with more than 300 episodes?<span class="chip answered">Answered</span></summary><p><b>Status:</b> Answered for one-epoch PPO and the default (30 runs with A2C). One-epoch PPO settles (5 of 5 seeds at the corners after 900 episodes) and default PPO does not (3 of 5, with two seeds stuck far away). The smaller learning rate settings were not run longer.</p></details>
   </section>
 
   <section class="card notes" id="assumptions">
