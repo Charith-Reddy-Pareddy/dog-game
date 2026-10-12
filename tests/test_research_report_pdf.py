@@ -1,4 +1,7 @@
-from doggame.research_report_pdf import column_widths, inline, parse
+import glob
+import re
+
+from doggame.research_report_pdf import FIGURES, column_widths, inline, parse
 
 SAMPLE = """# Title
 
@@ -68,3 +71,13 @@ def test_a_very_long_heading_cannot_take_more_than_its_capped_share():
     widths = column_widths([["x" * 80, "b"], ["1", "2"]], 100)
 
     assert abs(widths[0] - 100 * 28 / (28 + 12)) < 1e-9
+
+
+def test_every_report_source_has_its_tables_filled_in_and_only_known_figures():
+    reports = glob.glob("*REPORT.md")
+    assert "RESEARCH_REPORT.md" in reports and "WALKING_GAME_REPORT.md" in reports
+
+    for path in reports:
+        text = open(path).read()
+        assert "{{T:" not in text, f"{path} still has an unfilled table"
+        assert set(re.findall(r"\{\{figure:(\w+)\}\}", text)) <= set(FIGURES), f"{path} names a figure that does not exist"

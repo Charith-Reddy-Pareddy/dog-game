@@ -1,6 +1,6 @@
 """Builds research_report.pdf from RESEARCH_REPORT.md, so the two never disagree.
 
-Run with `python3 -m doggame.research_report_pdf` (needs reportlab). The
+Run with `python3 -m doggame.research_report_pdf [source.md output.pdf]` (needs reportlab). The
 Markdown it understands is small: `#` title, `##`/`###` headings, paragraphs,
 `-` and `1.` lists, `|` tables, `>` quotes, **bold**, `code` and [links](url).
 A line `{{figure:name}}` is replaced by the chart of that name from FIGURES.
@@ -8,6 +8,7 @@ A line `{{figure:name}}` is replaced by the chart of that name from FIGURES.
 
 import json
 import re
+import sys
 from html import escape
 
 import numpy as np
@@ -167,7 +168,15 @@ def walking_figure():
     return d
 
 
-FIGURES = {"convergence": convergence_figure, "walking": walking_figure}
+def trajectories_figure():
+    """The recorded paths of one walking game, before and after training (doggame.walking_figures)."""
+    from doggame.walking_figures import TRAJECTORIES, trajectory_figure
+
+    with open(TRAJECTORIES) as f:
+        return trajectory_figure(json.load(f))
+
+
+FIGURES = {"convergence": convergence_figure, "walking": walking_figure, "trajectories": trajectories_figure}
 
 
 def build(source=SOURCE, path=OUTPUT):
@@ -204,4 +213,4 @@ def build(source=SOURCE, path=OUTPUT):
 
 
 if __name__ == "__main__":
-    build()
+    build(*sys.argv[1:3])  # optionally: a Markdown source and the PDF to write
