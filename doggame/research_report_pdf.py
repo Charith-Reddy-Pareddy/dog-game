@@ -97,10 +97,15 @@ def parse(markdown):
 
 
 def column_widths(rows, total):
-    """Split `total` between the columns in proportion to their longest cell: at least 12 characters (20 for the
-    first column) and at most 28, so a long heading wraps instead of squeezing the other columns."""
-    longest = [min(28, max(20 if col == 0 else 12, max(len(row[col]) for row in rows))) for col in range(len(rows[0]))]
-    return [total * n / sum(longest) for n in longest]
+    """Split `total` between the columns in proportion to their longest cell: at least 14 characters (20 for the
+    first column), room for the column's longest single word so it never breaks mid-word, and at most 28 so a
+    long heading wraps instead of squeezing the other columns."""
+    weights = []
+    for col in range(len(rows[0])):
+        longest_cell = max(len(row[col]) for row in rows)
+        longest_word = max(len(word) for row in rows for word in row[col].split())
+        weights.append(min(28, max(20 if col == 0 else 14, longest_cell, 2.4 * longest_word)))
+    return [total * w / sum(weights) for w in weights]
 
 
 def study_rows(study, path=STUDIES):

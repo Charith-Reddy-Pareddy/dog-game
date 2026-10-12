@@ -70,7 +70,7 @@ def test_italics_are_converted_but_stars_around_spaces_and_inside_code_are_not()
 def test_a_very_long_heading_cannot_take_more_than_its_capped_share():
     widths = column_widths([["x" * 80, "b"], ["1", "2"]], 100)
 
-    assert abs(widths[0] - 100 * 28 / (28 + 12)) < 1e-9
+    assert abs(widths[0] - 100 * 28 / (28 + 14)) < 1e-9
 
 
 def test_every_report_source_has_its_tables_filled_in_and_only_known_figures():
@@ -81,3 +81,9 @@ def test_every_report_source_has_its_tables_filled_in_and_only_known_figures():
         text = open(path).read()
         assert "{{T:" not in text, f"{path} still has an unfilled table"
         assert set(re.findall(r"\{\{figure:(\w+)\}\}", text)) <= set(FIGURES), f"{path} names a figure that does not exist"
+
+
+def test_a_column_of_long_words_gets_enough_room_not_to_break_them():
+    widths = column_widths([["h", "Algorithm"], ["a", "REINFORCE"], ["b", "A2C"]], 100)
+
+    assert widths[1] >= 100 * (2.4 * 9) / (20 + 2.4 * 9) - 1e-9  # at least the room 9 letters need, next to a 20-weight first column
