@@ -211,7 +211,7 @@
       <li><b>Self-play policy gradient converges on the dog game.</b> It does so for every algorithm tried, though how many episodes it needs depends on the algorithm and the setup. <a href="#findings">Training results</a></li>
       <li><b>PPO is fast because it reuses each episode.</b> With one epoch it is no faster than REINFORCE. <a href="#experiments">More experiments</a></li>
       <li><b>The walking game reverses the ranking.</b> A2C is the most reliable there, and PPO is fast but swings away from the corners again; a gentler PPO settles with more training. <a href="#trajectories">Walking game</a> &middot; <a href="#walking-report">Report</a></li>
-      <li><b>17 of 32 research questions are answered, 5 partly, 10 still open.</b> <a href="#questions">Research questions</a></li>
+      <li><b>18 of 32 research questions are answered, 5 partly, 9 still open.</b> <a href="#questions">Research questions</a></li>
     </ul>
   </section>
 
@@ -329,7 +329,7 @@
     <h2>More experiments</h2>
     <p class="sub" style="margin-bottom:6px">
       Each experiment below answers one of the open research questions with saved
-      runs (<code>results/dog_game_studies.jsonl</code>, 476 runs in all); the
+      runs (<code>results/dog_game_studies.jsonl</code>, 484 runs in all); the
       code is <code>doggame/dog_game_studies.py</code>. A run counts as converged
       below 0.004 exploitability, which is my threshold, so the medians are shown too.
     </p>
@@ -422,6 +422,18 @@
     </div>
     <ul>
       <li>Inertia slows learning, as on the main game; the corners do not depend on it.</li>
+    </ul>
+
+    <h3>Is walking to the corners an equilibrium of the walking game?</h3>
+    <p class="hint" style="margin:0 0 6px">If one player walks straight to its corner at full speed and stays, the other's best response is solved numerically; the gain is how much more reward it gets than following the straight walk.</p>
+    <p class="hint scroll-hint">Swipe the table sideways to see every column.</p>
+    <div class="table-scroll">
+    <table><thead><tr><th>House setup</th><th>Players start</th><th>Red&#x27;s gain</th><th>Blue&#x27;s gain</th><th>Largest gain as a share of the reward</th></tr></thead><tbody><tr><td>default: (0.88, 0.12) / (0.3, 0.65), w = 0.5</td><td>on their houses</td><td>0.00000</td><td>0.00173</td><td>0.29%</td></tr><tr><td>default: (0.88, 0.12) / (0.3, 0.65), w = 0.5</td><td>on the corners</td><td>0.00000</td><td>0.00000</td><td>0.00%</td></tr><tr><td>(0.9, 0.2) / (0.1, 0.8), w = 0.5</td><td>on their houses</td><td>0.00248</td><td>0.00248</td><td>0.13%</td></tr><tr><td>(0.9, 0.2) / (0.1, 0.8), w = 0.5</td><td>on the corners</td><td>0.00000</td><td>0.00000</td><td>0.00%</td></tr><tr><td>(0.8, 0.8) / (0.2, 0.3), w = 0.3</td><td>on their houses</td><td>0.00004</td><td>0.00297</td><td>3.09%</td></tr><tr><td>(0.8, 0.8) / (0.2, 0.3), w = 0.3</td><td>on the corners</td><td>0.00000</td><td>0.00000</td><td>0.00%</td></tr><tr><td>(0.7, 0.1) / (0.6, 0.9), w = 0.7</td><td>on their houses</td><td>0.01524</td><td>0.03014</td><td>4.74%</td></tr><tr><td>(0.7, 0.1) / (0.6, 0.9), w = 0.7</td><td>on the corners</td><td>0.00000</td><td>0.00000</td><td>0.00%</td></tr></tbody></table>
+    </div>
+    <ul>
+      <li>Resting on the corners is an exact equilibrium in all four setups: the gain from deviating is 0.</li>
+      <li>Walking straight to the corner is a near-equilibrium: the best deviation gains 0.13% to 4.7% of the reward, because each step&#x27;s best position lies outside the square.</li>
+      <li>The equilibrium of the full dynamic game with feedback strategies was not computed.</li>
     </ul>
 
     <h3>Which equilibrium does self-play find?</h3>
@@ -548,6 +560,7 @@
       <li><b>All three learn to walk to the corners, but not equally reliably.</b> After 300 episodes A2C has 5 of 5 seeds at the corners, REINFORCE 4 of 5 and PPO 2 of 5.</li>
       <li><b>PPO is the fastest to get there and the worst at staying:</b> it spends only 14 of 35 later checkpoints at the corners, against 34 of 35 for A2C.</li>
       <li><b>A gentler PPO settles, the default does not.</b> With one epoch and three times more training PPO reaches the corners in 5 of 5 seeds; a smaller learning rate does not help.</li>
+      <li><b>Walking to the corners is a near-equilibrium.</b> Resting on them is an exact equilibrium, and the best deviation from walking straight there gains only 0.13% to 4.7% of the reward.</li>
       <li><b>A lower discount makes the game easier to learn, a higher one harder.</b> The ranking holds on three other house setups, though one is much harder; the scores are noisy, so the report tracks many checkpoints.</li>
     </ul>
   </section>
@@ -590,7 +603,7 @@
     <details class="q"><summary><span class="q-num">Q20</span>Why does pre-training from a different setup hurt?<span class="chip open">Open</span></summary><p><b>Status:</b> Open on the mechanism. The measured pattern (same corners help, flipped corners hurt) suggests the network has to un-learn a boundary direction, but that is a hypothesis.</p></details>
     <details class="q"><summary><span class="q-num">Q21</span>Does re-solving the stage game less often change the Nash-Q fixed point?<span class="chip answered">Answered</span></summary><p><b>Status:</b> Answered for the dog game. No: with a state-independent transition, every Q matrix differs from the payoffs by a constant, so the equilibrium never moves between iterations.</p></details>
     <details class="q"><summary><span class="q-num">Q22</span>Is the exact equilibrium of the discretized game always a single action pair?<span class="chip answered">Answered</span></summary><p><b>Status:</b> Answered for the five setups and five grid sizes tested (25 games). Yes.</p></details>
-    <details class="q"><summary><span class="q-num">Q23</span>Is the one-shot corner pair also an equilibrium of the walking game?<span class="chip open">Open</span></summary><p>The walking experiments check that players head to the one-shot corners, not that those corners are an equilibrium of the walking game.</p><p><b>Status:</b> Open.</p></details>
+    <details class="q"><summary><span class="q-num">Q23</span>Is the one-shot corner pair also an equilibrium of the walking game?<span class="chip answered">Answered</span></summary><p><b>Status:</b> Answered for the resting state and for the straight-walk profile (8 checks, four house setups). Both players resting on the corners is an exact equilibrium (gain 0 in all four setups). Walking straight to the corners at full speed is a near-equilibrium: the best deviation gains 0.13% to 4.7% of the reward. The equilibrium of the full dynamic game with feedback strategies was not computed.</p></details>
     <details class="q"><summary><span class="q-num">Q24</span>Does PPO stay ahead when matched on gradient steps rather than episodes?<span class="chip answered">Answered</span></summary><p><b>Status:</b> Answered for the main game (75 runs of PPO with 1, 2 and 4 epochs). No clear lead per gradient step. After 100 episodes 1, 9 and 19 of 25 runs had converged with 1, 2 and 4 epochs, and one-epoch PPO is no faster than REINFORCE.</p></details>
     <details class="q"><summary><span class="q-num">Q25</span>How does the walking game change with the maximum step length and with the discount?<span class="chip partly">Partly</span></summary><p><b>Status:</b> Partly answered for A2C on one house setup (20 runs). A lower discount makes learning faster (0.5: 5 of 5 seeds, 35 of 35 later checkpoints at the corners) and a higher one slower (0.99: 4 of 5, 22 of 35); a longer step (0.4) costs nothing, and a shorter one (0.1) is slower (3 of 5, 20 of 35) within 300 episodes. The one-shot corners do not depend on either, so this is about how fast the players get there, not where.</p></details>
     <details class="q"><summary><span class="q-num">Q26</span>Do A2C and PPO beat REINFORCE on the walking game?<span class="chip answered">Answered</span></summary><p><b>Status:</b> Answered for one house setup (15 runs). A2C is the most reliable (5 of 5 seeds at the corners at the end, 34 of 35 later checkpoints under 0.1); REINFORCE is slower (4 of 5, 24 of 35); PPO gets there fastest but does not stay (2 of 5, 14 of 35).</p></details>
