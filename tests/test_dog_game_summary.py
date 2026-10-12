@@ -1,6 +1,6 @@
 from doggame.dog_game_summary import (algorithms_table, convergence_counts, markdown, noise_table, resolution_table,
                                       selection_outcome, selection_table, walking_algorithms_table, walking_share_series, walking_table,
-                                      ppo_epochs_table, ppo_walking_table)
+                                      ppo_epochs_table, ppo_long_table, ppo_walking_table, walking_settings_table)
 
 
 def run(study, key, **fields):
@@ -111,3 +111,24 @@ def test_ppo_walking_table_compares_settings_with_the_default_and_a2c():
 
     assert [r[0] for r in table[1:]] == ["A2C (reference)", "PPO, lr 0.01, 4 epochs (default)", "PPO, lr 0.003, 4 epochs"]
     assert table[3][-2:] == ["2 of 2", "1 of 1"]
+
+
+def test_ppo_long_table_uses_the_longer_checkpoints_and_a_later_start_for_the_late_share():
+    curve = {"300": 0.5, "450": 0.02, "600": 0.4, "900": 0.03}
+    rows = [run("ppo_long", dict(setting="ppo4", seed=0), start=1.5, curve=curve), run("ppo_long", dict(setting="a2c", seed=0), start=1.5, curve=curve)]
+
+    table = ppo_long_table(rows)
+
+    assert table[0][:5] == ["Setting", "Before training", "At 300", "At 600", "At 900"]
+    assert [r[0] for r in table[1:]] == ["A2C", "PPO, 4 epochs (default)"]
+    assert table[1][-2:] == ["2 of 3", "1 of 1"]  # checkpoints 450, 600 and 900: two are under 0.1
+
+
+def test_walking_settings_table_puts_the_default_next_to_the_changed_settings():
+    curve = {"50": 0.9, "100": 0.5, "200": 0.1, "300": 0.05}
+    rows = [run("walking", dict(algorithm="a2c", seed=0), start=1.5, curve=curve),
+            run("walking_settings", dict(max_step=0.4, discount=0.9, seed=0), start=1.5, curve=curve)]
+
+    table = walking_settings_table(rows)
+
+    assert [r[0] for r in table[1:]] == ["max step 0.2, discount 0.9 (default)", "max step 0.4, discount 0.9"]

@@ -121,6 +121,31 @@ def ppo_walking_table(rows, late=150):
     return table
 
 
+def ppo_long_table(rows, late=450):
+    """The walking game's A2C and PPO settings trained for 900 episodes, to see whether the late swings settle."""
+    runs = study(rows, "ppo_long")
+    shown = [e for e in (300, 600, 900) if any(str(e) in r["curve"] for r in runs)]
+    table = [_walking_header("Setting", late, shown)]
+    for setting, label in (("a2c", "A2C"), ("ppo4", "PPO, 4 epochs (default)"), ("ppo1", "PPO, 1 epoch")):
+        mine = [r for r in runs if r["key"]["setting"] == setting]
+        if mine:
+            table.append(_walking_row(label, mine, late, shown))
+    return table
+
+
+def walking_settings_table(rows, late=150):
+    """A2C on the walking game with a different maximum step or discount, next to the default (0.2 and 0.9)."""
+    shown = (50, 100, 200, 300)
+    default = [r for r in study(rows, "walking") if r["key"]["algorithm"] == "a2c"]
+    varied = study(rows, "walking_settings")
+    table = [_walking_header("Setting", late, shown)]
+    for max_step, discount in ((0.1, 0.9), (0.2, 0.9), (0.4, 0.9), (0.2, 0.5), (0.2, 0.99)):
+        mine = default if (max_step, discount) == (0.2, 0.9) else [r for r in varied if (r["key"]["max_step"], r["key"]["discount"]) == (max_step, discount)]
+        if mine:
+            table.append(_walking_row(f"max step {max_step}, discount {discount}" + (" (default)" if mine is default else ""), mine, late, shown))
+    return table
+
+
 def ppo_epochs_table(rows):
     """Main game: share of runs under the threshold after each number of episodes, with the gradient steps each
     algorithm takes per episode, so PPO's speed can be compared with REINFORCE and A2C on equal steps."""
@@ -271,7 +296,8 @@ if __name__ == "__main__":
     for name, table in (("convergence", convergence_table(runs)), ("algorithms", algorithms_table(studies)), ("selection", selection_table(studies)),
                         ("inertia", inertia_table(studies)), ("pretraining", pretraining_table(studies)), ("stage solver", stage_solver_table(studies)),
                         ("resolution", resolution_table(studies)), ("noise", noise_table(studies)), ("walking", walking_table(runs)), ("walking algorithms", walking_algorithms_table(studies)),
-                        ("ppo epochs", ppo_epochs_table(studies)), ("ppo walking", ppo_walking_table(studies))):
+                        ("ppo epochs", ppo_epochs_table(studies)), ("ppo walking", ppo_walking_table(studies)),
+                        ("ppo long", ppo_long_table(studies)), ("walking settings", walking_settings_table(studies))):
         print(f"\n### {name}\n\n{markdown(table)}")
     print("\nconvergence counts:", convergence_counts(runs))
     print("inertia median distance:", inertia_distances(studies))
