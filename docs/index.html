@@ -125,6 +125,17 @@
   .traj-read b { color: var(--ink); }
   .traj-legend { font-size: 0.78rem; color: var(--muted); line-height: 1.5; }
 
+  .traj-chart svg { width: 100%; height: auto; display: block; margin: 6px 0 10px; background: #fbf9f4; border: 1px solid var(--line); border-radius: 12px; }
+  .chip { display: inline-block; font-size: 0.68rem; font-weight: 700; letter-spacing: 0.03em; padding: 2px 8px; border-radius: 999px; margin-left: 8px; vertical-align: middle; text-transform: uppercase; }
+  .chip.answered { background: #e3efe6; color: #2f5d3d; }
+  .chip.partly { background: #f6ecd5; color: #7a5a16; }
+  .chip.open { background: #ece8e0; color: #5f584d; }
+  details.q { border-top: 1px solid var(--line); padding: 8px 0; }
+  details.q summary { cursor: pointer; font-size: 0.9rem; line-height: 1.5; }
+  details.q p { margin: 6px 0 2px 22px; font-size: 0.85rem; color: var(--muted); line-height: 1.55; }
+  details.q p b { color: var(--ink); }
+  .q-num { font-weight: 700; margin-right: 8px; }
+
   @media (max-width: 640px) {
     .traj-grid { grid-template-columns: 1fr; }
     .scroll-hint { display: block; }
@@ -215,9 +226,10 @@
     <p class="sub" style="margin-bottom:16px">
       These numbers come from real self-play training runs (PyTorch REINFORCE,
       1500 episodes each, 5 house/weight configurations &times; 3 network
-      architectures &mdash; reproduce with <code>python3 -m doggame.experiments</code>),
-      not from this page. Exploitability here is the same check as the live
-      simulator above, applied to the trained policy's learned actions.
+      architectures &times; 5 seeds &mdash; reproduce with
+      <code>python3 -m doggame.dog_game_study</code>), not from this page. Each
+      row is five runs. Exploitability is the same check as the live simulator
+      above, applied to the trained policy's learned actions.
     </p>
 
     <div class="stat-grid" id="statGrid"></div>
@@ -230,8 +242,9 @@
           <th>Architecture</th>
           <th>Houses (red / blue)</th>
           <th class="num">w</th>
-          <th class="num">Dist. to solver's Nash</th>
-          <th class="num">Exploitability</th>
+          <th class="num">Converged</th>
+          <th class="num">Median exploitability</th>
+          <th class="num">Worst run</th>
         </tr>
       </thead>
       <tbody></tbody>
@@ -240,28 +253,121 @@
 
     <div class="callout episodes">
       <b>Finding 1 &mdash; "can this converge?" needs a number attached to it.</b>
-      14 of 15 (config, architecture) runs reached exploitability below 0.004
-      within 1500 episodes. The 15th &mdash; <code>separate</code> architecture on
-      the (0.8,0.8)/(0.2,0.3) config &mdash; was still at 0.183, clearly
-      unconverged. Training that exact run 3000 episodes further brought it to
-      0.004: not stuck, just slower on one action dimension. Policy gradient
-      does converge here, but "1500 episodes" isn't a number you can quote
-      without naming the configuration and architecture it was measured on.
+      74 of 75 runs reached exploitability below 0.004 within 1500
+      episodes. The one miss is the <code>separate</code> architecture on
+      setup 2, seed 0, at 0.18; the
+      other four seeds of that setup converge. The three architectures do not
+      separate (24 of 25,
+      25 of 25 and 25 of 25). Policy
+      gradient does converge here, but "1500 episodes" isn't a number you can
+      quote without naming the setup and the algorithm it was measured on.
     </div>
 
     <div class="callout equilibria">
-      <b>Finding 2 &mdash; multiple equilibria are real, not a bug.</b>
+      <b>Finding 2 &mdash; multiple equilibria are real, and self-play picks a boundary one.</b>
       When both houses share a y-coordinate (e.g. (0.95,0.5) and (0.05,0.5)),
       the y-axis of the game becomes degenerate: any pair of y-actions that
       averages back to that shared value is equally optimal. The analytical
       best-response solver lands on the "obvious" solution (both players at
-      y&nbsp;=&nbsp;0.5); trained policies instead consistently found a
-      boundary-cancellation solution (red near y&nbsp;=&nbsp;1, blue near
-      y&nbsp;=&nbsp;0). Both check out as genuinely unexploitable
-      (&lt;&nbsp;0.0002) &mdash; two different, equally valid equilibria, which is
-      exactly the non-uniqueness the source research predicts once houses
-      share a coordinate.
+      y&nbsp;=&nbsp;0.5). Across 30 trained policies (10 seeds &times; 3
+      architectures) none did; every one ended with one player at the top edge
+      and the other at the bottom, 23 with red on top and 7 with red at the
+      bottom. All of these are genuinely unexploitable (&lt;&nbsp;0.0002), as is
+      the interior point.
     </div>
+  </section>
+
+  <section class="card notes" id="experiments">
+    <h2>More experiments</h2>
+    <p class="sub" style="margin-bottom:6px">
+      Each experiment below answers one of the open research questions with saved
+      runs (<code>results/dog_game_studies.jsonl</code>, 306 runs in all); the
+      code is <code>doggame/dog_game_studies.py</code>. A run counts as converged
+      below 0.004 exploitability, which is my threshold, so the medians are shown too.
+    </p>
+
+    <h3>REINFORCE, A2C and PPO</h3>
+    <p class="hint" style="margin:0 0 6px">Share of the 25 runs per algorithm (5 setups &times; 5 seeds) under 0.004 after each number of training episodes.</p>
+    <div class="traj-chart"><svg viewBox="0 0 640 280" role="img" aria-label="Share of runs under 0.004 by episodes trained, for REINFORCE, A2C and PPO"><line x1="50" x2="626" y1="236.0" y2="236.0" stroke="#e4ddd0"/><text x="44" y="240.0" text-anchor="end" font-size="11" fill="#7a7369">0.0</text><line x1="50" x2="626" y1="193.6" y2="193.6" stroke="#e4ddd0"/><text x="44" y="197.6" text-anchor="end" font-size="11" fill="#7a7369">0.2</text><line x1="50" x2="626" y1="151.2" y2="151.2" stroke="#e4ddd0"/><text x="44" y="155.2" text-anchor="end" font-size="11" fill="#7a7369">0.4</text><line x1="50" x2="626" y1="108.8" y2="108.8" stroke="#e4ddd0"/><text x="44" y="112.8" text-anchor="end" font-size="11" fill="#7a7369">0.6</text><line x1="50" x2="626" y1="66.4" y2="66.4" stroke="#e4ddd0"/><text x="44" y="70.4" text-anchor="end" font-size="11" fill="#7a7369">0.8</text><line x1="50" x2="626" y1="24.0" y2="24.0" stroke="#e4ddd0"/><text x="44" y="28.0" text-anchor="end" font-size="11" fill="#7a7369">1.0</text><text x="88.4" y="252" text-anchor="middle" font-size="11" fill="#7a7369">100</text><text x="146.0" y="252" text-anchor="middle" font-size="11" fill="#7a7369">250</text><text x="242.0" y="252" text-anchor="middle" font-size="11" fill="#7a7369">500</text><text x="434.0" y="252" text-anchor="middle" font-size="11" fill="#7a7369">1000</text><text x="626.0" y="252" text-anchor="middle" font-size="11" fill="#7a7369">1500</text><text x="338.0" y="272" text-anchor="middle" font-size="11" fill="#7a7369">training episodes</text><text x="50" y="14" font-size="11" fill="#7a7369">share of runs under 0.004</text><polyline points="88.4,236.0 146.0,125.8 242.0,32.5 434.0,32.5 626.0,32.5" fill="none" stroke="#3f7d9e" stroke-width="3.2" stroke-dasharray="" stroke-linejoin="round"/><circle cx="88.4" cy="236.0" r="3.2" fill="#3f7d9e"/><circle cx="146.0" cy="125.8" r="3.2" fill="#3f7d9e"/><circle cx="242.0" cy="32.5" r="3.2" fill="#3f7d9e"/><circle cx="434.0" cy="32.5" r="3.2" fill="#3f7d9e"/><circle cx="626.0" cy="32.5" r="3.2" fill="#3f7d9e"/><text x="622" y="119.4" text-anchor="end" font-size="12" font-weight="600" fill="#3f7d9e">REINFORCE</text><polyline points="88.4,236.0 146.0,125.8 242.0,32.5 434.0,24.0 626.0,24.0" fill="none" stroke="#d8555f" stroke-width="2" stroke-dasharray="6 4" stroke-linejoin="round"/><circle cx="88.4" cy="236.0" r="3.2" fill="#d8555f"/><circle cx="146.0" cy="125.8" r="3.2" fill="#d8555f"/><circle cx="242.0" cy="32.5" r="3.2" fill="#d8555f"/><circle cx="434.0" cy="24.0" r="3.2" fill="#d8555f"/><circle cx="626.0" cy="24.0" r="3.2" fill="#d8555f"/><text x="622" y="137.4" text-anchor="end" font-size="12" font-weight="600" fill="#d8555f">A2C</text><polyline points="88.4,74.9 146.0,32.5 242.0,24.0 434.0,24.0 626.0,24.0" fill="none" stroke="#4a7c59" stroke-width="2" stroke-dasharray="" stroke-linejoin="round"/><circle cx="88.4" cy="74.9" r="3.2" fill="#4a7c59"/><circle cx="146.0" cy="32.5" r="3.2" fill="#4a7c59"/><circle cx="242.0" cy="24.0" r="3.2" fill="#4a7c59"/><circle cx="434.0" cy="24.0" r="3.2" fill="#4a7c59"/><circle cx="626.0" cy="24.0" r="3.2" fill="#4a7c59"/><text x="622" y="155.4" text-anchor="end" font-size="12" font-weight="600" fill="#4a7c59">PPO</text></svg></div>
+    <p class="hint scroll-hint">Swipe the table sideways to see every column.</p>
+    <div class="table-scroll">
+    <table><thead><tr><th>Algorithm</th><th>100 episodes</th><th>250 episodes</th><th>500 episodes</th><th>1000 episodes</th><th>1500 episodes</th><th>Median at the end</th></tr></thead><tbody><tr><td>REINFORCE</td><td>0 of 25</td><td>13 of 25</td><td>24 of 25</td><td>24 of 25</td><td>24 of 25</td><td>0.0002</td></tr><tr><td>A2C</td><td>0 of 25</td><td>13 of 25</td><td>24 of 25</td><td>25 of 25</td><td>25 of 25</td><td>0.0001</td></tr><tr><td>PPO</td><td>19 of 25</td><td>24 of 25</td><td>25 of 25</td><td>25 of 25</td><td>25 of 25</td><td>0.0000</td></tr></tbody></table>
+    </div>
+    <ul>
+      <li>PPO is much faster per episode: 19 of 25 runs had converged after 100 episodes, against none for REINFORCE and A2C, and all 25 by 500.</li>
+      <li>A2C is not faster than REINFORCE early on, but it converged on all 25 runs by 1000 episodes, including the slow run REINFORCE left behind.</li>
+      <li>The comparison is matched on episodes, not gradient steps: PPO takes four gradient steps per episode, so part of its lead may be extra optimization.</li>
+    </ul>
+
+    <h3>Which equilibrium does self-play find?</h3>
+    <p class="hint" style="margin:0 0 6px">The setup whose houses share a y-coordinate, 10 seeds per architecture.</p>
+    <p class="hint scroll-hint">Swipe the table sideways to see every column.</p>
+    <div class="table-scroll">
+    <table><thead><tr><th>Layout</th><th>red top, blue bottom</th><th>red bottom, blue top</th><th>both at y = 0.5</th><th>other</th><th>Median exploitability</th></tr></thead><tbody><tr><td>separate</td><td>8 of 10</td><td>2 of 10</td><td>0 of 10</td><td>0 of 10</td><td>0.00009</td></tr><tr><td>shared</td><td>7 of 10</td><td>3 of 10</td><td>0 of 10</td><td>0 of 10</td><td>0.00008</td></tr><tr><td>partial</td><td>8 of 10</td><td>2 of 10</td><td>0 of 10</td><td>0 of 10</td><td>0.00018</td></tr></tbody></table>
+    </div>
+    <ul>
+      <li>None of the 30 runs found the interior solution the best-response solver reports. All ended at the edges, one player on top and the other at the bottom, split 23 to 7, with no difference between architectures.</li>
+      <li>The exact solver on the discretized game also returns a boundary equilibrium for this setup, at every grid size.</li>
+      <li>Why self-play prefers it is untested. One hypothesis is that a wide initial exploration noise pushes early samples onto the boundary, where clipping removes the gradient along the degenerate axis.</li>
+    </ul>
+
+    <h3>Does dog inertia change the outcome?</h3>
+    <p class="hint" style="margin:0 0 6px">REINFORCE with the dog's own weight w&#8320; at 0, 0.3, 0.6 and 0.9; the second row is the setup that was slowest above.</p>
+    <p class="hint scroll-hint">Swipe the table sideways to see every column.</p>
+    <div class="table-scroll">
+    <table><thead><tr><th>House setup</th><th>w0 = 0.0</th><th>w0 = 0.3</th><th>w0 = 0.6</th><th>w0 = 0.9</th></tr></thead><tbody><tr><td>(0.9, 0.2) / (0.1, 0.8), w = 0.5</td><td>5 of 5 (median 0.0002)</td><td>5 of 5 (median 0.0002)</td><td>5 of 5 (median 0.0002)</td><td>5 of 5 (median 0.0006)</td></tr><tr><td>(0.8, 0.8) / (0.2, 0.3), w = 0.3</td><td>4 of 5 (median 0.0007)</td><td>5 of 5 (median 0.0016)</td><td>1 of 5 (median 0.0102)</td><td>0 of 5 (median 0.0295)</td></tr></tbody></table>
+    </div>
+    <ul>
+      <li>Inertia leaves the steady state unchanged but slows training a great deal on the hard setup: 4, 5, 1 and 0 of 5 runs converged within 1500 episodes.</li>
+      <li>The unconverged runs look unfinished rather than different: their median distance to the one-shot equilibrium stays small. Whether more episodes fix them was not tested.</li>
+      <li>Policies are scored against the one-shot game, so this does not say whether the equilibrium of the full game with inertia is the same.</li>
+    </ul>
+
+    <h3>Does pre-training help?</h3>
+    <p class="hint" style="margin:0 0 6px">Training on setup 2 (red top-right, blue bottom-left at equilibrium), from scratch or after 1500 episodes on another setup.</p>
+    <p class="hint scroll-hint">Swipe the table sideways to see every column.</p>
+    <div class="table-scroll">
+    <table><thead><tr><th>Starting point</th><th>after 100 episodes</th><th>after 300 episodes</th></tr></thead><tbody><tr><td>from scratch</td><td>0 of 5 (median 0.0599)</td><td>2 of 5 (median 0.0048)</td></tr><tr><td>pre-trained on setup 1</td><td>0 of 5 (median 0.1599)</td><td>0 of 5 (median 0.2289)</td></tr><tr><td>pre-trained on setup 5</td><td>5 of 5 (median 0.0002)</td><td>4 of 5 (median 0.0002)</td></tr></tbody></table>
+    </div>
+    <ul>
+      <li>Pre-training on setup 5, which has the same equilibrium corners, put all 5 runs under the threshold after 100 episodes, where training from scratch had none.</li>
+      <li>Pre-training on setup 1, whose corners are flipped, left every run worse than scratch after 300 episodes (median 0.23 against 0.0048).</li>
+      <li>One target setup and five seeds. The mechanism is not tested.</li>
+    </ul>
+
+    <h3>How precisely must the Nash-Q stage game be solved?</h3>
+    <p class="hint" style="margin:0 0 6px">Each cell: median error of the fixed point's Q-values / median gap of the strategy, against the exact solution on a 9 &times; 9 grid.</p>
+    <p class="hint scroll-hint">Swipe the table sideways to see every column.</p>
+    <div class="table-scroll">
+    <table><thead><tr><th>Fictitious-play iterations</th><th>re-solve every 1: Q error / gap</th><th>re-solve every 5: Q error / gap</th><th>re-solve every 25: Q error / gap</th></tr></thead><tbody><tr><td>10</td><td>0.3612 / 0.0583</td><td>0.3612 / 0.0583</td><td>0.3612 / 0.0583</td></tr><tr><td>30</td><td>0.1311 / 0.0215</td><td>0.1311 / 0.0215</td><td>0.1311 / 0.0215</td></tr><tr><td>100</td><td>0.0406 / 0.0067</td><td>0.0406 / 0.0067</td><td>0.0406 / 0.0067</td></tr><tr><td>300</td><td>0.0136 / 0.0023</td><td>0.0136 / 0.0023</td><td>0.0136 / 0.0023</td></tr><tr><td>1000</td><td>0.0041 / 0.0007</td><td>0.0041 / 0.0007</td><td>0.0041 / 0.0007</td></tr><tr><td>3000</td><td>0.0014 / 0.0002</td><td>0.0014 / 0.0002</td><td>0.0014 / 0.0002</td></tr></tbody></table>
+    </div>
+    <ul>
+      <li>The error falls about as 1 over the number of fictitious-play iterations: 0.36 at 10, 0.0014 at 3000.</li>
+      <li>Re-solving less often changes nothing here. The transition does not depend on the state, so every Q matrix is the payoffs plus a constant, and a constant never moves an equilibrium.</li>
+    </ul>
+
+    <h3>Does grid resolution matter?</h3>
+    <p class="hint" style="margin:0 0 6px">Exact (Lemke-Howson) solution of the discretized stage game, all five setups.</p>
+    <p class="hint scroll-hint">Swipe the table sideways to see every column.</p>
+    <div class="table-scroll">
+    <table><thead><tr><th>Grid</th><th>Actions per player</th><th>Matrix entries</th><th>Setups with a unique equilibrium found (of 4)</th><th>Shared-y setup: distance to the solver&#x27;s equilibrium</th><th>Equilibrium is one action pair</th><th>Seconds (median)</th></tr></thead><tbody><tr><td>3 x 3</td><td>9</td><td>81</td><td>2</td><td>1.00</td><td>yes</td><td>0.003</td></tr><tr><td>5 x 5</td><td>25</td><td>625</td><td>4</td><td>1.00</td><td>yes</td><td>0.031</td></tr><tr><td>9 x 9</td><td>81</td><td>6,561</td><td>4</td><td>1.00</td><td>yes</td><td>0.356</td></tr><tr><td>13 x 13</td><td>169</td><td>28,561</td><td>4</td><td>1.00</td><td>yes</td><td>2.017</td></tr><tr><td>17 x 17</td><td>289</td><td>83,521</td><td>4</td><td>1.00</td><td>yes</td><td>116.625</td></tr></tbody></table>
+    </div>
+    <ul>
+      <li>Quality stops improving at 5 &amp;times; 5: the equilibrium is on the boundary, and every grid contains the corners. A 3 &amp;times; 3 grid picks a different corner for some setups.</li>
+      <li>Cost grows steeply, and the equilibrium is always a single action pair. The timings come from a heavily loaded machine, so only the growth is meaningful.</li>
+      <li>Ties make it much slower than the median shows: on the setup with the most tied payoffs the exact solve took 17 seconds at 9 &amp;times; 9, 338 seconds at 13 &amp;times; 13 and about 43 minutes at 17 &amp;times; 17, because most starting labels fail and are retried.</li>
+    </ul>
+
+    <h3>How much of fictitious play's mixing is noise?</h3>
+    <p class="hint" style="margin:0 0 6px">Indifference check at its default floor of 0.001, five seeds per row.</p>
+    <p class="hint scroll-hint">Swipe the table sideways to see every column.</p>
+    <div class="table-scroll">
+    <table><thead><tr><th>Fictitious-play iterations</th><th>Indifference spread</th><th>Actions counted as played</th><th>Weight on the leftover first pick</th></tr></thead><tbody><tr><td>30</td><td>0.6415</td><td>2</td><td>0.03226</td></tr><tr><td>100</td><td>0.6496</td><td>2</td><td>0.00990</td></tr><tr><td>300</td><td>0.6519</td><td>2</td><td>0.00332</td></tr><tr><td>1000</td><td>0.0000</td><td>1</td><td>0.00100</td></tr><tr><td>3000</td><td>0.0000</td><td>1</td><td>0.00033</td></tr><tr><td>10000</td><td>0.0000</td><td>1</td><td>0.00010</td></tr><tr><td>exact (Lemke-Howson)</td><td>0.0000</td><td>1</td><td>0.00000</td></tr></tbody></table>
+    </div>
+    <ul>
+      <li>The exact equilibrium is one action pair, so none of the mixing is real: what fictitious play shows is the weight of its first random pick, 1 over the iterations plus one.</li>
+      <li>The check hides it only once it falls below the floor, which is why the spread drops to exactly 0 from 1000 iterations.</li>
+    </ul>
   </section>
 
   <section class="card" id="trajectories">
@@ -297,6 +403,49 @@
     </p>
   </section>
 
+  <section class="card notes" id="questions">
+    <h2>Research questions</h2>
+    <p class="sub" style="margin-bottom:6px">
+      The questions that motivated the project, with what the experiments here
+      settled. Open a question to see its status and the evidence. The full
+      answers, with numbers and caveats, are in the
+      <a href="https://github.com/Charith-Reddy-Pareddy/dog-game/blob/main/RESEARCH_REPORT.md" target="_blank" rel="noopener">research report</a>
+      (<a href="https://github.com/Charith-Reddy-Pareddy/dog-game/blob/main/research_report.pdf" target="_blank" rel="noopener">PDF</a>) and in
+      <a href="https://github.com/Charith-Reddy-Pareddy/dog-game/blob/main/RESEARCH_QUESTIONS.md" target="_blank" rel="noopener">RESEARCH_QUESTIONS.md</a>.
+    </p>
+    <h3>Policy gradient (REINFORCE, A2C, PPO)</h3>
+    <details class="q"><summary><span class="q-num">Q1</span>Can self-play policy gradient converge to a Nash equilibrium in a general-sum game?<span class="chip answered">Answered</span></summary><p>Policy gradient is a single-agent algorithm; two copies played against each other are best-response dynamics, not a game solver, and nothing guarantees mutual improvement converges.</p><p><b>Status:</b> Answered for the dog game (74 of 75 REINFORCE runs, 25 of 25 PPO runs); open for general-sum games in general.</p></details>
+    <details class="q"><summary><span class="q-num">Q2</span>Does the number of episodes needed depend on the house and weight configuration, or is there one number that works everywhere?<span class="chip answered">Answered</span></summary><p><b>Status:</b> Answered. It depends on the configuration and on the algorithm.</p></details>
+    <details class="q"><summary><span class="q-num">Q3</span>Does pre-training help, and what does the benefit depend on?<span class="chip answered">Answered</span></summary><p><b>Status:</b> Answered for one target setup. It helps a lot when the source setup has the same equilibrium corners and hurts when it does not.</p></details>
+    <details class="q"><summary><span class="q-num">Q4</span>When the game has more than one equilibrium, which one does self-play find, and is it consistent across seeds and architectures?<span class="chip answered">Answered</span></summary><p><b>Status:</b> Answered for the shared-coordinate setup (30 runs). Never the solver&#x27;s interior point; always a boundary equilibrium, one of two mirror images, about 3 to 1.</p></details>
+    <h3>Nash-Q on a discretized grid</h3>
+    <details class="q"><summary><span class="q-num">Q5</span>How precisely must the stage game inside the Nash-Q backup be solved?<span class="chip answered">Answered</span></summary><p>An exact solver gives an exact equilibrium; fictitious play only approximates one. How much stage-game error can the outer Bellman iteration tolerate?</p><p><b>Status:</b> Answered for the dog game. The error of the fixed point falls about as 1 over the number of fictitious-play iterations.</p></details>
+    <details class="q"><summary><span class="q-num">Q5b</span>Is there literature on how precisely the stage game must be solved for the outer loop to converge?<span class="chip open">Open</span></summary><p><b>Status:</b> Open as a literature question; this repository measures it for one game but does not survey the literature.</p></details>
+    <details class="q"><summary><span class="q-num">Q6</span>How does grid resolution trade off against solution quality, and is a neural network needed as the grid grows?<span class="chip answered">Answered</span></summary><p><b>Status:</b> Answered for the dog game. Quality stops improving at 5 x 5; cost keeps growing steeply. The network question is partly answered by the walking game&#x27;s deep Nash-Q.</p></details>
+    <h3>Common to both methods</h3>
+    <details class="q"><summary><span class="q-num">Q7</span>What is the right multi-agent network architecture?<span class="chip partly">Partly</span></summary><p>Separate networks, a shared trunk, or a partly shared trunk.</p><p><b>Status:</b> Partly answered. All three converge (24, 25 and 25 of 25 runs); cross-play between independently trained architectures is untested.</p></details>
+    <details class="q"><summary><span class="q-num">Q8</span>When is the equilibrium unique?<span class="chip answered">Answered</span></summary><p>The conjecture is that the houses must differ in both coordinates.</p><p><b>Status:</b> Answered. Confirmed, and every shared coordinate opens a continuum of equilibria.</p></details>
+    <details class="q"><summary><span class="q-num">Q9</span>How do you verify, after the fact, that a policy is an equilibrium?<span class="chip answered">Answered</span></summary><p><b>Status:</b> Answered. <code>doggame/verify.py</code> implements exploitability and the indifference check.</p></details>
+    <details class="q"><summary><span class="q-num">Q10</span>Practical solvers rarely land on clean probabilities. How much of the non-clean mixing is real and how much is numerical noise?<span class="chip answered">Answered</span></summary><p><b>Status:</b> Answered for the dog game. The exact equilibrium is a single action pair, so all the mixing fictitious play shows is noise.</p></details>
+    <details class="q"><summary><span class="q-num">Q11</span>Which findings are expected to transfer to a harder game (one with many states and no unique equilibrium), and which depend on the dog game&#x27;s simple structure?<span class="chip open">Open</span></summary><p><b>Status:</b> Open. The state-independent transition, the unique equilibrium and the one-shot payoffs are all dog-game specific.</p></details>
+    <h3>From the follow-up planning notes</h3>
+    <details class="q"><summary><span class="q-num">Q12</span>Should the dog have momentum (<code>w0 * dog + w1 * red + w2 * blue</code>), and does inertia change anything besides how long it takes?<span class="chip partly">Partly</span></summary><p><b>Status:</b> Partly answered. Inertia leaves the steady state unchanged but slows policy-gradient training sharply on the harder setup; whether it changes the equilibrium of the dynamic game is untested.</p></details>
+    <details class="q"><summary><span class="q-num">Q13</span>Can a &quot;vertex Nash&quot; choice (the equilibrium with the largest sum of values) give a more useful equilibrium selection for multi-state games?<span class="chip open">Open</span></summary><p><b>Status:</b> Open. The dog game has one state.</p></details>
+    <details class="q"><summary><span class="q-num">Q14</span>(Adjacent thread.) Can an LLM&#x27;s behavior in a repeated game be modeled as bounded-rationality play over a continuous action space, and can its choices be inverted into a reward function?<span class="chip open">Open</span></summary><p><b>Status:</b> Out of scope for this repository.</p></details>
+    <details class="q"><summary><span class="q-num">Q15</span>(Adjacent thread.) For a continuous-action grid player, is the natural action space a disk (an angle and a radius) with a separate heading-only action?<span class="chip partly">Partly</span></summary><p><b>Status:</b> Partly addressed by the walking version, which uses an angle and a step length.</p></details>
+    <h3>New questions from this work</h3>
+    <details class="q"><summary><span class="q-num">Q16</span>Do A2C and PPO reach the equilibrium faster than REINFORCE, and is the speed-up from the baseline or from reusing each episode?<span class="chip partly">Partly</span></summary><p><b>Status:</b> Partly answered. PPO is much faster per episode (19 of 25 runs converged after 100 episodes, against 0 of 25); A2C is not faster than REINFORCE. PPO also takes four gradient steps per episode, so a comparison matched on gradient steps is still open.</p></details>
+    <details class="q"><summary><span class="q-num">Q17</span>What decides which of the two mirror equilibria self-play finds, and why does it never find the interior solution?<span class="chip open">Open</span></summary><p><b>Status:</b> Open on the mechanism. The outcome is measured (23 of 30 against 7 of 30, no interior); the explanation (a wide initial exploration noise plus clipping at the boundary) is a hypothesis.</p></details>
+    <details class="q"><summary><span class="q-num">Q18</span>How strongly does dog inertia slow policy-gradient training?<span class="chip answered">Answered</span></summary><p><b>Status:</b> Answered for two setups. On the easy setup every run converges up to <code>w0 = 0.9</code>; on the hard one 4 of 5 converge at <code>w0 = 0</code>, 5 of 5 at 0.3, 1 of 5 at 0.6 and 0 of 5 at 0.9 within 1500 episodes.</p></details>
+    <details class="q"><summary><span class="q-num">Q19</span>Does the one-shot equilibrium remain the equilibrium of the game with inertia?<span class="chip open">Open</span></summary><p>Policies trained with inertia are scored against the one-shot game; the equilibrium of the full dynamic game has not been solved.</p><p><b>Status:</b> Open.</p></details>
+    <details class="q"><summary><span class="q-num">Q20</span>Why does pre-training from a different setup hurt?<span class="chip open">Open</span></summary><p><b>Status:</b> Open on the mechanism. The measured pattern (same corners help, flipped corners hurt) suggests the network has to un-learn a boundary direction, but that is a hypothesis.</p></details>
+    <details class="q"><summary><span class="q-num">Q21</span>Does re-solving the stage game less often change the Nash-Q fixed point?<span class="chip answered">Answered</span></summary><p><b>Status:</b> Answered for the dog game. No: with a state-independent transition, every Q matrix differs from the payoffs by a constant, so the equilibrium never moves between iterations.</p></details>
+    <details class="q"><summary><span class="q-num">Q22</span>Is the exact equilibrium of the discretized game always a single action pair?<span class="chip answered">Answered</span></summary><p><b>Status:</b> Answered for the five setups and five grid sizes tested (25 games). Yes.</p></details>
+    <details class="q"><summary><span class="q-num">Q23</span>Is the one-shot corner pair also an equilibrium of the walking game?<span class="chip open">Open</span></summary><p>The walking experiments check that players head to the one-shot corners, not that those corners are an equilibrium of the walking game.</p><p><b>Status:</b> Open.</p></details>
+    <details class="q"><summary><span class="q-num">Q24</span>Does a compute-matched comparison (same number of gradient steps, not episodes) keep PPO ahead?<span class="chip open">Open</span></summary><p><b>Status:</b> Open.</p></details>
+    <details class="q"><summary><span class="q-num">Q25</span>How does the walking game change with the maximum step length and with the discount?<span class="chip open">Open</span></summary><p><b>Status:</b> Open; only a step of 0.2 and a discount of 0.9 were run.</p></details>
+  </section>
+
   <section class="card notes" id="assumptions">
     <h2>Assumptions and open questions</h2>
     <p class="sub" style="margin-bottom:8px">
@@ -328,7 +477,7 @@
       <li>Each Nash-Q stage game is solved exactly, but the solver can cycle on some games, so answers are checked and retried from another starting point.</li>
       <li>The continuous best-response methods (bisection, finite-difference gradient, quadratic fit) are for DQN. Policy gradient handles continuous actions directly.</li>
       <li>The analytic solver returns one pure equilibrium. When equilibria aren't unique, which one it returns is arbitrary.</li>
-      <li>Every run in the dog-game training-results table uses one seed, so the claim about architecture and convergence speed rests on a single data point.</li>
+      <li>The training-results table uses five seeds per row; the other experiments use five seeds, and ten for the equilibrium-selection study.</li>
     </ul>
 
     <h3>Still open</h3>
@@ -836,38 +985,39 @@
 
 /* ---------- precomputed training results ---------- */
 (function () {
-  // [{"architecture": "separate", "house_red": [0.9, 0.2], "house_blue": [0.1, 0.8], "w": 0.5, "distance_red": 0.0005, "distance_blue": 0.0004, "red_exploitability": 0.000241, "blue_exploitability": 0.00017}, {"architecture": "separate", "house_red": [0.8, 0.8], "house_blue": [0.2, 0.3], "w": 0.3, "distance_red": 0.5166, "distance_blue": 0.0009, "red_exploitability": 0.183362, "blue_exploitability": 0.023828}, {"architecture": "separate", "house_red": [0.7, 0.1], "house_blue": [0.6, 0.9], "w": 0.7, "distance_red": 0.0023, "distance_blue": 0.0021, "red_exploitability": 6.3e-05, "blue_exploitability": 0.000215}, {"architecture": "separate", "house_red": [0.95, 0.5], "house_blue": [0.05, 0.5], "w": 0.5, "distance_red": 0.4925, "distance_blue": 0.4963, "red_exploitability": 0.000131, "blue_exploitability": 7.3e-05}, {"architecture": "separate", "house_red": [0.6, 0.6], "house_blue": [0.4, 0.4], "w": 0.5, "distance_red": 0.0006, "distance_blue": 0.0004, "red_exploitability": 8.2e-05, "blue_exploitability": 5.4e-05}, {"architecture": "shared", "house_red": [0.9, 0.2], "house_blue": [0.1, 0.8], "w": 0.5, "distance_red": 0.0005, "distance_blue": 0.0004, "red_exploitability": 0.000231, "blue_exploitability": 0.000176}, {"architecture": "shared", "house_red": [0.8, 0.8], "house_blue": [0.2, 0.3], "w": 0.3, "distance_red": 0.0114, "distance_blue": 0.0015, "red_exploitability": 0.003924, "blue_exploitability": 6.6e-05}, {"architecture": "shared", "house_red": [0.7, 0.1], "house_blue": [0.6, 0.9], "w": 0.7, "distance_red": 0.0021, "distance_blue": 0.0022, "red_exploitability": 5.6e-05, "blue_exploitability": 0.000212}, {"architecture": "shared", "house_red": [0.95, 0.5], "house_blue": [0.05, 0.5], "w": 0.5, "distance_red": 0.4898, "distance_blue": 0.4951, "red_exploitability": 0.000117, "blue_exploitability": 8.4e-05}, {"architecture": "shared", "house_red": [0.6, 0.6], "house_blue": [0.4, 0.4], "w": 0.5, "distance_red": 0.0006, "distance_blue": 0.0004, "red_exploitability": 8.8e-05, "blue_exploitability": 6.2e-05}, {"architecture": "partial", "house_red": [0.9, 0.2], "house_blue": [0.1, 0.8], "w": 0.5, "distance_red": 0.0008, "distance_blue": 0.0007, "red_exploitability": 0.000397, "blue_exploitability": 0.000322}, {"architecture": "partial", "house_red": [0.8, 0.8], "house_blue": [0.2, 0.3], "w": 0.3, "distance_red": 0.002, "distance_blue": 0.0014, "red_exploitability": 0.00081, "blue_exploitability": 5.6e-05}, {"architecture": "partial", "house_red": [0.7, 0.1], "house_blue": [0.6, 0.9], "w": 0.7, "distance_red": 0.0032, "distance_blue": 0.0046, "red_exploitability": 0.000125, "blue_exploitability": 0.000408}, {"architecture": "partial", "house_red": [0.95, 0.5], "house_blue": [0.05, 0.5], "w": 0.5, "distance_red": 0.4837, "distance_blue": 0.494, "red_exploitability": 0.000184, "blue_exploitability": 0.00011}, {"architecture": "partial", "house_red": [0.6, 0.6], "house_blue": [0.4, 0.4], "w": 0.5, "distance_red": 0.001, "distance_blue": 0.0006, "red_exploitability": 0.000139, "blue_exploitability": 8.4e-05}] is substituted with real training-run output.
-  const RESULTS = [{"architecture": "separate", "house_red": [0.9, 0.2], "house_blue": [0.1, 0.8], "w": 0.5, "distance_red": 0.0005, "distance_blue": 0.0004, "red_exploitability": 0.000241, "blue_exploitability": 0.00017}, {"architecture": "separate", "house_red": [0.8, 0.8], "house_blue": [0.2, 0.3], "w": 0.3, "distance_red": 0.5166, "distance_blue": 0.0009, "red_exploitability": 0.183362, "blue_exploitability": 0.023828}, {"architecture": "separate", "house_red": [0.7, 0.1], "house_blue": [0.6, 0.9], "w": 0.7, "distance_red": 0.0023, "distance_blue": 0.0021, "red_exploitability": 6.3e-05, "blue_exploitability": 0.000215}, {"architecture": "separate", "house_red": [0.95, 0.5], "house_blue": [0.05, 0.5], "w": 0.5, "distance_red": 0.4925, "distance_blue": 0.4963, "red_exploitability": 0.000131, "blue_exploitability": 7.3e-05}, {"architecture": "separate", "house_red": [0.6, 0.6], "house_blue": [0.4, 0.4], "w": 0.5, "distance_red": 0.0006, "distance_blue": 0.0004, "red_exploitability": 8.2e-05, "blue_exploitability": 5.4e-05}, {"architecture": "shared", "house_red": [0.9, 0.2], "house_blue": [0.1, 0.8], "w": 0.5, "distance_red": 0.0005, "distance_blue": 0.0004, "red_exploitability": 0.000231, "blue_exploitability": 0.000176}, {"architecture": "shared", "house_red": [0.8, 0.8], "house_blue": [0.2, 0.3], "w": 0.3, "distance_red": 0.0114, "distance_blue": 0.0015, "red_exploitability": 0.003924, "blue_exploitability": 6.6e-05}, {"architecture": "shared", "house_red": [0.7, 0.1], "house_blue": [0.6, 0.9], "w": 0.7, "distance_red": 0.0021, "distance_blue": 0.0022, "red_exploitability": 5.6e-05, "blue_exploitability": 0.000212}, {"architecture": "shared", "house_red": [0.95, 0.5], "house_blue": [0.05, 0.5], "w": 0.5, "distance_red": 0.4898, "distance_blue": 0.4951, "red_exploitability": 0.000117, "blue_exploitability": 8.4e-05}, {"architecture": "shared", "house_red": [0.6, 0.6], "house_blue": [0.4, 0.4], "w": 0.5, "distance_red": 0.0006, "distance_blue": 0.0004, "red_exploitability": 8.8e-05, "blue_exploitability": 6.2e-05}, {"architecture": "partial", "house_red": [0.9, 0.2], "house_blue": [0.1, 0.8], "w": 0.5, "distance_red": 0.0008, "distance_blue": 0.0007, "red_exploitability": 0.000397, "blue_exploitability": 0.000322}, {"architecture": "partial", "house_red": [0.8, 0.8], "house_blue": [0.2, 0.3], "w": 0.3, "distance_red": 0.002, "distance_blue": 0.0014, "red_exploitability": 0.00081, "blue_exploitability": 5.6e-05}, {"architecture": "partial", "house_red": [0.7, 0.1], "house_blue": [0.6, 0.9], "w": 0.7, "distance_red": 0.0032, "distance_blue": 0.0046, "red_exploitability": 0.000125, "blue_exploitability": 0.000408}, {"architecture": "partial", "house_red": [0.95, 0.5], "house_blue": [0.05, 0.5], "w": 0.5, "distance_red": 0.4837, "distance_blue": 0.494, "red_exploitability": 0.000184, "blue_exploitability": 0.00011}, {"architecture": "partial", "house_red": [0.6, 0.6], "house_blue": [0.4, 0.4], "w": 0.5, "distance_red": 0.001, "distance_blue": 0.0006, "red_exploitability": 0.000139, "blue_exploitability": 8.4e-05}];
-
+  // five seeds per cell, from results/dog_game_runs.jsonl
+  const RESULTS = [{"architecture": "separate", "house_red": [0.9, 0.2], "house_blue": [0.1, 0.8], "w": 0.5, "converged": 5, "runs": 5, "median": 0.000218, "worst": 0.00024}, {"architecture": "separate", "house_red": [0.8, 0.8], "house_blue": [0.2, 0.3], "w": 0.3, "converged": 4, "runs": 5, "median": 0.000715, "worst": 0.18336}, {"architecture": "separate", "house_red": [0.7, 0.1], "house_blue": [0.6, 0.9], "w": 0.7, "converged": 5, "runs": 5, "median": 0.000342, "worst": 0.00042}, {"architecture": "separate", "house_red": [0.95, 0.5], "house_blue": [0.05, 0.5], "w": 0.5, "converged": 5, "runs": 5, "median": 9e-05, "worst": 0.00013}, {"architecture": "separate", "house_red": [0.6, 0.6], "house_blue": [0.4, 0.4], "w": 0.5, "converged": 5, "runs": 5, "median": 8.1e-05, "worst": 8e-05}, {"architecture": "shared", "house_red": [0.9, 0.2], "house_blue": [0.1, 0.8], "w": 0.5, "converged": 5, "runs": 5, "median": 0.000186, "worst": 0.00023}, {"architecture": "shared", "house_red": [0.8, 0.8], "house_blue": [0.2, 0.3], "w": 0.3, "converged": 5, "runs": 5, "median": 0.000563, "worst": 0.00392}, {"architecture": "shared", "house_red": [0.7, 0.1], "house_blue": [0.6, 0.9], "w": 0.7, "converged": 5, "runs": 5, "median": 0.000318, "worst": 0.00043}, {"architecture": "shared", "house_red": [0.95, 0.5], "house_blue": [0.05, 0.5], "w": 0.5, "converged": 5, "runs": 5, "median": 8.1e-05, "worst": 0.00012}, {"architecture": "shared", "house_red": [0.6, 0.6], "house_blue": [0.4, 0.4], "w": 0.5, "converged": 5, "runs": 5, "median": 8.8e-05, "worst": 9e-05}, {"architecture": "partial", "house_red": [0.9, 0.2], "house_blue": [0.1, 0.8], "w": 0.5, "converged": 5, "runs": 5, "median": 0.000395, "worst": 0.00046}, {"architecture": "partial", "house_red": [0.8, 0.8], "house_blue": [0.2, 0.3], "w": 0.3, "converged": 5, "runs": 5, "median": 0.00081, "worst": 0.00105}, {"architecture": "partial", "house_red": [0.7, 0.1], "house_blue": [0.6, 0.9], "w": 0.7, "converged": 5, "runs": 5, "median": 0.000786, "worst": 0.00104}, {"architecture": "partial", "house_red": [0.95, 0.5], "house_blue": [0.05, 0.5], "w": 0.5, "converged": 5, "runs": 5, "median": 0.000182, "worst": 0.0002}, {"architecture": "partial", "house_red": [0.6, 0.6], "house_blue": [0.4, 0.4], "w": 0.5, "converged": 5, "runs": 5, "median": 0.000165, "worst": 0.00022}];
   const tbody = document.querySelector("#resultsTable tbody");
   const archClass = { separate: "arch-separate", shared: "arch-shared", partial: "arch-partial" };
-  const maxExploit = Math.max(...RESULTS.map((r) => Math.max(r.red_exploitability, r.blue_exploitability)));
+  const maxMedian = Math.max(...RESULTS.map((r) => r.median));
 
   RESULTS.forEach((r) => {
-    const gap = Math.max(r.red_exploitability, r.blue_exploitability);
-    const pct = Math.min(100, (Math.log10(gap + 1e-6) - Math.log10(1e-6)) / (Math.log10(maxExploit + 1e-6) - Math.log10(1e-6)) * 100);
-    const color = gap < 0.004 ? "#4a7c59" : gap < 0.02 ? "#b8862e" : "#b23a44";
+    const pct = Math.min(100, (Math.log10(r.median + 1e-6) - Math.log10(1e-6)) / (Math.log10(maxMedian + 1e-6) - Math.log10(1e-6)) * 100);
+    const color = r.median < 0.004 ? "#4a7c59" : r.median < 0.02 ? "#b8862e" : "#b23a44";
+    const missed = r.converged < r.runs;
     const tr = document.createElement("tr");
     tr.innerHTML = `
       <td><span class="arch-tag ${archClass[r.architecture]}">${r.architecture}</span></td>
       <td>(${r.house_red[0]}, ${r.house_red[1]}) / (${r.house_blue[0]}, ${r.house_blue[1]})</td>
       <td class="num">${r.w}</td>
-      <td class="num">${Math.max(r.distance_red, r.distance_blue).toFixed(4)}</td>
+      <td class="num" style="${missed ? "color:#b23a44;font-weight:600" : ""}">${r.converged} of ${r.runs}</td>
       <td class="num">
         <div class="bar-cell">
-          <span>${gap.toFixed(5)}</span>
+          <span>${r.median.toFixed(5)}</span>
           <div class="bar-track"><div class="bar-fill" style="width:${pct}%;background:${color}"></div></div>
         </div>
-      </td>`;
+      </td>
+      <td class="num" style="${r.worst >= 0.004 ? "color:#b23a44;font-weight:600" : ""}">${r.worst.toFixed(4)}</td>`;
     tbody.appendChild(tr);
   });
 
-  const converged = RESULTS.filter((r) => Math.max(r.red_exploitability, r.blue_exploitability) < 0.004).length;
+  const total = RESULTS.reduce((n, r) => n + r.runs, 0);
+  const converged = RESULTS.reduce((n, r) => n + r.converged, 0);
   const stats = [
-    { num: RESULTS.length, lbl: "training runs" },
-    { num: `${converged}/${RESULTS.length}`, lbl: "converged (exploitability < 0.004) within 1500 episodes" },
-    { num: "3", lbl: "network architectures compared" },
-    { num: "5", lbl: "house / weight configurations" },
+    { num: total, lbl: "REINFORCE runs (5 seeds)" },
+    { num: `${converged}/${total}`, lbl: "converged (exploitability < 0.004) within 1500 episodes" },
+    { num: "25/25", lbl: "PPO runs converged within 1500 episodes" },
+    { num: "19/25", lbl: "PPO runs already converged after 100 episodes" },
   ];
   const statGrid = document.getElementById("statGrid");
   stats.forEach((s) => {
