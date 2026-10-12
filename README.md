@@ -4,6 +4,7 @@
 
 **Live demo:** https://charith-reddy-pareddy.github.io/dog-game/
 **Research report:** [RESEARCH_REPORT.md](RESEARCH_REPORT.md) ([PDF](research_report.pdf), built from it)
+**Walking-game report:** [WALKING_GAME_REPORT.md](WALKING_GAME_REPORT.md) ([PDF](docs/walking_game_report.pdf)), policy gradient on the angle-radius game
 **Research questions:** [RESEARCH_QUESTIONS.md](RESEARCH_QUESTIONS.md), with the status of each
 **Results PDF:** [dog_game_results.pdf](dog_game_results.pdf) (convergence over seeds, the walking game and its paths)
 **Assumptions:** [ASSUMPTIONS.md](ASSUMPTIONS.md)
@@ -228,8 +229,9 @@ run keeps what it finished and a rerun skips it.
   convergence and walking runs, and the recorded paths of the players and the dog.
 - `doggame/dog_game_studies.py`, `doggame/dog_game_summary.py` -- eleven experiments
   that answer open research questions, and the tables built from their saved results.
-- `doggame/dog_game_report.py`, `doggame/research_report_pdf.py`, `doggame/pdf_kit.py` --
-  build `dog_game_results.pdf` and `research_report.pdf`.
+- `doggame/dog_game_report.py`, `doggame/research_report_pdf.py`, `doggame/walking_figures.py`,
+  `doggame/pdf_kit.py` -- build `dog_game_results.pdf`, `research_report.pdf` and
+  `docs/walking_game_report.pdf` (from `WALKING_GAME_REPORT.md`).
 - `doggame/figures.py` -- the link-preview image and the README charts (needs poppler's `pdftoppm`).
 - `results/` -- the saved runs: `dog_game_runs.jsonl`, `dog_game_studies.jsonl`,
   `dog_game_trajectories.json`; see [results/README.md](results/README.md) for every field.
@@ -248,7 +250,7 @@ run keeps what it finished and a rerun skips it.
 
 ## Tests
 
-`python3 -m pytest` runs the whole suite (176 tests). Defects found while testing are fixed
+`python3 -m pytest` runs the whole suite (178 tests). Defects found while testing are fixed
 in commits labelled "debug", each with a regression test.
 
 ## License
