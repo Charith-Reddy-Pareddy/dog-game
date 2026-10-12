@@ -47,6 +47,8 @@ def build(path=OUTPUT, results=RESULTS, trajectories=TRAJECTORIES, studies=STUDI
     by_name = {row[0]: row for row in algorithms[1:]}
     ppo_settings = dog_game_summary.ppo_walking_table(dog_game_summary.load(studies))
     by_setting = {row[0]: row for row in ppo_settings[1:]}
+    ppo_long = dog_game_summary.ppo_long_table(dog_game_summary.load(studies))
+    by_long = {row[0]: row for row in ppo_long[1:]}
     with open(trajectories) as f:
         walk = json.load(f)
     example = walk["seeds"][0]  # the figure shows the first seed; the live site lets you pick
@@ -174,6 +176,10 @@ def build(path=OUTPUT, results=RESULTS, trajectories=TRAJECTORIES, studies=STUDI
                              "scored the same way:"), k.table(ppo_settings, column_widths(ppo_settings, 6.9 * inch))]),
         k.point(f"Fewer epochs helps partly ({by_setting['PPO, lr 0.01, 1 epoch'][-1]} seeds at the corners, against {by_setting['PPO, lr 0.01, 4 epochs (default)'][-1]} for the default), "
                 f"a smaller learning rate does not, and nothing matches A2C ({by_name['A2C'][-1]}). Why is not tested."),
+        KeepTogether([k.text("Trained three times longer (900 episodes), do the unstable settings settle? Late checkpoints are from 450 episodes on:"),
+                      k.table(ppo_long, column_widths(ppo_long, 6.9 * inch))]),
+        k.point(f"A2C stays at the corners ({by_long['A2C'][-1]} seeds). One-epoch PPO settles ({by_long['PPO, 1 epoch'][-1]} seeds) but is slower; "
+                f"default PPO does not ({by_long['PPO, 4 epochs (default)'][-1]} seeds), with some seeds stuck far from the corners."),
         KeepTogether([k.h2("Trajectories"),
                       k.text(f"One sampled 15-step game for seed {example['seed']}, before and after training, on the same house setup. "
                              "Red and blue walk from their own houses; the dog moves to the average of their positions."),
