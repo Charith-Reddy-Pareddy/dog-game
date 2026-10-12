@@ -85,8 +85,24 @@ from the saved runs in `results/`:
   most reliable (5 of 5 seeds at the corners), while PPO is the fastest to get there but
   swings away again in three of five seeds. A smaller learning rate does not fix PPO, and
   fewer epochs only help partly.
+- **A gentler PPO settles, the default does not.** With one epoch PPO reaches the corners in 5 of 5 seeds
+  after 900 episodes; default PPO still has two seeds stuck far away. A lower discount makes the
+  walking game easier to learn.
 - **PPO's speed comes from reusing each episode.** With one epoch (one gradient step per
   episode, like REINFORCE) it is no faster than REINFORCE.
+
+## Figures
+
+How many runs have converged, by episodes trained, on the main game:
+
+![Share of runs under 0.004 by episodes trained for REINFORCE, A2C and PPO](docs/figures/algorithms.png)
+
+On the walking game the ranking changes, and PPO swings away from the corners again:
+
+![Share of seeds at the Nash corners by episodes trained for REINFORCE, A2C and PPO on the walking game](docs/figures/walking.png)
+
+Step through the walking game's recorded paths with the play button on the
+[live site](https://charith-reddy-pareddy.github.io/dog-game/#trajectories).
 
 ## Quick start
 
@@ -157,7 +173,7 @@ env = DogGameEnv(house_red=(0.9, 0.2), house_blue=(0.1, 0.8), w=0.5,
 ```bash
 python3 -m doggame.experiments        # the original 15-run convergence study
 python3 -m doggame.dog_game_study     # five-seed convergence and walking runs
-python3 -m doggame.dog_game_studies   # the nine studies in the report (resumable; add 0/4 to shard)
+python3 -m doggame.dog_game_studies   # the eleven studies in the report (resumable; add 0/4 to shard)
 python3 -m doggame.dog_game_summary   # print every table as Markdown
 python3 -m doggame.research_report_pdf   # rebuild research_report.pdf from RESEARCH_REPORT.md
 ```
@@ -210,12 +226,13 @@ run keeps what it finished and a rerun skips it.
 
 - `doggame/dog_game_study.py`, `doggame/dog_game_trajectories.py` -- the five-seed
   convergence and walking runs, and the recorded paths of the players and the dog.
-- `doggame/dog_game_studies.py`, `doggame/dog_game_summary.py` -- nine experiments
+- `doggame/dog_game_studies.py`, `doggame/dog_game_summary.py` -- eleven experiments
   that answer open research questions, and the tables built from their saved results.
 - `doggame/dog_game_report.py`, `doggame/research_report_pdf.py`, `doggame/pdf_kit.py` --
   build `dog_game_results.pdf` and `research_report.pdf`.
+- `doggame/figures.py` -- the link-preview image and the README charts (needs poppler's `pdftoppm`).
 - `results/` -- the saved runs: `dog_game_runs.jsonl`, `dog_game_studies.jsonl`,
-  `dog_game_trajectories.json`.
+  `dog_game_trajectories.json`; see [results/README.md](results/README.md) for every field.
 
 **The website**
 
@@ -231,7 +248,7 @@ run keeps what it finished and a rerun skips it.
 
 ## Tests
 
-`python3 -m pytest` runs the whole suite (172 tests). Defects found while testing are fixed
+`python3 -m pytest` runs the whole suite (176 tests). Defects found while testing are fixed
 in commits labelled "debug", each with a regression test.
 
 ## License
