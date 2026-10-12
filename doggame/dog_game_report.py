@@ -41,6 +41,7 @@ def build(path=OUTPUT, results=RESULTS, trajectories=TRAJECTORIES):
     convergence, walking = load(results)
     with open(trajectories) as f:
         walk = json.load(f)
+    example = walk["seeds"][0]  # the figure shows the first seed; the live site lets you pick
     cells = defaultdict(list)
     for r in convergence:
         cells[(r["config"], r["architecture"])].append(r["exploitability"])
@@ -111,7 +112,7 @@ def build(path=OUTPUT, results=RESULTS, trajectories=TRAJECTORIES):
         size = 170
         for row, (key, label) in enumerate((("reinforce", "REINFORCE"), ("nash_q", "Nash-Q"))):
             for col, when in enumerate(("before", "after")):
-                panel(d, 30 + col * 215, 245 - row * 215 + 0, size, f"{label}, {when} training", walk[key][when])
+                panel(d, 30 + col * 215, 245 - row * 215 + 0, size, f"{label}, {when} training", example[key][when])
         d.add(String(30, 8, "square = house, X = one-shot Nash corner, open circle = start, filled circle = end; dashed gray = dog", fontSize=7.5))
         return d
 
@@ -151,7 +152,7 @@ def build(path=OUTPUT, results=RESULTS, trajectories=TRAJECTORIES):
         KeepTogether([k.text("Per seed:"), k.table(seed_rows, [0.7 * inch, 2.6 * inch, 2.6 * inch])]),
         Spacer(1, 6),
         KeepTogether([k.h2("Trajectories"),
-                      k.text(f"One sampled 15-step game for seed {walk['seed']}, before and after training, on the same house setup. "
+                      k.text(f"One sampled 15-step game for seed {example['seed']}, before and after training, on the same house setup. "
                              "Red and blue walk from their own houses; the dog moves to the average of their positions."),
                       trajectory_figure(), k.small("Paths of red, blue and the dog. Before training the walks wander; "
                       "after training both players end at or near their Nash corners and the dog settles near the middle.")]),
