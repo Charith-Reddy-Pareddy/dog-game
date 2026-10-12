@@ -1,6 +1,6 @@
 from doggame.dog_game_summary import (algorithms_table, convergence_counts, markdown, noise_table, resolution_table,
                                       selection_outcome, selection_table, walking_algorithms_table, walking_share_series, walking_table,
-                                      ppo_epochs_table, ppo_long_table, ppo_walking_table, walking_houses_table, walking_inertia_table,
+                                      ppo_epochs_table, ppo_long_table, ppo_walking_table, walking_equilibrium_table, walking_houses_table, walking_inertia_table,
                                       walking_settings_table)
 
 
@@ -153,3 +153,14 @@ def test_walking_inertia_table_puts_the_default_next_to_the_inertia_settings():
     rows = [run("walking", dict(algorithm="a2c", seed=0), start=1.5, curve=curve), run("walking_inertia", dict(w0=0.6, seed=0), start=1.5, curve=curve)]
 
     assert [r[0] for r in walking_inertia_table(rows)[1:]] == ["w0 = 0 (default)", "w0 = 0.6"]
+
+
+def test_walking_equilibrium_table_shows_each_players_gain_and_the_largest_share_of_the_reward():
+    result = lambda gain: {"followed": -2.0, "best": -2.0 + gain, "gain": gain}
+    rows = [run("walking_equilibrium", dict(setup="default", start="houses"), red=result(0.0), blue=result(0.02)),
+            run("walking_equilibrium", dict(setup=2, start="corners"), red=result(0.0), blue=result(0.0))]
+
+    table = walking_equilibrium_table(rows)
+
+    assert table[1][1:] == ["on their houses", "0.00000", "0.02000", "1.00%"]
+    assert table[2][0].startswith("(0.7, 0.1)") and table[2][1:] == ["on the corners", "0.00000", "0.00000", "0.00%"]

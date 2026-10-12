@@ -173,6 +173,20 @@ def walking_inertia_table(rows, late=150):
     return table
 
 
+def walking_equilibrium_table(rows):
+    """For the walking game: how much either player could gain by deviating when both follow the corner path."""
+    runs = study(rows, "walking_equilibrium")
+    table = [["House setup", "Players start", "Red's gain", "Blue's gain", "Largest gain as a share of the reward"]]
+    labels = {"default": "default: (0.88, 0.12) / (0.3, 0.65), w = 0.5"}
+    for r in runs:
+        setup = r["key"]["setup"]
+        label = labels.get(setup) or houses(setup)
+        share = max(r["red"]["gain"] / abs(r["red"]["followed"]), r["blue"]["gain"] / abs(r["blue"]["followed"])) if min(abs(r["red"]["followed"]), abs(r["blue"]["followed"])) > 1e-9 else 0.0
+        table.append([label, "on their houses" if r["key"]["start"] == "houses" else "on the corners",
+                      f"{r['red']['gain']:.5f}", f"{r['blue']['gain']:.5f}", f"{100 * share:.2f}%"])
+    return table
+
+
 def ppo_epochs_table(rows):
     """Main game: share of runs under the threshold after each number of episodes, with the gradient steps each
     algorithm takes per episode, so PPO's speed can be compared with REINFORCE and A2C on equal steps."""
@@ -325,7 +339,8 @@ if __name__ == "__main__":
                         ("resolution", resolution_table(studies)), ("noise", noise_table(studies)), ("walking", walking_table(runs)), ("walking algorithms", walking_algorithms_table(studies)),
                         ("ppo epochs", ppo_epochs_table(studies)), ("ppo walking", ppo_walking_table(studies)),
                         ("ppo long", ppo_long_table(studies)), ("walking settings", walking_settings_table(studies)),
-                        ("walking houses", walking_houses_table(studies)), ("walking inertia", walking_inertia_table(studies))):
+                        ("walking houses", walking_houses_table(studies)), ("walking inertia", walking_inertia_table(studies)),
+                        ("walking equilibrium", walking_equilibrium_table(studies))):
         print(f"\n### {name}\n\n{markdown(table)}")
     print("\nconvergence counts:", convergence_counts(runs))
     print("inertia median distance:", inertia_distances(studies))
