@@ -90,3 +90,11 @@ def test_the_walking_studies_define_the_expected_runs_without_overlap():
 
     assert sorted({k["setting"] for k in long_keys}) == ["a2c", "ppo1", "ppo4"] and len(long_keys) == 15
     assert sorted({(k["max_step"], k["discount"]) for k in settings}) == [(0.1, 0.9), (0.2, 0.5), (0.2, 0.99), (0.4, 0.9)] and len(settings) == 20
+
+
+def test_the_walking_house_and_inertia_studies_define_the_expected_runs():
+    houses = [k for k, _ in studies.study_walking_houses(range(5))]
+    inertia = [k for k, _ in studies.study_walking_inertia(range(5))]
+
+    assert len(houses) == 3 * 3 * 5 and {k["setup"] for k in houses} == {0, 1, 2} and {k["algorithm"] for k in houses} == {"reinforce", "a2c", "ppo"}
+    assert len(inertia) == 10 and {k["w0"] for k in inertia} == {0.3, 0.6}

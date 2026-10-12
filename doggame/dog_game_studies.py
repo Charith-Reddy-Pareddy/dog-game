@@ -11,6 +11,8 @@ to do only the second of four shards.
 - ppo_variants: PPO with fewer epochs or a smaller learning rate, on both games
 - ppo_long:     the PPO settings trained three times longer on the walking game
 - walking_settings: the walking game with a shorter or longer step and a lower or higher discount
+- walking_houses: the three algorithms on three other house setups
+- walking_inertia: A2C on the walking game with dog inertia
 - selection:    which equilibrium self-play finds when the houses share a coordinate
 - inertia:      does giving the dog momentum (w0) change where training ends up
 - pretraining:  does starting from a policy trained on another setup help
@@ -97,10 +99,10 @@ def study_algorithms(seeds):
                 yield dict(config=config_index, algorithm=algorithm, seed=seed), run
 
 
-def walking_run(algorithm, seed, episodes=300, every=25, max_step=0.2, discount=0.9, **options):
+def walking_run(algorithm, seed, episodes=300, every=25, max_step=0.2, discount=0.9, houses=WALK_HOUSES, w=0.5, w0=0.0, **options):
     """Train one walking-game policy, scoring it every `every` episodes (finely, because the walking policies'
     paths swing): how far the players end from the one-shot Nash corners, which do not depend on the step or the discount."""
-    env = PolarDogGameEnv(*WALK_HOUSES, w=0.5, max_step=max_step, discount=discount)
+    env = PolarDogGameEnv(*houses, w=w, w0=w0, max_step=max_step, discount=discount)
     torch.manual_seed(seed)
     policy = PolarPolicy(seed=seed)
     distance = lambda: walk_distance(env, lambda: final_positions(env, policy))
@@ -155,6 +157,24 @@ def study_walking_settings(seeds):
         for seed in seeds:
             yield (dict(max_step=max_step, discount=discount, seed=seed),
                    lambda max_step=max_step, discount=discount, seed=seed: walking_run("a2c", seed, max_step=max_step, discount=discount))
+
+
+def study_walking_houses(seeds):
+    """The three algorithms on the walking game with three other house setups (the first three of DEFAULT_CONFIGS)."""
+    for setup in (0, 1, 2):
+        config = DEFAULT_CONFIGS[setup]
+        for algorithm in ("reinforce", "a2c", "ppo"):
+            for seed in seeds:
+                yield (dict(setup=setup, algorithm=algorithm, seed=seed),
+                       lambda config=config, algorithm=algorithm, seed=seed:
+                       walking_run(algorithm, seed, houses=(config["house_red"], config["house_blue"]), w=config["w"]))
+
+
+def study_walking_inertia(seeds):
+    """A2C on the walking game when the dog keeps part of its old position each round (w0 of 0.3 and 0.6)."""
+    for w0 in (0.3, 0.6):
+        for seed in seeds:
+            yield dict(w0=w0, seed=seed), lambda w0=w0, seed=seed: walking_run("a2c", seed, w0=w0)
 
 
 def study_selection(seeds):
@@ -252,7 +272,7 @@ def study_noise(seeds, resolution=9):
 
 
 STUDIES = dict(algorithms=study_algorithms, walking=study_walking, ppo_variants=study_ppo_variants, ppo_long=study_ppo_long,
-               walking_settings=study_walking_settings, selection=study_selection, inertia=study_inertia, pretraining=study_pretraining,
+               walking_settings=study_walking_settings, walking_houses=study_walking_houses, walking_inertia=study_walking_inertia, selection=study_selection, inertia=study_inertia, pretraining=study_pretraining,
                stage_solver=study_stage_solver, resolution=study_resolution, noise=study_noise)
 
 
