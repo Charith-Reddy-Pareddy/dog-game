@@ -5,6 +5,13 @@
 <title>Dog Game</title>
 <meta name="description" content="The dog game: a general-sum two-player game with a live Nash-equilibrium simulator, REINFORCE / A2C / PPO and Nash-Q experiments, the walking game, and the research questions they answer." />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23fbf9f4'/%3E%3Crect x='8' y='38' width='16' height='16' rx='3' fill='%23d8555f'/%3E%3Crect x='40' y='10' width='16' height='16' rx='3' fill='%233f7d9e'/%3E%3Ccircle cx='32' cy='32' r='9' fill='%232a2622'/%3E%3C/svg%3E" />
+<meta name="theme-color" content="#f4f1ec" />
+<meta property="og:type" content="website" />
+<meta property="og:title" content="Dog Game" />
+<meta property="og:description" content="A general-sum two-player game with a live simulator, REINFORCE / A2C / PPO and Nash-Q experiments, the walking game, and the research questions they answer." />
+<meta property="og:url" content="https://charith-reddy-pareddy.github.io/dog-game/" />
+<meta name="twitter:card" content="summary" />
 <style>
   :root {
     --red: #d8555f;
@@ -129,6 +136,7 @@
   .nav a { text-decoration: none; font-weight: 600; }
   .nav a:hover { text-decoration: underline; }
   html { scroll-behavior: smooth; }
+  @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
   .traj-chart svg { width: 100%; height: auto; display: block; margin: 6px 0 10px; background: #fbf9f4; border: 1px solid var(--line); border-radius: 12px; }
   .chip { display: inline-block; font-size: 0.68rem; font-weight: 700; letter-spacing: 0.03em; padding: 2px 8px; border-radius: 999px; margin-left: 8px; vertical-align: middle; text-transform: uppercase; }
   .chip.answered { background: #e3efe6; color: #2f5d3d; }
@@ -296,7 +304,7 @@
     <h2>More experiments</h2>
     <p class="sub" style="margin-bottom:6px">
       Each experiment below answers one of the open research questions with saved
-      runs (<code>results/dog_game_studies.jsonl</code>, 321 runs in all); the
+      runs (<code>results/dog_game_studies.jsonl</code>, 386 runs in all); the
       code is <code>doggame/dog_game_studies.py</code>. A run counts as converged
       below 0.004 exploitability, which is my threshold, so the medians are shown too.
     </p>
@@ -326,6 +334,28 @@
       <li>REINFORCE is slower and more variable (4 of 5 seeds, 24 of 35 later checkpoints).</li>
       <li>PPO is the fastest to get there and the worst at staying: three of its five seeds leave the corners again later, to a distance of about 1.0, and it spends only 14 of 35 later checkpoints at the corners. Why is not tested.</li>
       <li>The paths swing, so the table reports the share of checkpoints and not just the end of training.</li>
+    </ul>
+
+    <h3>Where does PPO's speed come from, and can it be made stable?</h3>
+    <p class="hint" style="margin:0 0 6px">Main game: PPO with 1, 2 and 4 epochs (gradient steps per episode) next to REINFORCE and A2C, 25 runs each.</p>
+    <p class="hint scroll-hint">Swipe the table sideways to see every column.</p>
+    <div class="table-scroll">
+    <table><thead><tr><th>Algorithm</th><th>Gradient steps per episode</th><th>100 episodes</th><th>250 episodes</th><th>500 episodes</th><th>1000 episodes</th><th>1500 episodes</th><th>Median at the end</th></tr></thead><tbody><tr><td>REINFORCE</td><td>1</td><td>0 of 25</td><td>13 of 25</td><td>24 of 25</td><td>24 of 25</td><td>24 of 25</td><td>0.0002</td></tr><tr><td>A2C</td><td>1</td><td>0 of 25</td><td>13 of 25</td><td>24 of 25</td><td>25 of 25</td><td>25 of 25</td><td>0.0001</td></tr><tr><td>PPO, 1 epoch</td><td>1</td><td>1 of 25</td><td>12 of 25</td><td>20 of 25</td><td>24 of 25</td><td>25 of 25</td><td>0.0002</td></tr><tr><td>PPO, 2 epochs</td><td>2</td><td>9 of 25</td><td>22 of 25</td><td>23 of 25</td><td>25 of 25</td><td>25 of 25</td><td>0.0000</td></tr><tr><td>PPO, 4 epochs (default)</td><td>4</td><td>19 of 25</td><td>24 of 25</td><td>25 of 25</td><td>25 of 25</td><td>25 of 25</td><td>0.0000</td></tr></tbody></table>
+    </div>
+    <ul>
+      <li>The speed-up comes from reusing each episode: after 100 episodes 1, 9 and 19 of 25 runs had converged with 1, 2 and 4 epochs, and one-epoch PPO is no faster than REINFORCE.</li>
+      <li>Per gradient step PPO is not clearly ahead: with 4 epochs it has taken 400 steps after 100 episodes (19 of 25 converged), between REINFORCE at 250 and at 500 episodes (13 and 24).</li>
+    </ul>
+
+    <p class="hint" style="margin:10px 0 6px">Walking game: PPO with fewer epochs and/or a smaller learning rate, 5 seeds each, next to A2C.</p>
+    <p class="hint scroll-hint">Swipe the table sideways to see every column.</p>
+    <div class="table-scroll">
+    <table><thead><tr><th>Setting</th><th>Before training</th><th>At 50</th><th>At 100</th><th>At 200</th><th>At 300</th><th>Late checkpoints at the corners (from 150)</th><th>Seeds at the corners at the end</th></tr></thead><tbody><tr><td>A2C (reference)</td><td>1.49</td><td>0.731</td><td>0.199</td><td>0.032</td><td>0.011</td><td>34 of 35</td><td>5 of 5</td></tr><tr><td>PPO, lr 0.01, 4 epochs (default)</td><td>1.49</td><td>0.263</td><td>0.127</td><td>0.500</td><td>0.371</td><td>14 of 35</td><td>2 of 5</td></tr><tr><td>PPO, lr 0.01, 1 epoch</td><td>1.49</td><td>0.595</td><td>0.479</td><td>0.249</td><td>0.123</td><td>21 of 35</td><td>4 of 5</td></tr><tr><td>PPO, lr 0.003, 4 epochs</td><td>1.49</td><td>0.477</td><td>0.361</td><td>0.448</td><td>0.362</td><td>15 of 35</td><td>1 of 5</td></tr><tr><td>PPO, lr 0.003, 1 epoch</td><td>1.49</td><td>0.836</td><td>0.641</td><td>0.470</td><td>0.322</td><td>8 of 35</td><td>2 of 5</td></tr></tbody></table>
+    </div>
+    <ul>
+      <li>Fewer epochs helps but does not fix it: 4 of 5 seeds at the corners and 21 of 35 later checkpoints, against 2 of 5 and 14 of 35 for the default, but slower early.</li>
+      <li>A smaller learning rate does not help (1 of 5 and 2 of 5 seeds), and some runs were still far from the corners at 300 episodes. None matches A2C (5 of 5, 34 of 35).</li>
+      <li>Why PPO is unstable here is still untested; five seeds per setting and a 300-episode horizon.</li>
     </ul>
 
     <h3>Which equilibrium does self-play find?</h3>
@@ -467,7 +497,7 @@
     <details class="q"><summary><span class="q-num">Q14</span>(Adjacent thread.) Can an LLM&#x27;s behavior in a repeated game be modeled as bounded-rationality play over a continuous action space, and can its choices be inverted into a reward function?<span class="chip open">Open</span></summary><p><b>Status:</b> Out of scope for this repository.</p></details>
     <details class="q"><summary><span class="q-num">Q15</span>(Adjacent thread.) For a continuous-action grid player, is the natural action space a disk (an angle and a radius) with a separate heading-only action?<span class="chip partly">Partly</span></summary><p><b>Status:</b> Partly addressed by the walking version, which uses an angle and a step length.</p></details>
     <h3>New questions from this work</h3>
-    <details class="q"><summary><span class="q-num">Q16</span>Do A2C and PPO reach the equilibrium faster than REINFORCE, and is the speed-up from the baseline or from reusing each episode?<span class="chip partly">Partly</span></summary><p><b>Status:</b> Partly answered. On the main game PPO is much faster per episode (19 of 25 runs converged after 100 episodes, against 0 of 25) and A2C is not faster than REINFORCE. On the walking game the order changes (Q26). PPO also takes four gradient steps per episode, so a comparison matched on gradient steps is still open.</p></details>
+    <details class="q"><summary><span class="q-num">Q16</span>Do A2C and PPO reach the equilibrium faster than REINFORCE, and is the speed-up from the baseline or from reusing each episode?<span class="chip answered">Answered</span></summary><p><b>Status:</b> Answered. On the main game PPO is much faster per episode (19 of 25 runs converged after 100 episodes, against 0 of 25) and A2C is not faster than REINFORCE. With one epoch (one gradient step per episode, like the others) PPO is no faster than REINFORCE, so the speed-up comes from reusing each episode (Q24). On the walking game the order changes (Q26).</p></details>
     <details class="q"><summary><span class="q-num">Q17</span>What decides which of the two mirror equilibria self-play finds, and why does it never find the interior solution?<span class="chip open">Open</span></summary><p><b>Status:</b> Open on the mechanism. The outcome is measured (23 of 30 against 7 of 30, no interior); the explanation (a wide initial exploration noise plus clipping at the boundary) is a hypothesis.</p></details>
     <details class="q"><summary><span class="q-num">Q18</span>How strongly does dog inertia slow policy-gradient training?<span class="chip answered">Answered</span></summary><p><b>Status:</b> Answered for two setups. On the easy setup every run converges up to <code>w0 = 0.9</code>; on the hard one 4 of 5 converge at <code>w0 = 0</code>, 5 of 5 at 0.3, 1 of 5 at 0.6 and 0 of 5 at 0.9 within 1500 episodes.</p></details>
     <details class="q"><summary><span class="q-num">Q19</span>Does the one-shot equilibrium remain the equilibrium of the game with inertia?<span class="chip open">Open</span></summary><p>Policies trained with inertia are scored against the one-shot game; the equilibrium of the full dynamic game has not been solved.</p><p><b>Status:</b> Open.</p></details>
@@ -475,11 +505,12 @@
     <details class="q"><summary><span class="q-num">Q21</span>Does re-solving the stage game less often change the Nash-Q fixed point?<span class="chip answered">Answered</span></summary><p><b>Status:</b> Answered for the dog game. No: with a state-independent transition, every Q matrix differs from the payoffs by a constant, so the equilibrium never moves between iterations.</p></details>
     <details class="q"><summary><span class="q-num">Q22</span>Is the exact equilibrium of the discretized game always a single action pair?<span class="chip answered">Answered</span></summary><p><b>Status:</b> Answered for the five setups and five grid sizes tested (25 games). Yes.</p></details>
     <details class="q"><summary><span class="q-num">Q23</span>Is the one-shot corner pair also an equilibrium of the walking game?<span class="chip open">Open</span></summary><p>The walking experiments check that players head to the one-shot corners, not that those corners are an equilibrium of the walking game.</p><p><b>Status:</b> Open.</p></details>
-    <details class="q"><summary><span class="q-num">Q24</span>Does a compute-matched comparison (same number of gradient steps, not episodes) keep PPO ahead?<span class="chip open">Open</span></summary><p><b>Status:</b> Open.</p></details>
+    <details class="q"><summary><span class="q-num">Q24</span>Does PPO stay ahead when matched on gradient steps rather than episodes?<span class="chip answered">Answered</span></summary><p><b>Status:</b> Answered for the main game (75 runs of PPO with 1, 2 and 4 epochs). No clear lead per gradient step. After 100 episodes 1, 9 and 19 of 25 runs had converged with 1, 2 and 4 epochs, and one-epoch PPO is no faster than REINFORCE.</p></details>
     <details class="q"><summary><span class="q-num">Q25</span>How does the walking game change with the maximum step length and with the discount?<span class="chip open">Open</span></summary><p><b>Status:</b> Open; only a step of 0.2 and a discount of 0.9 were run.</p></details>
     <details class="q"><summary><span class="q-num">Q26</span>Do A2C and PPO beat REINFORCE on the walking game?<span class="chip answered">Answered</span></summary><p><b>Status:</b> Answered for one house setup (15 runs). A2C is the most reliable (5 of 5 seeds at the corners at the end, 34 of 35 later checkpoints under 0.1); REINFORCE is slower (4 of 5, 24 of 35); PPO gets there fastest but does not stay (2 of 5, 14 of 35).</p></details>
-    <details class="q"><summary><span class="q-num">Q27</span>Why is PPO unstable on the walking game?<span class="chip open">Open</span></summary><p>Candidates are four epochs on a 15-step batch, a learning rate of 0.01, and advantage normalization over so few samples.</p><p><b>Status:</b> Open.</p></details>
-    <details class="q"><summary><span class="q-num">Q28</span>Does a smaller learning rate or fewer epochs make PPO reliable on the walking game?<span class="chip open">Open</span></summary><p><b>Status:</b> Open.</p></details>
+    <details class="q"><summary><span class="q-num">Q27</span>Why is PPO unstable on the walking game?<span class="chip open">Open</span></summary><p><b>Status:</b> Open on the mechanism. A smaller learning rate does not help and fewer epochs help partly, so it is not simply the step size; reusing each episode seems to contribute, but that is a hypothesis.</p></details>
+    <details class="q"><summary><span class="q-num">Q28</span>Does a smaller learning rate or fewer epochs make PPO reliable on the walking game?<span class="chip answered">Answered</span></summary><p><b>Status:</b> Answered for the settings tried (15 runs). Fewer epochs help partly (4 of 5 seeds at the corners, 21 of 35 later checkpoints, against 2 of 5 and 14 of 35 for the default), a smaller learning rate does not (1 of 5 and 2 of 5), and nothing matches A2C (5 of 5, 34 of 35).</p></details>
+    <details class="q"><summary><span class="q-num">Q29</span>Do the slower PPO settings settle with more than 300 episodes?<span class="chip open">Open</span></summary><p>Several runs were still far from the corners when training stopped.</p><p><b>Status:</b> Open.</p></details>
   </section>
 
   <section class="card notes" id="assumptions">
