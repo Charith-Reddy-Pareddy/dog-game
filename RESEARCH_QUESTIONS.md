@@ -1,130 +1,158 @@
 # Research Questions
 
-These are the open questions that motivated this repository, drawn from
-the research group's planning meeting on the dog game (the "AI dog" /
-"Battling Influencer Game") and the preceding grid-soccer exact-solver
-work. They're grouped by the two subgroups the meeting split into, plus
-the questions common to both.
+These are the questions that motivated this repository, drawn from the
+project's planning notes on the dog game (the "AI dog" / "Battling
+Influencers Game"). They are grouped by the two solution methods the project
+compares, plus the questions common to both, and then a set of new questions
+that the experiments here raised.
 
-## Policy gradient (REINFORCE / A2C-style self-play)
+Each question has a status. **Answered** means a result file in
+[`results/`](results/) settles it for the dog game, with the number of runs
+behind it. **Partly answered** means there is evidence but it leaves
+something untested. **Open** means nothing here tests it yet. The answers,
+with the numbers and the caveats, are in [RESEARCH_REPORT.md](RESEARCH_REPORT.md)
+([PDF](research_report.pdf)).
 
-1. **Can self-play policy gradient converge to a Nash equilibrium at
-   all in a general-sum game?** Policy gradient is fundamentally a
-   single-agent learning algorithm; running two copies of it against
-   each other is best-response dynamics, not a direct game solver, and
-   there is no guarantee that mutual improvement converges anywhere.
-   This was posed as *the* open question for this subgroup.
-2. Does the number of self-play episodes needed to converge depend on
-   the specific house/weight configuration, or is there a single
-   number that works across the board?
-3. Does pre-training help, and if so, on what does the benefit depend?
-4. When the game has more than one Nash equilibrium (see question 8
-   below), which one does self-play find, and is it consistent across
-   runs, seeds, or network architectures?
+## Policy gradient (REINFORCE, A2C, PPO)
 
-## DQN / Nash-Q (discretized-action side)
+1. **Can self-play policy gradient converge to a Nash equilibrium in a
+   general-sum game?** Policy gradient is a single-agent algorithm; two
+   copies played against each other are best-response dynamics, not a game
+   solver, and nothing guarantees mutual improvement converges.
+   *Status: answered for the dog game (74 of 75 REINFORCE runs, 25 of 25
+   PPO runs); open for general-sum games in general.*
+2. Does the number of episodes needed depend on the house and weight
+   configuration, or is there one number that works everywhere?
+   *Status: answered. It depends on the configuration and on the algorithm.*
+3. Does pre-training help, and what does the benefit depend on?
+   *Status: answered for one target setup. It helps a lot when the source
+   setup has the same equilibrium corners and hurts when it does not.*
+4. When the game has more than one equilibrium, which one does self-play
+   find, and is it consistent across seeds and architectures?
+   *Status: answered for the shared-coordinate setup (30 runs). Never the
+   solver's interior point; always a boundary equilibrium, one of two
+   mirror images, about 3 to 1.*
 
-5. **How should the per-state stage game inside the Nash-Q Bellman
-   backup `Q = R + discount * NashV(Q)` actually be solved?** An LP
-   solver gives an exact stage-game equilibrium; best-response
-   dynamics (fictitious play) only approximates one. How much stage
-   game error is tolerable before the outer Bellman iteration stops
-   converging to the right fixed point?
-5b. Is there existing literature on how precisely the stage game must
-   be solved for the outer dynamic-programming loop to converge, given
-   how commonly Nash-Q-style methods are used in practice?
-6. Continuous actions have to be discretized into a finite grid for
-   DQN. How does the grid resolution trade off against solution
-   quality, and is a neural-network function approximator viable in
-   place of a full grid as resolution grows?
+## Nash-Q on a discretized grid
 
-## Common to both subgroups
+5. **How precisely must the stage game inside the Nash-Q backup be
+   solved?** An exact solver gives an exact equilibrium; fictitious play only
+   approximates one. How much stage-game error can the outer Bellman
+   iteration tolerate?
+   *Status: answered for the dog game. The error of the fixed point falls
+   about as 1 over the number of fictitious-play iterations.*
+5b. Is there literature on how precisely the stage game must be solved for
+    the outer loop to converge?
+    *Status: open as a literature question; this repository measures it
+    for one game but does not survey the literature.*
+6. How does grid resolution trade off against solution quality, and is a
+   neural network needed as the grid grows?
+   *Status: answered for the dog game. Quality stops improving at 5 x 5;
+   cost keeps growing steeply. The network question is partly answered by the
+   walking game's deep Nash-Q.*
 
-7. **What is the right multi-agent policy network architecture?**
-   Fully separate per-player networks, a fully shared trunk, or a
-   partially shared trunk with separate per-player branches — do they
-   differ in training stability, final policy quality, or how they
-   perform against each other (not just against themselves)?
-8. **When is the dog game's Nash equilibrium unique?** The conjecture
-   from the meeting is that uniqueness requires the two houses to
-   differ in *both* coordinates. What happens at the degenerate case
-   (a shared coordinate), and do different solvers reliably pick
-   different-but-equally-valid equilibria there?
-9. **How do you verify, after the fact, that a solved or learned
-   policy actually is a Nash equilibrium?** For a mixed strategy: are
-   all actions played with positive probability equally good, and is
-   no unplayed action strictly better? For a continuous action pair:
-   is there no unilateral deviation that improves either player's
-   payoff?
-10. Practical solvers (fictitious play, best-response iteration)
-    rarely land on "clean" probabilities (50/50, 1/3-2/3, etc.) the
-    way a hand-solved game would. How much of that is real mixing
-    versus numerical/approximation noise, and how should a verification
-    check be tuned to tell the two apart?
-11. Everything above is being developed on the dog game specifically
-    because it is simpler than the soccer game (general-sum vs.
-    zero-sum, provably unique equilibrium under mild conditions vs.
-    many possible equilibria). Which of the findings here — on
-    architecture, verification, and stage-game solving — are expected
-    to transfer to the soccer game, and which are artifacts of the dog
-    game's simpler structure?
+## Common to both methods
+
+7. **What is the right multi-agent network architecture?** Separate
+   networks, a shared trunk, or a partly shared trunk.
+   *Status: partly answered. All three converge (24, 25 and 25 of 25 runs);
+   cross-play between independently trained architectures is untested.*
+8. **When is the equilibrium unique?** The conjecture is that the houses must
+   differ in both coordinates.
+   *Status: answered. Confirmed, and every shared coordinate opens a
+   continuum of equilibria.*
+9. **How do you verify, after the fact, that a policy is an equilibrium?**
+   *Status: answered. `doggame/verify.py` implements exploitability and the
+   indifference check.*
+10. Practical solvers rarely land on clean probabilities. How much of the
+    non-clean mixing is real and how much is numerical noise?
+    *Status: answered for the dog game. The exact equilibrium is a single
+    action pair, so all the mixing fictitious play shows is noise.*
+11. Which findings are expected to transfer to a harder game (one with many
+    states and no unique equilibrium), and which depend on the dog game's
+    simple structure?
+    *Status: open. The state-independent transition, the unique equilibrium
+    and the one-shot payoffs are all dog-game specific.*
 
 ## From the follow-up planning notes
 
-A second planning session raised further questions, some specific to
-this repo and some about the surrounding research program:
+12. Should the dog have momentum (`w0 * dog + w1 * red + w2 * blue`), and does
+    inertia change anything besides how long it takes?
+    *Status: partly answered. Inertia leaves the steady state unchanged but
+    slows policy-gradient training sharply on the harder setup; whether it
+    changes the equilibrium of the dynamic game is untested.*
+13. Can a "vertex Nash" choice (the equilibrium with the largest sum of values)
+    give a more useful equilibrium selection for multi-state games?
+    *Status: open. The dog game has one state.*
+14. (Adjacent thread.) Can an LLM's behavior in a repeated game be modeled as
+    bounded-rationality play over a continuous action space, and can its
+    choices be inverted into a reward function?
+    *Status: out of scope for this repository.*
+15. (Adjacent thread.) For a continuous-action grid player, is the natural
+    action space a disk (an angle and a radius) with a separate heading-only
+    action?
+    *Status: partly addressed by the walking version, which uses an angle and
+    a step length.*
 
-12. Should the dog have some momentum instead of fully re-targeting
-    every round — i.e. should the transition be a three-weight
-    `w0 * dog + w1 * pick_red + w2 * pick_blue` instead of the
-    two-weight `w * pick_red + (1-w) * pick_blue`? Does adding inertia
-    change anything besides how many rounds convergence takes?
-13. Can improving Nash-Q's per-state solve (a "vertex Nash" picking the
-    equilibrium with the largest sum of both players' values, when a
-    stage game has more than one) give a more useful notion of
-    equilibrium selection for a multi-*state* Markov game than
-    checking optimality alone does?
-14. (From an adjacent research thread, not this repo's game.) Can an
-    LLM's behavior in a repeated game be modeled the same way — as
-    bounded-rationality play over a structured, continuous action
-    space — and does "inverting" an LLM's observed choices recover an
-    implied reward function the way inverse RL would for a human
-    player?
-15. (Also adjacent, and soccer-specific.) For a continuous-action
-    soccer player, is the natural action space a disk (move up to
-    radius `r`, any heading — polar coordinates `[0, r) x [0, 2*pi]`)
-    with a separate heading-only action (`[0, 2*pi)`) for something
-    like a kick direction? Centralized vs. decentralized control over
-    that combined action space was flagged as an open question too.
+## New questions from this work
 
-## Status of these questions in this repository
+16. **Do A2C and PPO reach the equilibrium faster than REINFORCE, and is the
+    speed-up from the baseline or from reusing each episode?**
+    *Status: partly answered. PPO is much faster per episode (19 of 25
+    runs converged after 100 episodes, against 0 of 25); A2C is not faster
+    than REINFORCE. PPO also takes four gradient steps per episode, so a
+    comparison matched on gradient steps is still open.*
+17. **What decides which of the two mirror equilibria self-play finds, and
+    why does it never find the interior solution?**
+    *Status: open on the mechanism. The outcome is measured (23 of 30
+    against 7 of 30, no interior); the explanation (a wide initial
+    exploration noise plus clipping at the boundary) is a hypothesis.*
+18. **How strongly does dog inertia slow policy-gradient training?**
+    *Status: answered for two setups. On the easy setup every run converges
+    up to `w0 = 0.9`; on the hard one 4 of 5 converge at `w0 = 0`, 5 of 5 at
+    0.3, 1 of 5 at 0.6 and 0 of 5 at 0.9 within 1500 episodes.*
+19. **Does the one-shot equilibrium remain the equilibrium of the game with
+    inertia?** Policies trained with inertia are scored against the one-shot
+    game; the equilibrium of the full dynamic game has not been solved.
+    *Status: open.*
+20. **Why does pre-training from a different setup hurt?**
+    *Status: open on the mechanism. The measured pattern (same corners help,
+    flipped corners hurt) suggests the network has to un-learn a boundary
+    direction, but that is a hypothesis.*
+21. **Does re-solving the stage game less often change the Nash-Q fixed
+    point?**
+    *Status: answered for the dog game. No: with a state-independent
+    transition, every Q matrix differs from the payoffs by a constant, so the
+    equilibrium never moves between iterations.*
+22. **Is the exact equilibrium of the discretized game always a single
+    action pair?**
+    *Status: answered for the five setups and five grid sizes tested (25
+    games). Yes.*
+23. **Is the one-shot corner pair also an equilibrium of the walking game?**
+    The walking experiments check that players head to the one-shot corners,
+    not that those corners are an equilibrium of the walking game.
+    *Status: open.*
+24. **Does a compute-matched comparison (same number of gradient steps, not
+    episodes) keep PPO ahead?** *Status: open.*
+25. **How does the walking game change with the maximum step length and with
+    the discount?** *Status: open; only a step of 0.2 and a discount of 0.9
+    were run.*
 
-- Questions 1-2 and 7 are addressed empirically in
-  [`doggame/experiments.py`](doggame/experiments.py) and summarized in
-  the [README](README.md#findings) and on the
-  [live results page](https://charith-reddy-pareddy.github.io/dog-game/#findings).
-- Question 5 now has a partial answer: [`doggame/exact_nash.py`](doggame/exact_nash.py)
-  adds an *exact* stage-game solver (NashPy's Lemke-Howson algorithm)
-  as an alternative to fictitious play's approximation, and
-  [`doggame/dqn.py`](doggame/dqn.py)'s `resync_every` lets the outer
-  Bellman loop freeze a stage-game solution across several iterations
-  instead of re-solving every time — but the general question of how
-  much stage-game solution error the outer loop tolerates before it
-  stops converging correctly is still open (see 5b).
-- Question 6 is addressed by [`doggame/discretize.py`](doggame/discretize.py)
-  and [`doggame/dqn.py`](doggame/dqn.py); the resolution/scaling
-  concern it raises is concretely what the fix documented under
-  "A defect found and fixed" in [RESEARCH_REPORT.md](RESEARCH_REPORT.md)
-  was about.
-- Question 8 has a direct, reproducible example in the README and the
-  live page's "Finding 2".
-- Question 9 is implemented directly in
-  [`doggame/verify.py`](doggame/verify.py).
-- Question 12 is implemented in [`doggame/env.py`](doggame/env.py)
-  (`make_inertial_transition`) and on the
-  [live simulator](https://charith-reddy-pareddy.github.io/dog-game/)'s
-  w0 slider; see `RESEARCH_REPORT.md` for why inertia only changes the
-  transient, not the eventual fixed point.
-- Questions 3, 4, 5b, 10, 11, 13, 14, and 15 are open; see
-  [RESEARCH_REPORT.md](RESEARCH_REPORT.md#open-questions) for where
-  this repo's results leave them.
+## Where each question is answered in this repository
+
+| Questions | Evidence |
+|---|---|
+| 1, 2, 7, 8 | `results/dog_game_runs.jsonl` (75 REINFORCE runs), `doggame/experiments.py` |
+| 1, 2, 16 | `results/dog_game_studies.jsonl`, study `algorithms` (75 runs), `doggame/train_ac.py` |
+| 3, 20 | study `pretraining` (15 runs) |
+| 4, 17 | study `selection` (30 runs) |
+| 5, 21 | study `stage_solver` (90 runs) |
+| 6, 22 | study `resolution` (25 games) |
+| 9 | `doggame/verify.py` |
+| 10 | study `noise` (31 runs) |
+| 12, 18, 19 | study `inertia` (40 runs) |
+| walking game | `results/dog_game_runs.jsonl`, `results/dog_game_trajectories.json` |
+
+Questions 5b, 11, 13, 14, 19, 23, 24 and 25 are open. The studies are in
+[`doggame/dog_game_studies.py`](doggame/dog_game_studies.py) and the tables are
+produced by [`doggame/dog_game_summary.py`](doggame/dog_game_summary.py).
