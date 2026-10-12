@@ -1,6 +1,7 @@
 from doggame.dog_game_summary import (algorithms_table, convergence_counts, markdown, noise_table, resolution_table,
                                       selection_outcome, selection_table, walking_algorithms_table, walking_share_series, walking_table,
-                                      ppo_epochs_table, ppo_long_table, ppo_walking_table, walking_settings_table)
+                                      ppo_epochs_table, ppo_long_table, ppo_walking_table, walking_houses_table, walking_inertia_table,
+                                      walking_settings_table)
 
 
 def run(study, key, **fields):
@@ -132,3 +133,23 @@ def test_walking_settings_table_puts_the_default_next_to_the_changed_settings():
     table = walking_settings_table(rows)
 
     assert [r[0] for r in table[1:]] == ["max step 0.2, discount 0.9 (default)", "max step 0.4, discount 0.9"]
+
+
+def test_walking_houses_table_lists_the_default_setup_and_then_each_other_setup_per_algorithm():
+    curve = {"100": 0.4, "150": 0.02, "300": 0.03}
+    rows = [run("walking", dict(algorithm="a2c", seed=0), start=1.5, curve=curve),
+            run("walking_houses", dict(setup=1, algorithm="a2c", seed=0), start=1.5, curve=curve),
+            run("walking_houses", dict(setup=1, algorithm="ppo", seed=0), start=1.5, curve=curve)]
+
+    table = walking_houses_table(rows)
+
+    assert table[0][:4] == ["House setup", "Algorithm", "Before training", "At 100"]
+    assert [(r[0].startswith("default"), r[1]) for r in table[1:]] == [(True, "A2C"), (False, "A2C"), (False, "PPO")]
+    assert "(0.8, 0.8) / (0.2, 0.3)" in table[2][0] and table[2][-2:] == ["2 of 2", "1 of 1"]
+
+
+def test_walking_inertia_table_puts_the_default_next_to_the_inertia_settings():
+    curve = {"50": 0.9, "100": 0.5, "200": 0.1, "300": 0.05}
+    rows = [run("walking", dict(algorithm="a2c", seed=0), start=1.5, curve=curve), run("walking_inertia", dict(w0=0.6, seed=0), start=1.5, curve=curve)]
+
+    assert [r[0] for r in walking_inertia_table(rows)[1:]] == ["w0 = 0 (default)", "w0 = 0.6"]

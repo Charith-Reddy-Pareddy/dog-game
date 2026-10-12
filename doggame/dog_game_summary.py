@@ -146,6 +146,33 @@ def walking_settings_table(rows, late=150):
     return table
 
 
+def walking_houses_table(rows, late=150):
+    """The three algorithms on the walking game's default house setup and on three others."""
+    shown = (100, 300)
+    default = {"reinforce": [], "a2c": [], "ppo": []}
+    for r in study(rows, "walking"):
+        default[r["key"]["algorithm"]].append(r)
+    table = [["House setup", "Algorithm"] + _walking_header("", late, shown)[1:]]
+    others = study(rows, "walking_houses")
+    for label, source in [("default: (0.88, 0.12) / (0.3, 0.65), w = 0.5", lambda a: default[a])] + [
+            (houses(i), lambda a, i=i: [r for r in others if r["key"]["setup"] == i and r["key"]["algorithm"] == a]) for i in sorted({r["key"]["setup"] for r in others})]:
+        for name, algorithm in ALGORITHM_NAMES.items():
+            mine = source(name)
+            if mine:
+                table.append([label, algorithm] + _walking_row("", mine, late, shown)[1:])
+    return table
+
+
+def walking_inertia_table(rows, late=150):
+    """A2C on the walking game with the dog's own weight w0 at 0 (the default), 0.3 and 0.6."""
+    shown = (50, 100, 200, 300)
+    table = [_walking_header("Setting", late, shown)]
+    groups = [("w0 = 0 (default)", [r for r in study(rows, "walking") if r["key"]["algorithm"] == "a2c"])]
+    groups += [(f"w0 = {w0}", [r for r in study(rows, "walking_inertia") if r["key"]["w0"] == w0]) for w0 in (0.3, 0.6)]
+    table += [_walking_row(label, runs, late, shown) for label, runs in groups if runs]
+    return table
+
+
 def ppo_epochs_table(rows):
     """Main game: share of runs under the threshold after each number of episodes, with the gradient steps each
     algorithm takes per episode, so PPO's speed can be compared with REINFORCE and A2C on equal steps."""
@@ -297,7 +324,8 @@ if __name__ == "__main__":
                         ("inertia", inertia_table(studies)), ("pretraining", pretraining_table(studies)), ("stage solver", stage_solver_table(studies)),
                         ("resolution", resolution_table(studies)), ("noise", noise_table(studies)), ("walking", walking_table(runs)), ("walking algorithms", walking_algorithms_table(studies)),
                         ("ppo epochs", ppo_epochs_table(studies)), ("ppo walking", ppo_walking_table(studies)),
-                        ("ppo long", ppo_long_table(studies)), ("walking settings", walking_settings_table(studies))):
+                        ("ppo long", ppo_long_table(studies)), ("walking settings", walking_settings_table(studies)),
+                        ("walking houses", walking_houses_table(studies)), ("walking inertia", walking_inertia_table(studies))):
         print(f"\n### {name}\n\n{markdown(table)}")
     print("\nconvergence counts:", convergence_counts(runs))
     print("inertia median distance:", inertia_distances(studies))
