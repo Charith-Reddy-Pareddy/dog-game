@@ -158,8 +158,8 @@ def build(path=OUTPUT, results=RESULTS, trajectories=TRAJECTORIES, studies=STUDI
                       trajectory_figure(walk), k.small("Paths of red, blue and the dog. Before training the walks wander; "
                       "after training both players end at or near their Nash corners and the dog settles near the middle.")]),
         k.h2("Limits"),
-        k.point("The corners are the equilibrium of the one-shot game. The walking game itself has not been solved, so this shows the players heading to the one-shot "
-                "corners, not that they play an equilibrium of the walking game."),
+        k.point("The corners are the equilibrium of the one-shot game. Resting on them is an exact equilibrium of the walking game, and walking straight there is a "
+                "near-equilibrium (the best deviation gains 0.13% to 4.7% of the reward); the full game's feedback equilibrium was not computed."),
         k.point("Walking was checked on one house setup only. The Nash-Q network sees the exact stage-game solution at every target, so it is not independent of the solver."),
         *[k.point(f"The untrained {dict(METHODS)[r['architecture']]} policy of seed {r['seed']} already started close to the corners ({r['before']:.2f}), "
                   "so that run shows little.") for r in near],

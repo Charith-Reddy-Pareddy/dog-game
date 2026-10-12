@@ -16,7 +16,7 @@ This report asks one question: how well do policy-gradient methods, REINFORCE, A
 - **A lower discount makes the game easier to learn and a higher one harder.** A longer step costs nothing and a shorter one is slower (Section 4.5).
 - **The ranking holds on other house setups, but some setups are much harder.** On three other setups A2C is again the most reliable wherever any algorithm learns the game, PPO is the least reliable or tied for least, and on one setup none of them gets more than 1 of 5 seeds to the corners in 300 episodes. Dog inertia slows learning (Section 4.7).
 - **Scores are noisy.** Evaluating a policy changes the random numbers in training, so the paths are sensitive, and a single end-of-training number would mislead (Section 4.6).
-- **Not shown:** that the one-shot corners are an equilibrium of the walking game itself. The game has not been solved (Section 6).
+- **The corners are an equilibrium of the walking game as a resting state, and walking straight to them is a near-equilibrium.** Once both players are on their corners neither gains by deviating, and the best deviation from a straight walk gains 0.13% to 4.7% of the reward (Section 4.8). The full game's equilibrium with feedback strategies was not computed.
 
 ## 1. The walking game
 
@@ -56,7 +56,7 @@ All three use Adam at learning rate 0.01 and one self-play episode per update, w
 
 ## 4. Results
 
-Every number comes from `results/dog_game_studies.jsonl` (the `walking`, `ppo_variants`, `ppo_long`, `walking_settings`, `walking_houses` and `walking_inertia` studies) and `results/dog_game_runs.jsonl`, and the tables are produced by `doggame/dog_game_summary.py`.
+Every number comes from `results/dog_game_studies.jsonl` (the `walking`, `ppo_variants`, `ppo_long`, `walking_settings`, `walking_houses`, `walking_inertia` and `walking_equilibrium` studies) and `results/dog_game_runs.jsonl`, and the tables are produced by `doggame/dog_game_summary.py`.
 
 ### 4.1 Three algorithms, 300 episodes
 
@@ -174,11 +174,34 @@ A first run of this comparison was scored only at 50, 100, 200 and 300 episodes.
 - The one-shot corners do not depend on `w0`, since they are the steady state, so this is about how fast the players get there.
 - Inertia was tried with A2C only.
 
+### 4.8 Is walking to the corners an equilibrium?
+
+The reference for all of this is the one-shot Nash corner pair, but the walking game is a dynamic game, so it is fair to ask whether the corners are an equilibrium of it. Two checks (`doggame/walking_equilibrium.py`), on the default setup and the three others of Section 4.7:
+
+- **Resting on the corners.** Both players start on their corners.
+- **Walking there.** Both players start on their houses, and each walks straight to its corner at full speed and then stays. If one player does this, the other faces a known path, so its best response is a deterministic optimal-control problem: choose 15 positions, each within the maximum step of the last and inside the square, to maximize the discounted reward. It is solved numerically. The gain is how much more reward the best response gets than following the straight walk.
+
+| House setup | Players start | Red's gain | Blue's gain | Largest gain as a share of the reward |
+|---|---|---|---|---|
+| default: (0.88, 0.12) / (0.3, 0.65), w = 0.5 | on their houses | 0.00000 | 0.00173 | 0.29% |
+| default: (0.88, 0.12) / (0.3, 0.65), w = 0.5 | on the corners | 0.00000 | 0.00000 | 0.00% |
+| (0.9, 0.2) / (0.1, 0.8), w = 0.5 | on their houses | 0.00248 | 0.00248 | 0.13% |
+| (0.9, 0.2) / (0.1, 0.8), w = 0.5 | on the corners | 0.00000 | 0.00000 | 0.00% |
+| (0.8, 0.8) / (0.2, 0.3), w = 0.3 | on their houses | 0.00004 | 0.00297 | 3.09% |
+| (0.8, 0.8) / (0.2, 0.3), w = 0.3 | on the corners | 0.00000 | 0.00000 | 0.00% |
+| (0.7, 0.1) / (0.6, 0.9), w = 0.7 | on their houses | 0.01524 | 0.03014 | 4.74% |
+| (0.7, 0.1) / (0.6, 0.9), w = 0.7 | on the corners | 0.00000 | 0.00000 | 0.00% |
+
+- **As a resting state the corner pair is an exact equilibrium**, in all four setups: the gain from deviating is 0.
+- **Walking straight to the corner is not exactly a best response, but the gains are small.** They are 0.13% and 0.29% of the reward on two setups and 3.1% and 4.7% on the other two. The reason is that each step's best position is the unconstrained optimum, which lies outside the square, so the best path heads toward that point and not toward the corner.
+- **So the equilibrium paths of the full game differ slightly from the straight walk, but they end on the same corners.** The check is against every deviation by one player from a fixed path. The equilibrium of the full dynamic game with feedback strategies was not computed.
+- The setup where learning is hardest (w = 0.7, Section 4.7) also has the largest gain. That is an observation, not a tested cause.
+
 ## 5. What this does and does not show
 
 - **Four house setups, one of them much harder.** Most runs use red at (0.88, 0.12), blue at (0.3, 0.65), w = 0.5 and no dog inertia. Section 4.7 adds three other setups for all three algorithms, and inertia for A2C only.
 - **Five seeds per setting.** The counts are out of five, so small differences between settings are patterns, not a ranking. The step-length and discount study uses A2C only.
-- **The corners are the one-shot equilibrium.** Heading to them shows the players learning a sensible behavior, not that they play an equilibrium of the walking game. That game has not been solved.
+- **The corners are a resting-state equilibrium.** Section 4.8 shows that the corner pair is an exact equilibrium once both players are there and that walking straight to it is a near-equilibrium. The equilibrium of the full game with feedback strategies has not been computed.
 - **My choices.** The 0.1 threshold, the 300-episode budget, the learning rate and the network sizes were not tuned for each algorithm.
 - **Why the ranking differs from the main game is not tested.** The causes of PPO's instability here are unknown; reusing each episode seems to contribute, but that is a hypothesis.
 
@@ -186,7 +209,7 @@ A first run of this comparison was scored only at 50, 100, 200 and 300 episodes.
 
 These are the walking-game questions in [RESEARCH_QUESTIONS.md](RESEARCH_QUESTIONS.md):
 
-- **Q23.** Is the one-shot corner pair an equilibrium of the walking game?
+- **Q23.** Is the one-shot corner pair an equilibrium of the walking game? Answered for the resting state and the straight walk (Section 4.8); the full feedback equilibrium is not computed.
 - **Q27.** Why is PPO unstable here? (A smaller learning rate does not help and fewer epochs do.)
 - **Q30.** Do these findings hold on other house setups and with dog inertia? Partly answered (Section 4.7); other step lengths, PPO with inertia and longer training on the hard setup were not run.
 - **Q31.** Does an entropy bonus or a larger network change PPO's instability?
@@ -194,7 +217,7 @@ These are the walking-game questions in [RESEARCH_QUESTIONS.md](RESEARCH_QUESTIO
 ## 7. Reproducing
 
 ```
-python3 -m doggame.dog_game_studies walking ppo_variants ppo_long walking_settings walking_houses walking_inertia   # the runs (resumable, shardable)
+python3 -m doggame.dog_game_studies walking ppo_variants ppo_long walking_settings walking_houses walking_inertia walking_equilibrium   # the runs (resumable, shardable)
 python3 -m doggame.dog_game_summary                                                  # print every table
 python3 -m doggame.research_report_pdf WALKING_GAME_REPORT.md docs/walking_game_report.pdf
 ```

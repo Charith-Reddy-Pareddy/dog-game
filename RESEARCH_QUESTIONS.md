@@ -146,9 +146,11 @@ with the numbers and the caveats, are in [RESEARCH_REPORT.md](RESEARCH_REPORT.md
     *Status: answered for the five setups and five grid sizes tested (25
     games). Yes.*
 23. **Is the one-shot corner pair also an equilibrium of the walking game?**
-    The walking experiments check that players head to the one-shot corners,
-    not that those corners are an equilibrium of the walking game.
-    *Status: open.*
+    *Status: answered for the resting state and for the straight-walk profile (8 checks, four house
+    setups). Both players resting on the corners is an exact equilibrium (gain 0 in all four setups).
+    Walking straight to the corners at full speed is a near-equilibrium: the best deviation gains
+    0.13% to 4.7% of the reward. The equilibrium of the full dynamic game with feedback strategies
+    was not computed.*
 24. **Does PPO stay ahead when matched on gradient steps rather than episodes?**
     *Status: answered for the main game (75 runs of PPO with 1, 2 and 4 epochs).
     No clear lead per gradient step. After 100 episodes 1, 9 and 19 of 25 runs had
@@ -208,8 +210,9 @@ with the numbers and the caveats, are in [RESEARCH_REPORT.md](RESEARCH_REPORT.md
 | 27, 28, 29 | study `ppo_long` (15 runs) |
 | 25 | study `walking_settings` (20 runs) |
 | 30 | studies `walking_houses` (45 runs) and `walking_inertia` (10 runs) |
+| 23 | study `walking_equilibrium` (8 checks), `doggame/walking_equilibrium.py` |
 | walking game | `results/dog_game_runs.jsonl`, `results/dog_game_trajectories.json` |
 
-Questions 5b, 11, 13, 14, 19, 23, 27 and 31 are open, and 25 and 30 are partly answered. The studies are in
+Questions 5b, 11, 13, 14, 19, 27 and 31 are open, and 25 and 30 are partly answered. The studies are in
 [`doggame/dog_game_studies.py`](doggame/dog_game_studies.py) and the tables are
 produced by [`doggame/dog_game_summary.py`](doggame/dog_game_summary.py).

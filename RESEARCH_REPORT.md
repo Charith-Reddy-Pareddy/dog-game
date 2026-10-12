@@ -326,6 +326,24 @@ The walking-game runs above use one house setup. Here the three algorithms are r
 - **One setup is much harder:** on (0.7, 0.1) / (0.6, 0.9) with w = 0.7 no algorithm gets more than 1 of 5 seeds to the corners in 300 episodes. More episodes were not tried.
 - **Dog inertia slows A2C** (5 and 4 of 5 seeds at the corners at `w0` of 0.3 and 0.6, against 5 of 5 without it).
 
+### 5.14 Is walking to the corners an equilibrium of the walking game?
+
+The walking game is judged against the one-shot Nash corners, so this checks them against the walking game itself (`doggame/walking_equilibrium.py`; see the [walking-game report](WALKING_GAME_REPORT.md), Section 4.8). If one player walks straight to its corner and stays, the other's best response is a deterministic optimal-control problem, solved numerically:
+
+| House setup | Players start | Red's gain | Blue's gain | Largest gain as a share of the reward |
+|---|---|---|---|---|
+| default: (0.88, 0.12) / (0.3, 0.65), w = 0.5 | on their houses | 0.00000 | 0.00173 | 0.29% |
+| default: (0.88, 0.12) / (0.3, 0.65), w = 0.5 | on the corners | 0.00000 | 0.00000 | 0.00% |
+| (0.9, 0.2) / (0.1, 0.8), w = 0.5 | on their houses | 0.00248 | 0.00248 | 0.13% |
+| (0.9, 0.2) / (0.1, 0.8), w = 0.5 | on the corners | 0.00000 | 0.00000 | 0.00% |
+| (0.8, 0.8) / (0.2, 0.3), w = 0.3 | on their houses | 0.00004 | 0.00297 | 3.09% |
+| (0.8, 0.8) / (0.2, 0.3), w = 0.3 | on the corners | 0.00000 | 0.00000 | 0.00% |
+| (0.7, 0.1) / (0.6, 0.9), w = 0.7 | on their houses | 0.01524 | 0.03014 | 4.74% |
+| (0.7, 0.1) / (0.6, 0.9), w = 0.7 | on the corners | 0.00000 | 0.00000 | 0.00% |
+
+- **Resting on the corners is an exact equilibrium** in all four setups (gain 0).
+- **Walking straight to them is a near-equilibrium:** the best deviation gains 0.13% to 4.7% of the reward, because each step's best position lies outside the square. The full game's equilibrium with feedback strategies was not computed.
+
 ## 6. Research questions and answers
 
 The statuses are the same as in [RESEARCH_QUESTIONS.md](RESEARCH_QUESTIONS.md).
@@ -364,7 +382,7 @@ The statuses are the same as in [RESEARCH_QUESTIONS.md](RESEARCH_QUESTIONS.md).
 
 **Q22. Is the exact equilibrium always one action pair?** *Answered.* Yes, in all 25 games (Section 5.7).
 
-**Q23.** Whether the one-shot corners are an equilibrium of the walking game is open.
+**Q23. Is the one-shot corner pair an equilibrium of the walking game?** *Answered for the resting state and the straight walk.* Resting on the corners is an exact equilibrium, and walking straight to them is a near-equilibrium with gains of 0.13% to 4.7% (Section 5.14). The full feedback equilibrium was not computed.
 
 **Q25. How does the walking game change with the step length and the discount?** *Partly answered for A2C on one setup.* A lower discount makes learning faster, a higher one slower, a longer step costs nothing and a shorter one is slower within 300 episodes (Section 5.12). The corners themselves do not depend on either.
 
@@ -395,7 +413,7 @@ The statuses are the same as in [RESEARCH_QUESTIONS.md](RESEARCH_QUESTIONS.md).
 python3 -m pytest                          # the test suite
 python3 -m doggame.experiments             # the original convergence study
 python3 -m doggame.dog_game_study          # five-seed convergence and walking runs
-python3 -m doggame.dog_game_studies        # the thirteen studies in Section 5 (resumable, shardable)
+python3 -m doggame.dog_game_studies        # the fourteen studies in Section 5 (resumable, shardable)
 python3 -m doggame.dog_game_summary        # print every table as Markdown
 python3 -m doggame.research_report_pdf     # build research_report.pdf from this file
 ```
