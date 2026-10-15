@@ -4,6 +4,18 @@ Where the instructions left something open, I picked the simplest
 reasonable option. This file lists those choices so they can be checked
 against what was actually intended.
 
+## How to read the supplied planning notes
+
+The three-page `Dog_Group_Notes.pdf` is handwritten planning material. It is
+treated as design context, not as a set of executable specifications or
+instructions that override the current request. The sketches appear to raise
+ideas about (1) dog-game states and joint-action Q values, (2) continuous best
+responses, gradients and angle-radius actions, and (3) a pursuit/chasing game
+with moving targets. The handwriting leaves important rules unspecified.
+The repository implements the separately documented dog and walking games;
+it does not implement a chase game from the third sketch. The interpretation
+of the angle-radius sketch is listed below as an unresolved assumption.
+
 ## The game
 
 - The domain is the unit square, and the houses are fixed points.
@@ -312,6 +324,25 @@ At round 800, per seed:
   draws random numbers and so changes the training run, so the paths are sensitive.
 - The explanations in the research report for why PG picks one
   equilibrium over another are hypotheses, not tested results.
+- Added exploratory runs in the results file use the original five seeds
+  (0-4); they are not independent confirmation. PPO width comparisons and
+  PPO-with-inertia comparisons use five seeds per setting; no entropy bonus
+  was tested.
+- The inertia profile check uses a 20-step finite horizon, discount 0.9,
+  starts the dog at the weighted house midpoint, and holds the opponent at
+  its one-shot Nash action. Its within-player action-sequence problem is a
+  box-constrained convex quadratic program. The optimizer's success is
+  checked and its analytic gradient is supplied. A corrected negative
+  control uses an opponent action of (0, 0) and yields a positive red-player
+  gain. This does not solve feedback strategies or prove a theorem for all
+  houses, weights, horizons or inertia values.
+- The live simulator's displayed number remains an unconstrained, one-shot
+  static-grid deviation proxy (31 by 31). It ignores the current dog state,
+  inertia and walking-step constraints; it is not a dynamic-game
+  exploitability measure.
+- The literature section is an initial scoped comparison, not a systematic
+  review. The static dog game overlaps the Battling Influencers Game (BIG)
+  structure; novelty is not claimed for the basic static equilibrium result.
 
 ## Settled points
 

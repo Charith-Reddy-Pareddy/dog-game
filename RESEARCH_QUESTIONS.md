@@ -128,10 +128,13 @@ with the numbers and the caveats, are in [RESEARCH_REPORT.md](RESEARCH_REPORT.md
     *Status: answered for two setups. On the easy setup every run converges
     up to `w0 = 0.9`; on the hard one 4 of 5 converge at `w0 = 0`, 5 of 5 at
     0.3, 1 of 5 at 0.6 and 0 of 5 at 0.9 within 1500 episodes.*
-19. **Does the one-shot equilibrium remain the equilibrium of the game with
-    inertia?** Policies trained with inertia are scored against the one-shot
-    game; the equilibrium of the full dynamic game has not been solved.
-    *Status: open.*
+19. **Does the one-shot equilibrium remain an equilibrium of the game with
+    inertia?** On five house setups and `w0` values 0.3, 0.6 and 0.9, a checked
+    convex optimizer finds no profitable unilateral 20-step open-loop action
+    sequence when the other player holds its one-shot action. A negative
+    control detects a profitable deviation. This does not compute the full
+    feedback/Markov-perfect equilibrium.
+    *Status: partly answered for these setups, starts and horizon.*
 20. **Why does pre-training from a different setup hurt?**
     *Status: open on the mechanism. The measured pattern (same corners help,
     flipped corners hurt) suggests the network has to un-learn a boundary
@@ -186,10 +189,13 @@ with the numbers and the caveats, are in [RESEARCH_REPORT.md](RESEARCH_REPORT.md
     most reliable wherever any algorithm learns the game, and PPO is the least reliable or tied
     for least, with no early lead on the other setups. One setup is much harder: no algorithm
     gets more than 1 of 5 seeds to the corners in 300 episodes. Inertia slows A2C (4 of 5 seeds
-    at 0.6). Other step lengths, PPO with inertia and longer training on the hard setup were not
-    run.*
+    at 0.6). PPO with inertia and longer training on the hard setup extend the
+    evidence, but five seeds and one hard configuration do not resolve
+    generalization.*
 31. **Does an entropy bonus or a larger network change PPO's instability on the walking game?**
-    Neither was tried. *Status: open.*
+    A 64-unit network was tried with one and four PPO epochs; results differed
+    substantially across those settings and are based on five seeds. Entropy
+    bonus was not tested. *Status: partly answered for network capacity.*
 
 ## Where each question is answered in this repository
 

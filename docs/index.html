@@ -196,6 +196,7 @@
       <a href="#experiments">More experiments</a>
       <a href="#trajectories">Walking game</a>
       <a href="#walking-report">Walking-game report</a>
+      <a href="PG_RESEARCH_UPDATE.pdf" target="_blank" rel="noopener">Concise research update</a>
       <a href="#questions">Research questions</a>
       <a href="#assumptions">Assumptions</a>
       <a href="https://github.com/Charith-Reddy-Pareddy/dog-game/blob/main/research_report.pdf" target="_blank" rel="noopener">Research report (PDF)</a>
@@ -250,7 +251,7 @@
           <div class="row"><span><span class="swatch" style="background:var(--red)"></span>Red dist&sup2;</span><span class="metric" id="redDist">&mdash;</span></div>
           <div class="row"><span><span class="swatch" style="background:var(--blue)"></span>Blue dist&sup2;</span><span class="metric" id="blueDist">&mdash;</span></div>
           <div class="row"><span>Round</span><span class="metric" id="round">0</span></div>
-          <div class="row"><span>Exploitability (max gain from deviating)</span><span class="metric" id="exploit">&mdash;</span></div>
+          <div class="row"><span>One-shot grid deviation proxy</span><span class="metric" id="exploit">&mdash;</span></div>
           <canvas class="spark" id="sparkline" width="400" height="42"></canvas>
         </div>
 
@@ -259,11 +260,11 @@
           Set a max step &delta; and each player walks toward their pick by an angle and a distance of at most &delta; per round instead of jumping there. Raise w&#8320; to give the dog inertia &mdash; it then only partially closes
           the gap to each round's target instead of teleporting there, so
           "Run to equilibrium" takes more rounds but still settles on the same
-          point. Exploitability is computed live, in the browser, by grid-searching
-          for the best unilateral deviation from the current pair of picks
-          (against the full re-target, independent of w&#8320;) &mdash; it's ~0
-          exactly when neither player can do better alone, which is the definition
-          of a Nash equilibrium.
+          point. The displayed proxy grid-searches 31 &times; 31 unrestricted
+          actions in the one-shot, no-inertia blend. It does not account for the
+          current dog state, the max-step constraint or inertia, and is not
+          exploitability of the walking or dynamic game. Treat it only as a
+          one-shot reference score; the dynamic equilibrium has not been solved.
         </p>
       </div>
     </div>
@@ -599,7 +600,7 @@
     <details class="q"><summary><span class="q-num">Q16</span>Do A2C and PPO reach the equilibrium faster than REINFORCE, and is the speed-up from the baseline or from reusing each episode?<span class="chip answered">Answered</span></summary><p><b>Status:</b> Answered. On the main game PPO is much faster per episode (19 of 25 runs converged after 100 episodes, against 0 of 25) and A2C is not faster than REINFORCE. With one epoch (one gradient step per episode, like the others) PPO is no faster than REINFORCE, so the speed-up comes from reusing each episode (Q24). On the walking game the order changes (Q26).</p></details>
     <details class="q"><summary><span class="q-num">Q17</span>What decides which of the two mirror equilibria self-play finds, and why does it never find the interior solution?<span class="chip open">Open</span></summary><p><b>Status:</b> Open on the mechanism. The outcome is measured (23 of 30 against 7 of 30, no interior); the explanation (a wide initial exploration noise plus clipping at the boundary) is a hypothesis.</p></details>
     <details class="q"><summary><span class="q-num">Q18</span>How strongly does dog inertia slow policy-gradient training?<span class="chip answered">Answered</span></summary><p><b>Status:</b> Answered for two setups. On the easy setup every run converges up to <code>w0 = 0.9</code>; on the hard one 4 of 5 converge at <code>w0 = 0</code>, 5 of 5 at 0.3, 1 of 5 at 0.6 and 0 of 5 at 0.9 within 1500 episodes.</p></details>
-    <details class="q"><summary><span class="q-num">Q19</span>Does the one-shot equilibrium remain the equilibrium of the game with inertia?<span class="chip open">Open</span></summary><p>Policies trained with inertia are scored against the one-shot game; the equilibrium of the full dynamic game has not been solved.</p><p><b>Status:</b> Open.</p></details>
+    <details class="q"><summary><span class="q-num">Q19</span>Does the one-shot equilibrium remain the equilibrium of the game with inertia?<span class="chip partly">Partly</span></summary><p>For five house setups, three inertia weights and a 20-step horizon, the one-shot profile has no profitable unilateral open-loop action sequence when the opponent holds its one-shot action. The optimizer is checked against a positive-gain negative control. This does not compute the full feedback/Markov-perfect equilibrium.</p><p><b>Status:</b> Partly answered for these setups, starts and horizon.</p></details>
     <details class="q"><summary><span class="q-num">Q20</span>Why does pre-training from a different setup hurt?<span class="chip open">Open</span></summary><p><b>Status:</b> Open on the mechanism. The measured pattern (same corners help, flipped corners hurt) suggests the network has to un-learn a boundary direction, but that is a hypothesis.</p></details>
     <details class="q"><summary><span class="q-num">Q21</span>Does re-solving the stage game less often change the Nash-Q fixed point?<span class="chip answered">Answered</span></summary><p><b>Status:</b> Answered for the dog game. No: with a state-independent transition, every Q matrix differs from the payoffs by a constant, so the equilibrium never moves between iterations.</p></details>
     <details class="q"><summary><span class="q-num">Q22</span>Is the exact equilibrium of the discretized game always a single action pair?<span class="chip answered">Answered</span></summary><p><b>Status:</b> Answered for the five setups and five grid sizes tested (25 games). Yes.</p></details>
@@ -610,8 +611,8 @@
     <details class="q"><summary><span class="q-num">Q27</span>Why is PPO unstable on the walking game?<span class="chip open">Open</span></summary><p><b>Status:</b> Open on the mechanism. A smaller learning rate does not help, fewer epochs help, and default PPO&#x27;s failures persist (two of five seeds never return to the corners in 900 episodes), so it is not just slow; reusing each episode seems to contribute, but that is a hypothesis.</p></details>
     <details class="q"><summary><span class="q-num">Q28</span>Does a smaller learning rate or fewer epochs make PPO reliable on the walking game?<span class="chip answered">Answered</span></summary><p><b>Status:</b> Answered for the settings tried. Fewer epochs help (4 of 5 seeds after 300 episodes, 5 of 5 after 900), a smaller learning rate does not (1 of 5 and 2 of 5 after 300), and one-epoch PPO is still much slower than A2C (0.12 against 0.011 mean distance after 300 episodes).</p></details>
     <details class="q"><summary><span class="q-num">Q29</span>Do the slower PPO settings settle with more than 300 episodes?<span class="chip answered">Answered</span></summary><p><b>Status:</b> Answered for one-epoch PPO and the default (30 runs with A2C). One-epoch PPO settles (5 of 5 seeds at the corners after 900 episodes) and default PPO does not (3 of 5, with two seeds stuck far away). The smaller learning rate settings were not run longer.</p></details>
-    <details class="q"><summary><span class="q-num">Q30</span>Do the walking-game findings hold on other house setups and with dog inertia?<span class="chip partly">Partly</span></summary><p><b>Status:</b> Partly answered (45 runs on three other setups, 10 with inertia). A2C is again the most reliable wherever any algorithm learns the game, and PPO is the least reliable or tied for least, with no early lead on the other setups. One setup is much harder: no algorithm gets more than 1 of 5 seeds to the corners in 300 episodes. Inertia slows A2C (4 of 5 seeds at 0.6). Other step lengths, PPO with inertia and longer training on the hard setup were not run.</p></details>
-    <details class="q"><summary><span class="q-num">Q31</span>Does an entropy bonus or a larger network change PPO&#x27;s instability on the walking game?<span class="chip open">Open</span></summary><p>Neither was tried.</p><p><b>Status:</b> Open.</p></details>
+    <details class="q"><summary><span class="q-num">Q30</span>Do the walking-game findings hold on other house setups and with dog inertia?<span class="chip partly">Partly</span></summary><p><b>Status:</b> Partly answered. The 900-episode hard-setup study is complete (5 seeds per algorithm); PPO was also run with inertia at 0.3 and 0.6 (5 seeds each). These small, single-setup comparisons extend evidence but do not establish generalization.</p></details>
+    <details class="q"><summary><span class="q-num">Q31</span>Does an entropy bonus or a larger network change PPO&#x27;s instability on the walking game?<span class="chip partly">Partly</span></summary><p>A 64-unit network was tested with one and four epochs. The one-epoch variant ended under the corner threshold in 4/5 seeds (mean distance 0.218); four epochs did so in 1/5 (0.704). The 16-unit default with four epochs did so in 2/5 (0.371). Results are exploratory at five seeds; an entropy bonus was not tested.</p><p><b>Status:</b> Partly answered for network capacity.</p></details>
   </section>
 
   <section class="card notes" id="assumptions">
@@ -621,6 +622,7 @@
       reasonable option. These are the choices to check, and the questions
       that would settle them. The full list is in
       <a href="https://github.com/Charith-Reddy-Pareddy/dog-game/blob/main/ASSUMPTIONS.md" target="_blank" rel="noopener">ASSUMPTIONS.md</a>.
+      A printable copy is available as <a href="ASSUMPTIONS.pdf" target="_blank" rel="noopener">ASSUMPTIONS.pdf</a>.
     </p>
 
     <h3>The game</h3>

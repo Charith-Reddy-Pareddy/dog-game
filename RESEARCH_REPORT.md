@@ -233,7 +233,7 @@ The same three algorithms on the walking game (Section 5.9's house setup), five 
 - **REINFORCE is slower and more variable.** It reaches the corners later (mean distance 0.34 at 100 episodes against 0.20 for A2C) and spends 24 of 35 later checkpoints there; one seed stays near 0.2.
 - **PPO is the fastest to get there and the worst at staying.** It has the lowest distance at 50 and 100 episodes, but seeds 1, 2 and 4 leave the corners again later (their distance climbs back to about 1.0, meaning a player has left its corner), and it spends only 14 of 35 later checkpoints at the corners.
 - **A single end-of-training number would mislead.** A first run of this study, scored only at 50, 100, 200 and 300 episodes, gave the same order but different per-seed outcomes (PPO seed 3 ended at 1.4 there and at 0.0 here), because evaluating the policy draws random numbers and so changes the training run. The paths are sensitive, which is why this study records every 25 episodes and reports the share of checkpoints.
-- **Why PPO is unstable here is not tested.** Possible causes are four epochs on a 15-step batch, a learning rate of 0.01 and advantage normalization over so few samples. Whether a smaller learning rate or fewer epochs fixes it was not run.
+- **Why PPO is unstable here is not tested.** Possible causes include repeated updates on a short trajectory batch and the 0.01 learning rate. Section 5.11 tests fewer epochs and a lower learning rate: fewer epochs help, while the lower learning rate does not. These comparisons do not identify the mechanism.
 
 ### 5.11 Where does PPO's speed come from, and can it be made stable?
 
@@ -344,6 +344,30 @@ The walking game is judged against the one-shot Nash corners, so this checks the
 - **Resting on the corners is an exact equilibrium** in all four setups (gain 0).
 - **Walking straight to them is a near-equilibrium:** the best deviation gains 0.13% to 4.7% of the reward, because each step's best position lies outside the square. The full game's equilibrium with feedback strategies was not computed.
 
+### 5.15 Does the one-shot profile survive dog inertia?
+
+For each of the five main-game house setups, I tested the one-shot Nash actions against unilateral open-loop deviations over 20 discounted rounds, with `w0` of 0.3, 0.6 and 0.9 (15 checks). The dog starts at the environment's weighted house midpoint. With the opponent fixed at its Nash action, each player's sequence problem is a box-constrained convex quadratic program; `doggame/inertia_equilibrium.py` minimizes it using an exact gradient. All 30 measured gains were zero to numerical precision. A negative control with an opponent action changed to (0, 0) gives red a 0.214 gain, confirming that the check detects a profitable deviation. The earlier midpoint negative control was invalid for this setup and has been corrected.
+
+- **Scope:** this verifies the one-shot profile against unilateral action sequences while the other player holds its action fixed, for these finite horizons, starts and configurations. It does not solve the full feedback/Markov-perfect equilibrium or establish the result for all parameters. Q19 is therefore partly answered, not closed.
+
+### 5.16 Larger PPO network, dog inertia and longer training on the walking game
+
+These exploratory additions use five seeds and the existing walking score (10 sampled games per checkpoint; corner threshold 0.1). A 64-unit PPO network with one epoch ended under the threshold in 4/5 seeds (mean distance 0.218; 26/35 late checkpoints); with four epochs it did so in 1/5 (mean 0.704; 7/35). The 16-unit default with four epochs did so in 2/5 (mean 0.371; 14/35). PPO with `w0 = 0.3` ended under threshold in 4/5 seeds (mean distance 0.200; 24/35 late checkpoints), while `w0 = 0.6` did so in 2/5 (mean 0.569; 9/35). These five-seed samples are noisy; the network result is not a stable algorithm ranking. No entropy bonus was tested.
+
+On the hardest walking setup, the 900-episode study is now complete (five seeds per algorithm; late checkpoints start at episode 450):
+
+| Algorithm | Mean distance at 900 | Seeds under 0.1 at 900 | Late checkpoints under 0.1 |
+|---|---:|---:|---:|
+| REINFORCE | 0.563 | 2 of 5 | 29 of 95 |
+| A2C | 0.103 | 4 of 5 | 68 of 95 |
+| PPO (4 epochs) | 1.249 | 1 of 5 | 21 of 95 |
+
+The standard deviations of the final distances are 0.628, 0.205 and 0.775, respectively. This reinforces the difficulty of the setup but does not settle the algorithm ranking: there are five seeds, and one PPO seed ended exactly at the corners while the other four remained far away.
+
+### 5.17 Relation to prior work and claims boundary
+
+The static, no-inertia dog game is a bounded, two-player instance of the affine-receiver squared-loss structure in the Battling Influencers Game (BIG). BIG already proves the potential-game structure and characterizes pure equilibria; this repository does not claim that basic equilibrium structure as new. The repo's contribution is an executable empirical and verification study of policy-gradient and Nash-Q methods on this tractable game, with explicitly modeled inertia and movement-constrained variants. These are exploratory extensions, not evidence of a new general algorithm or a top-conference contribution. See the references in Section 7.
+
 ## 6. Research questions and answers
 
 The statuses are the same as in [RESEARCH_QUESTIONS.md](RESEARCH_QUESTIONS.md).
@@ -370,13 +394,13 @@ The statuses are the same as in [RESEARCH_QUESTIONS.md](RESEARCH_QUESTIONS.md).
 
 **Q11. What transfers to harder games?** *Open.* The state-independent transition (which collapses Nash-Q to one stage game), the unique equilibrium and the one-shot payoffs are dog-game specific. The solver hardening and the verification checks are game-agnostic.
 
-**Q12. Does inertia change anything besides how long it takes?** *Partly answered.* The steady state is unchanged, but policy-gradient training slows sharply on the hard setup (Section 5.4). Whether the equilibrium of the dynamic game changes is untested (Q19).
+**Q12. Does inertia change anything besides how long it takes?** *Partly answered.* The steady state is unchanged and the tested one-shot actions have no profitable unilateral open-loop deviation on the tested finite-horizon setups (Section 5.15). The feedback equilibrium remains unsolved (Q19).
 
 **Q13-Q15.** Q13 (vertex Nash for multi-state games) is open because the dog game has one state. Q14 (LLM play and inverse reward recovery) is a separate research thread. Q15 (disk-shaped action spaces) is partly addressed by the walking version's angle and step length.
 
 **Q16. Do A2C and PPO beat REINFORCE?** *Answered.* On the main game PPO is much faster per episode and A2C is not faster than REINFORCE (Section 5.2). With one epoch, matching REINFORCE on gradient steps, PPO is no faster than REINFORCE, so its speed comes from reusing each episode (Section 5.11, Q24). On the walking game the order changes: A2C is the most reliable and PPO is fast but unstable (Section 5.10, Q26).
 
-**Q17-Q20.** Q17 (why the outcome is 3 to 1 and never interior) and Q20 (why mismatched pre-training hurts) have measured patterns but untested mechanisms. Q18 is answered (Section 5.4). Q19 (the equilibrium of the dynamic game with inertia) is open.
+**Q17-Q20.** Q17 (why the outcome is 3 to 1 and never interior) and Q20 (why mismatched pre-training hurts) have measured patterns but untested mechanisms. Q18 is answered (Section 5.4). Q19 is partly answered by the fixed-opponent sequence checks in Section 5.15; the dynamic feedback equilibrium is open.
 
 **Q21. Does re-solving less often change the fixed point?** *Answered.* No, in this game (Section 5.6).
 
@@ -390,11 +414,13 @@ The statuses are the same as in [RESEARCH_QUESTIONS.md](RESEARCH_QUESTIONS.md).
 
 **Q26. Do A2C and PPO beat REINFORCE on the walking game?** *Answered for one house setup (15 runs).* A2C is the most reliable, REINFORCE is slower, and PPO is the fastest but does not stay at the corners (Section 5.10).
 
-**Q30. Do the walking-game findings hold on other house setups and with inertia?** *Partly answered.* A2C stays the most reliable where learning works, one setup is much harder, and inertia slows learning (Section 5.13). **Q31.** Whether an entropy bonus or a larger network changes PPO's instability is open.
+**Q30. Do the walking-game findings hold on other house setups and with inertia?** *Partly answered.* A2C stays the most reliable where learning works, one setup is much harder, and inertia slows learning. New five-seed PPO inertia results extend, but do not resolve, generalization (Sections 5.13 and 5.16). **Q31** is partly answered for network capacity; entropy remains untested.
 
 **Q27. Why is PPO unstable on the walking game?** *Open on the mechanism.* A smaller learning rate does not help and fewer epochs do; default PPO's failures persist for two seeds in 900 episodes (Sections 5.11 and 5.12).
 
-**Q28-Q29.** *Answered for the settings tried.* One-epoch PPO becomes reliable (4 of 5 seeds after 300 episodes and 5 of 5 after 900) but stays slower than A2C; a smaller learning rate does not help; default PPO does not settle with more training (Sections 5.11 and 5.12). The smaller-learning-rate settings were not run longer.
+**Q28-Q29.** *Answered for the settings tried.* One-epoch PPO reaches the corners in 4/5 seeds after 300 and 5/5 after 900 episodes, but stays slower than A2C; a smaller learning rate does not help; default PPO does not settle with more training (Sections 5.11 and 5.12). The smaller-learning-rate settings were not run longer.
+
+**Q31. Does an entropy bonus or a larger network change PPO's instability?** *Partly answered.* A 64-unit network was tested with one and four epochs (Section 5.16); results vary sharply by epoch count and are based on five seeds. An entropy bonus was not tested.
 
 ## 7. Limits
 
@@ -413,7 +439,7 @@ The statuses are the same as in [RESEARCH_QUESTIONS.md](RESEARCH_QUESTIONS.md).
 python3 -m pytest                          # the test suite
 python3 -m doggame.experiments             # the original convergence study
 python3 -m doggame.dog_game_study          # five-seed convergence and walking runs
-python3 -m doggame.dog_game_studies        # the fourteen studies in Section 5 (resumable, shardable)
+python3 -m doggame.dog_game_studies        # the studies in Section 5 (resumable, shardable)
 python3 -m doggame.dog_game_summary        # print every table as Markdown
 python3 -m doggame.research_report_pdf     # build research_report.pdf from this file
 ```
@@ -421,3 +447,9 @@ python3 -m doggame.research_report_pdf     # build research_report.pdf from this
 The studies write one line per finished run, so a stopped run keeps its results and a rerun skips what is done.
 
 The code, results and this report are released under the [MIT license](https://github.com/Charith-Reddy-Pareddy/dog-game/blob/main/LICENSE).
+
+## 9. References
+
+- Wu et al. (2025). [The Battling Influencers Game](https://arxiv.org/abs/2502.01127), arXiv:2502.01127. Its static affine-receiver squared-loss structure overlaps with this game; its background influence is fixed, while this repo's `w0` is previous-state inertia.
+- Hu and Wellman (2003). [Nash Q-Learning for General-Sum Stochastic Games](https://www.jmlr.org/papers/v4/hu03a.html). *JMLR*, 4, 1039-1069.
+- Hambly et al. (2023). [Policy Gradient Methods Find the Nash Equilibrium in N-player General-sum Linear-quadratic Games](https://www.jmlr.org/papers/v24/21-0842.html), *JMLR*, 24(139), 1-56. Their guarantees assume a specified stochastic LQ setting; they do not directly establish convergence for this deterministic clipped policy class. For PPO, see Schulman et al. (2017), [Proximal Policy Optimization](https://arxiv.org/abs/1707.06347).

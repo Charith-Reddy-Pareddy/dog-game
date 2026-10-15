@@ -48,6 +48,15 @@ def parse(markdown):
         line = lines[i]
         if not line.strip():
             i += 1
+        elif line.startswith("```"):
+            code, i = [], i + 1
+            while i < len(lines) and not lines[i].startswith("```"):
+                code.append(lines[i].rstrip())
+                i += 1
+            if i >= len(lines):
+                raise ValueError("Unclosed fenced code block in Markdown source")
+            blocks.append(("code", code))
+            i += 1
         elif line.startswith("# "):
             blocks.append(("title", line[2:].strip()))
             i += 1
@@ -186,8 +195,9 @@ FIGURES = {"convergence": convergence_figure, "walking": walking_figure, "trajec
 
 def build(source=SOURCE, path=OUTPUT):
     from reportlab.lib.pagesizes import letter
+    from reportlab.lib.styles import ParagraphStyle
     from reportlab.lib.units import inch
-    from reportlab.platypus import KeepTogether, SimpleDocTemplate, Spacer
+    from reportlab.platypus import KeepTogether, Preformatted, SimpleDocTemplate, Spacer
 
     k = kit()
     with open(source) as f:
@@ -213,6 +223,12 @@ def build(source=SOURCE, path=OUTPUT):
             story += [k.table([[inline(c) for c in row] for row in payload], column_widths(payload, 6.9 * inch)), Spacer(1, 6)]
         elif kind == "figure":
             story.append(KeepTogether([FIGURES[payload](), Spacer(1, 4)]))
+        elif kind == "code":
+            code_style = ParagraphStyle("report_code", fontName="Courier", fontSize=7.5, leading=9,
+                                        leftIndent=8, rightIndent=8, backColor="#f3f5f7",
+                                        borderColor="#d5dbe1", borderWidth=0.4, borderPadding=5,
+                                        spaceBefore=3, spaceAfter=8)
+            story.append(Preformatted("\n".join(payload), code_style, maxLineLength=108))
     SimpleDocTemplate(path, pagesize=letter, leftMargin=0.8 * inch, rightMargin=0.8 * inch, topMargin=0.7 * inch,
                       bottomMargin=0.7 * inch, title=title.replace("`", ""), author="").build(story)
 

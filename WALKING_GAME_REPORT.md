@@ -174,6 +174,27 @@ A first run of this comparison was scored only at 50, 100, 200 and 300 episodes.
 - The one-shot corners do not depend on `w0`, since they are the steady state, so this is about how fast the players get there.
 - Inertia was tried with A2C only.
 
+### 4.6 PPO with a larger network and with inertia
+
+Five seeds per setting, 300 episodes, scored every 25 episodes on the same default walking setup. A 64-unit hidden layer was compared with the default 16-unit PPO network and one/four PPO epochs. PPO was also tested with dog inertia `w0` of 0.3 and 0.6. The 64-unit, one-epoch run ends under the 0.1 distance threshold in 4/5 seeds (mean distance 0.218; 26/35 late checkpoints); 64 units with four epochs reaches it in 1/5 (0.704; 7/35). The default 16-unit/four-epoch PPO reaches it in 2/5 (0.371; 14/35). With inertia, PPO ends under threshold in 4/5 seeds at `w0 = 0.3` (0.200; 24/35 late checkpoints) and 2/5 at `w0 = 0.6` (0.569; 9/35).
+
+- These are exploratory results with five seeds. Network width interacts with epoch count in these runs, but this does not establish a robust effect. Entropy regularization was not tested.
+- Inertia outcomes are not monotone relative to the `w0 = 0` default across this small sample and should not be interpreted as evidence that inertia helps.
+
+### 4.7 Longer training on the hardest house setup
+
+The hardest setup, `(0.7, 0.1) / (0.6, 0.9)` with `w = 0.7`, was extended from 300 to 900 episodes, with five seeds per algorithm. Scores are means of 10 sampled games at each 25-episode checkpoint; the threshold remains 0.1.
+
+| Algorithm | Mean distance at 900 | Seeds under 0.1 at 900 | Late checkpoints under 0.1 (from 450) | SD at 900 |
+|---|---:|---:|---:|---:|
+| REINFORCE | 0.563 | 2 of 5 | 29 of 95 | 0.628 |
+| A2C | 0.103 | 4 of 5 | 68 of 95 | 0.205 |
+| PPO (4 epochs) | 1.249 | 1 of 5 | 21 of 95 | 0.775 |
+
+- More training brings four A2C seeds under the corner threshold, but one remains at 0.470. REINFORCE has two seeds under threshold and three well outside it.
+- PPO has one successful seed (distance 0.0) and four failures above 1.17. The mean and spread describe unstable outcomes, not a consistent comparison.
+- The previous 300-episode result was only a five-seed snapshot. The additional horizon gives evidence that some seeds improve with more training, but does not answer whether the hard game is learnable under other settings.
+
 ### 4.8 Is walking to the corners an equilibrium?
 
 The reference for all of this is the one-shot Nash corner pair, but the walking game is a dynamic game, so it is fair to ask whether the corners are an equilibrium of it. Two checks (`doggame/walking_equilibrium.py`), on the default setup and the three others of Section 4.7:
@@ -211,8 +232,8 @@ These are the walking-game questions in [RESEARCH_QUESTIONS.md](RESEARCH_QUESTIO
 
 - **Q23.** Is the one-shot corner pair an equilibrium of the walking game? Answered for the resting state and the straight walk (Section 4.8); the full feedback equilibrium is not computed.
 - **Q27.** Why is PPO unstable here? (A smaller learning rate does not help and fewer epochs do.)
-- **Q30.** Do these findings hold on other house setups and with dog inertia? Partly answered (Section 4.7); other step lengths, PPO with inertia and longer training on the hard setup were not run.
-- **Q31.** Does an entropy bonus or a larger network change PPO's instability?
+- **Q30.** Do these findings hold on other house setups and with dog inertia? Partly answered (Sections 4.6 and 4.7); small PPO-inertia samples extend the evidence but do not resolve generalization.
+- **Q31.** Does an entropy bonus or a larger network change PPO's instability? Partly answered for network width (Section 4.6); an entropy bonus remains untested.
 
 ## 7. Reproducing
 

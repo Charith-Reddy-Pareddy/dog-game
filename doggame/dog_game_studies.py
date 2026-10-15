@@ -13,6 +13,10 @@ to do only the second of four shards.
 - walking_settings: the walking game with a shorter or longer step and a lower or higher discount
 - walking_houses: the three algorithms on three other house setups
 - walking_inertia: A2C on the walking game with dog inertia
+- walking_capacity: PPO on the walking game with a larger network
+- walking_ppo_inertia: PPO on the walking game with dog inertia
+- walking_hard_long: the three algorithms on the hardest walking setup for 900 episodes
+- inertia_equilibrium: is the one-shot Nash profile an equilibrium of the main game with dog inertia?
 - walking_equilibrium: is walking to the one-shot corners an equilibrium of the walking game?
 - selection:    which equilibrium self-play finds when the houses share a coordinate
 - inertia:      does giving the dog momentum (w0) change where training ends up
@@ -40,6 +44,7 @@ from doggame.experiments import DEFAULT_CONFIGS
 from doggame.fictitious_play import expected_value, fictitious_play
 from doggame.nash import solve_stage_nash
 from doggame.polar import PolarDogGameEnv
+from doggame.inertia_equilibrium import check_profile as check_inertia_profile
 from doggame.walking_equilibrium import check_profile
 from doggame.polar_agent import PolarPolicy, final_positions, train_polar, train_polar_actor_critic
 from doggame.train import train_self_play
@@ -101,12 +106,12 @@ def study_algorithms(seeds):
                 yield dict(config=config_index, algorithm=algorithm, seed=seed), run
 
 
-def walking_run(algorithm, seed, episodes=300, every=25, max_step=0.2, discount=0.9, houses=WALK_HOUSES, w=0.5, w0=0.0, **options):
+def walking_run(algorithm, seed, episodes=300, every=25, max_step=0.2, discount=0.9, houses=WALK_HOUSES, w=0.5, w0=0.0, hidden=16, **options):
     """Train one walking-game policy, scoring it every `every` episodes (finely, because the walking policies'
     paths swing): how far the players end from the one-shot Nash corners, which do not depend on the step or the discount."""
     env = PolarDogGameEnv(*houses, w=w, w0=w0, max_step=max_step, discount=discount)
     torch.manual_seed(seed)
-    policy = PolarPolicy(seed=seed)
+    policy = PolarPolicy(hidden=hidden, seed=seed)
     distance = lambda: walk_distance(env, lambda: final_positions(env, policy))
     start, curve = distance(), {}
 
@@ -189,6 +194,40 @@ def study_walking_equilibrium(seeds):
                 result = check_profile(houses, w, (nash_red, nash_blue), starts=(nash_red, nash_blue) if start == "corners" else None)
                 return {player: {k: float(v) for k, v in values.items()} for player, values in result.items()}
             yield dict(setup=setup, start=start), run
+
+
+def study_walking_capacity(seeds):
+    """PPO on the walking game with a larger network (64 hidden units instead of 16), with 4 epochs and with 1."""
+    for epochs in (4, 1):
+        for seed in seeds:
+            yield dict(hidden=64, epochs=epochs, seed=seed), lambda epochs=epochs, seed=seed: walking_run("ppo", seed, hidden=64, ppo_epochs=epochs)
+
+
+def study_walking_ppo_inertia(seeds):
+    """PPO on the walking game when the dog keeps part of its old position (w0 of 0.3 and 0.6)."""
+    for w0 in (0.3, 0.6):
+        for seed in seeds:
+            yield dict(w0=w0, seed=seed), lambda w0=w0, seed=seed: walking_run("ppo", seed, w0=w0)
+
+
+def study_walking_hard_long(seeds):
+    """The three algorithms on the hardest walking setup, (0.7, 0.1) / (0.6, 0.9) with w = 0.7, for 900 episodes."""
+    config = DEFAULT_CONFIGS[2]
+    for algorithm in ("reinforce", "a2c", "ppo"):
+        for seed in seeds:
+            yield (dict(algorithm=algorithm, seed=seed),
+                   lambda algorithm=algorithm, seed=seed: walking_run(algorithm, seed, episodes=900, houses=(config["house_red"], config["house_blue"]), w=config["w"]))
+
+
+def study_inertia_equilibrium(seeds):
+    """Is the one-shot Nash profile an equilibrium of the main game with dog inertia? Deterministic, so `seeds` is unused."""
+    for setup, config in enumerate(DEFAULT_CONFIGS):
+        for w0 in (0.3, 0.6, 0.9):
+            def run(config=config, w0=w0):
+                nash_red, nash_blue, _ = solve_stage_nash(config["house_red"], config["house_blue"], config["w"], Square(0.0, 1.0))
+                result = check_inertia_profile((config["house_red"], config["house_blue"]), config["w"], w0, (nash_red, nash_blue))
+                return {player: {k: float(v) for k, v in values.items()} for player, values in result.items()}
+            yield dict(setup=setup, w0=w0), run
 
 
 def study_selection(seeds):
@@ -287,7 +326,8 @@ def study_noise(seeds, resolution=9):
 
 STUDIES = dict(algorithms=study_algorithms, walking=study_walking, ppo_variants=study_ppo_variants, ppo_long=study_ppo_long,
                walking_settings=study_walking_settings, walking_houses=study_walking_houses, walking_inertia=study_walking_inertia,
-               walking_equilibrium=study_walking_equilibrium, selection=study_selection, inertia=study_inertia, pretraining=study_pretraining,
+               walking_equilibrium=study_walking_equilibrium, walking_capacity=study_walking_capacity, walking_ppo_inertia=study_walking_ppo_inertia,
+               walking_hard_long=study_walking_hard_long, inertia_equilibrium=study_inertia_equilibrium, selection=study_selection, inertia=study_inertia, pretraining=study_pretraining,
                stage_solver=study_stage_solver, resolution=study_resolution, noise=study_noise)
 
 

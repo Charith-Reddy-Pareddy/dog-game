@@ -7,7 +7,8 @@
 **Walking-game report:** [WALKING_GAME_REPORT.md](WALKING_GAME_REPORT.md) ([PDF](docs/walking_game_report.pdf)), policy gradient on the angle-radius game
 **Research questions:** [RESEARCH_QUESTIONS.md](RESEARCH_QUESTIONS.md), with the status of each
 **Results PDF:** [dog_game_results.pdf](dog_game_results.pdf) (convergence over seeds, the walking game and its paths)
-**Assumptions:** [ASSUMPTIONS.md](ASSUMPTIONS.md)
+**Professor-facing update:** [PG_RESEARCH_UPDATE.md](PG_RESEARCH_UPDATE.md) ([PDF](docs/PG_RESEARCH_UPDATE.pdf))
+**Assumptions:** [ASSUMPTIONS.md](ASSUMPTIONS.md) ([PDF](docs/ASSUMPTIONS.pdf))
 **License:** [MIT](LICENSE)
 
 A two-player, general-sum game: a red house and a blue house each want a
@@ -91,6 +92,11 @@ from the saved runs in `results/`:
   walking game easier to learn.
 - **Walking to the corners is a near-equilibrium.** Resting on the one-shot corners is an exact equilibrium
   of the walking game, and the best deviation from walking straight there gains 0.13% to 4.7% of the reward.
+- **Under inertia, no profitable unilateral 20-step sequence deviation was found** from the one-shot profile in
+  15 tested house/weight settings with the opponent fixed at its one-shot action. This does not solve the full
+  feedback equilibrium; see Q19 and the report's scope caveat.
+- **The hard walking setup at 900 episodes remains seed-sensitive.** A2C has 4/5 final seeds under the corner
+  threshold, REINFORCE 2/5, and PPO 1/5. These exploratory results use five seeds per algorithm.
 - **The walking-game ranking holds on other house setups.** A2C is again the most reliable wherever
   learning works, and one setup is much harder (no algorithm learns it in 300 episodes).
 - **PPO's speed comes from reusing each episode.** With one epoch (one gradient step per
@@ -178,7 +184,7 @@ env = DogGameEnv(house_red=(0.9, 0.2), house_blue=(0.1, 0.8), w=0.5,
 ```bash
 python3 -m doggame.experiments        # the original 15-run convergence study
 python3 -m doggame.dog_game_study     # five-seed convergence and walking runs
-python3 -m doggame.dog_game_studies   # the fourteen studies in the report (resumable; add 0/4 to shard)
+python3 -m doggame.dog_game_studies   # all registered studies (resumable; add 0/4 to shard)
 python3 -m doggame.dog_game_summary   # print every table as Markdown
 python3 -m doggame.research_report_pdf   # rebuild research_report.pdf from RESEARCH_REPORT.md
 ```
@@ -232,7 +238,7 @@ run keeps what it finished and a rerun skips it.
 
 - `doggame/dog_game_study.py`, `doggame/dog_game_trajectories.py` -- the five-seed
   convergence and walking runs, and the recorded paths of the players and the dog.
-- `doggame/dog_game_studies.py`, `doggame/dog_game_summary.py` -- fourteen experiments
+- `doggame/dog_game_studies.py`, `doggame/dog_game_summary.py` -- experiments
   that answer open research questions, and the tables built from their saved results.
 - `doggame/dog_game_report.py`, `doggame/research_report_pdf.py`, `doggame/walking_figures.py`,
   `doggame/pdf_kit.py` -- build `dog_game_results.pdf`, `research_report.pdf` and

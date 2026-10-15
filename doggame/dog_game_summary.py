@@ -187,6 +187,54 @@ def walking_equilibrium_table(rows):
     return table
 
 
+def walking_capacity_table(rows, late=150):
+    """PPO on the walking game with 16 or 64 hidden units, and 4 epochs or 1."""
+    walking = [r for r in study(rows, "walking") if r["key"]["algorithm"] == "ppo"]
+    one_epoch = [r for r in study(rows, "ppo_variants") if r["key"]["game"] == "walking" and (r["key"]["lr"], r["key"]["epochs"]) == (0.01, 1)]
+    bigger = study(rows, "walking_capacity")
+    shown = (50, 100, 200, 300)
+    groups = [("16 hidden units, 4 epochs (default)", walking), ("64 hidden units, 4 epochs", [r for r in bigger if r["key"]["epochs"] == 4]),
+              ("16 hidden units, 1 epoch", one_epoch), ("64 hidden units, 1 epoch", [r for r in bigger if r["key"]["epochs"] == 1])]
+    return [_walking_header("PPO setting", late, shown)] + [_walking_row(label, runs, late, shown) for label, runs in groups if runs]
+
+
+def walking_ppo_inertia_table(rows, late=150):
+    """PPO and A2C on the walking game with the dog's own weight w0 at 0 (the default), 0.3 and 0.6."""
+    shown = (50, 100, 200, 300)
+    table = [_walking_header("Setting", late, shown)]
+    for algorithm, label, extra in (("ppo", "PPO", "walking_ppo_inertia"), ("a2c", "A2C", "walking_inertia")):
+        default = [r for r in study(rows, "walking") if r["key"]["algorithm"] == algorithm]
+        groups = [(f"{label}, w0 = 0 (default)", default)] + [(f"{label}, w0 = {w0}", [r for r in study(rows, extra) if r["key"]["w0"] == w0]) for w0 in (0.3, 0.6)]
+        table += [_walking_row(name, runs, late, shown) for name, runs in groups if runs]
+    return table
+
+
+def walking_hard_long_table(rows, late=450):
+    """The three algorithms on the hardest walking setup, trained for 900 episodes."""
+    runs = study(rows, "walking_hard_long")
+    shown = [e for e in (300, 600, 900) if any(str(e) in r["curve"] for r in runs)]
+    table = [_walking_header("Algorithm", late, shown)]
+    for name, label in ALGORITHM_NAMES.items():
+        mine = [r for r in runs if r["key"]["algorithm"] == name]
+        if mine:
+            table.append(_walking_row(label, mine, late, shown))
+    return table
+
+
+def inertia_equilibrium_table(rows):
+    """Main game with dog inertia: red's gain / blue's gain from the best deviation against the one-shot Nash profile."""
+    runs = study(rows, "inertia_equilibrium")
+    w0s = sorted({r["key"]["w0"] for r in runs})
+    table = [["House setup"] + [f"w0 = {w}" for w in w0s]]
+    for setup in sorted({r["key"]["setup"] for r in runs}):
+        row = [houses(setup)]
+        for w0 in w0s:
+            r = next(x for x in runs if x["key"]["setup"] == setup and x["key"]["w0"] == w0)
+            row.append(f"{r['red']['gain']:.5f} / {r['blue']['gain']:.5f}")
+        table.append(row)
+    return table
+
+
 def ppo_epochs_table(rows):
     """Main game: share of runs under the threshold after each number of episodes, with the gradient steps each
     algorithm takes per episode, so PPO's speed can be compared with REINFORCE and A2C on equal steps."""
@@ -340,7 +388,9 @@ if __name__ == "__main__":
                         ("ppo epochs", ppo_epochs_table(studies)), ("ppo walking", ppo_walking_table(studies)),
                         ("ppo long", ppo_long_table(studies)), ("walking settings", walking_settings_table(studies)),
                         ("walking houses", walking_houses_table(studies)), ("walking inertia", walking_inertia_table(studies)),
-                        ("walking equilibrium", walking_equilibrium_table(studies))):
+                        ("walking equilibrium", walking_equilibrium_table(studies)),
+                        ("walking capacity", walking_capacity_table(studies)), ("walking ppo inertia", walking_ppo_inertia_table(studies)),
+                        ("walking hard long", walking_hard_long_table(studies)), ("inertia equilibrium", inertia_equilibrium_table(studies))):
         print(f"\n### {name}\n\n{markdown(table)}")
     print("\nconvergence counts:", convergence_counts(runs))
     print("inertia median distance:", inertia_distances(studies))

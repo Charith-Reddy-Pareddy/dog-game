@@ -42,6 +42,12 @@ def test_blocks_come_out_in_order_with_their_content():
     assert blocks["quote"] == "a quoted note" and blocks["figure"] == "convergence"
 
 
+def test_fenced_commands_are_parsed_as_a_code_block_not_inline_markdown():
+    blocks = parse("# Title\n\n```sh\npython -m pytest\npython -m doggame.run\n```\n")
+
+    assert blocks == [("title", "Title"), ("code", ["python -m pytest", "python -m doggame.run"])]
+
+
 def test_inline_markup_becomes_html_and_special_characters_are_escaped():
     assert inline("**bold** and `a < b`") == '<b>bold</b> and <font face="Courier" size="9">a &lt; b</font>'
     assert inline("[site](http://x.y)") == '<link href="http://x.y" color="#2c5c76">site</link>'
