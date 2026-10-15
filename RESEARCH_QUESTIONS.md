@@ -129,12 +129,12 @@ with the numbers and the caveats, are in [RESEARCH_REPORT.md](RESEARCH_REPORT.md
     up to `w0 = 0.9`; on the hard one 4 of 5 converge at `w0 = 0`, 5 of 5 at
     0.3, 1 of 5 at 0.6 and 0 of 5 at 0.9 within 1500 episodes.*
 19. **Does the one-shot equilibrium remain an equilibrium of the game with
-    inertia?** On five house setups and `w0` values 0.3, 0.6 and 0.9, a checked
-    convex optimizer finds no profitable unilateral 20-step open-loop action
-    sequence when the other player holds its one-shot action. A negative
-    control detects a profitable deviation. This does not compute the full
-    feedback/Markov-perfect equilibrium.
-    *Status: partly answered for these setups, starts and horizon.*
+    inertia?** For five house setups, a coordinate-wise sufficient condition
+    proves that the one-shot profile is optimal against any unilateral action
+    sequence when the opponent holds its action, for any horizon and `w0` in
+    [0, 1]. A negative control outside the certificate has a profitable
+    deviation. The full feedback/Markov-perfect equilibrium is not computed.
+    *Status: partly answered for the tested setups and initial states.*
 20. **Why does pre-training from a different setup hurt?**
     *Status: open on the mechanism. The measured pattern (same corners help,
     flipped corners hurt) suggests the network has to un-learn a boundary

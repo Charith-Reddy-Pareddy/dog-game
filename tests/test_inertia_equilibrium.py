@@ -2,7 +2,7 @@ import numpy as np
 
 from doggame.env import Square
 from doggame.experiments import DEFAULT_CONFIGS
-from doggame.inertia_equilibrium import check_profile, discounted_reward
+from doggame.inertia_equilibrium import check_profile, certifies_open_loop_best_response, discounted_reward
 from doggame.nash import solve_stage_nash
 
 CONFIG = DEFAULT_CONFIGS[0]
@@ -27,9 +27,20 @@ def test_the_one_shot_nash_profile_has_no_profitable_deviation_with_or_without_i
         assert result["red"]["gain"] < 1e-9 and result["blue"]["gain"] < 1e-9
 
 
+def test_the_five_tested_profiles_have_an_analytic_sequence_response_certificate():
+    for config in DEFAULT_CONFIGS:
+        red, blue, _ = solve_stage_nash(config["house_red"], config["house_blue"], config["w"], Square(0.0, 1.0))
+        start = config["w"] * np.asarray(config["house_red"]) + (1 - config["w"]) * np.asarray(config["house_blue"])
+        assert certifies_open_loop_best_response(start, config["house_red"], red, blue, config["w"])
+        assert certifies_open_loop_best_response(start, config["house_blue"], blue, red, 1 - config["w"])
+
+
 def test_the_check_does_find_a_gain_when_the_profile_is_not_an_equilibrium():
     # This opponent action changes the best response; the previous midpoint
     # control accidentally left red's action as a best response in this setup.
     result = check_profile(HOUSES, CONFIG["w"], 0.6, (nash()[0], np.array([0.0, 0.0])))
 
+    assert not certifies_open_loop_best_response(
+        CONFIG["w"] * np.asarray(CONFIG["house_red"]) + (1 - CONFIG["w"]) * np.asarray(CONFIG["house_blue"]),
+        CONFIG["house_red"], nash()[0], np.array([0.0, 0.0]), CONFIG["w"])
     assert result["red"]["gain"] > 1e-3

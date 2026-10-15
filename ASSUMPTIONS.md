@@ -328,14 +328,16 @@ At round 800, per seed:
   (0-4); they are not independent confirmation. PPO width comparisons and
   PPO-with-inertia comparisons use five seeds per setting; no entropy bonus
   was tested.
-- The inertia profile check uses a 20-step finite horizon, discount 0.9,
-  starts the dog at the weighted house midpoint, and holds the opponent at
-  its one-shot Nash action. Its within-player action-sequence problem is a
-  box-constrained convex quadratic program. The optimizer's success is
-  checked and its analytic gradient is supplied. A corrected negative
-  control uses an opponent action of (0, 0) and yields a positive red-player
-  gain. This does not solve feedback strategies or prove a theorem for all
-  houses, weights, horizons or inertia values.
+- The inertia profile check starts the dog at the weighted house midpoint
+  and holds the opponent at its one-shot Nash action. A coordinate-wise
+  sufficient condition analytically certifies the tested profiles for any
+  horizon and `w0` in [0, 1]; the checked conditions are specific to the five
+  tested setups and do not prove the result for arbitrary houses or weights.
+  Uncertified profiles fall back to a box-constrained convex quadratic
+  optimizer with its analytic gradient and success status checked. A
+  corrected negative control uses an opponent action of (0, 0), fails the
+  certificate and yields a positive red-player gain under the optimizer.
+  This does not solve feedback strategies.
 - The live simulator's displayed number remains an unconstrained, one-shot
   static-grid deviation proxy (31 by 31). It ignores the current dog state,
   inertia and walking-step constraints; it is not a dynamic-game

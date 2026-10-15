@@ -29,7 +29,7 @@ experiment keeps what it finished and a rerun skips it. Print every table with
   - `walking_capacity`: PPO on the walking game with 64 hidden units and 1 or 4 epochs (five seeds per setting).
   - `walking_ppo_inertia`: PPO on the walking game with dog inertia (`w0` of 0.3 and 0.6; five seeds per setting).
   - `walking_hard_long`: REINFORCE, A2C and PPO on the hardest walking house setup, extended to 900 episodes (five seeds per algorithm).
-  - `inertia_equilibrium`: one-shot Nash profile checked against unilateral 20-step open-loop action sequences under inertia; each JSON object contains each player's followed payoff, best-response payoff and gain. See the limitations in `RESEARCH_REPORT.md` and `ASSUMPTIONS.md`.
+  - `inertia_equilibrium`: one-shot Nash profile checked under inertia; a coordinate-wise sufficient condition certifies the tested profiles against every unilateral action sequence, for any horizon and `w0` in [0, 1]. Each JSON object contains each player's followed payoff, best-response payoff and gain. See the scope limits in `RESEARCH_REPORT.md` and `ASSUMPTIONS.md`.
   - `walking_equilibrium`: for each house setup and start, how much either player could gain by deviating from the walk to the one-shot corners (`red` and `blue`, each with `followed`, `best` and `gain`).
   - `selection`: where self-play ends when the houses share a y-coordinate (`red`, `blue`, `exploitability`).
   - `inertia`: training with the dog's own weight `w0` set to 0, 0.3, 0.6 or 0.9.

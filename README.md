@@ -92,9 +92,9 @@ from the saved runs in `results/`:
   walking game easier to learn.
 - **Walking to the corners is a near-equilibrium.** Resting on the one-shot corners is an exact equilibrium
   of the walking game, and the best deviation from walking straight there gains 0.13% to 4.7% of the reward.
-- **Under inertia, no profitable unilateral 20-step sequence deviation was found** from the one-shot profile in
-  15 tested house/weight settings with the opponent fixed at its one-shot action. This does not solve the full
-  feedback equilibrium; see Q19 and the report's scope caveat.
+- **Under inertia, a coordinate-wise argument certifies** that the one-shot profile is optimal against any
+  unilateral action sequence in all five tested house configurations when the opponent holds its action,
+  for every horizon and `w0` in [0, 1]. This does not solve the full feedback equilibrium; see Q19.
 - **The hard walking setup at 900 episodes remains seed-sensitive.** A2C has 4/5 final seeds under the corner
   threshold, REINFORCE 2/5, and PPO 1/5. These exploratory results use five seeds per algorithm.
 - **The walking-game ranking holds on other house setups.** A2C is again the most reliable wherever

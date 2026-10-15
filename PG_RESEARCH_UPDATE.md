@@ -10,9 +10,9 @@ This update repairs the published report rendering, corrects one contradictory s
 
 ### 1. A restricted dynamic-equilibrium check for dog inertia
 
-For five house configurations and dog inertia weights `w0 = 0.3, 0.6, 0.9`, I checked each player against every 20-step action sequence while the other player holds its one-shot Nash action. The dog starts at the weighted house midpoint; payoffs are discounted by 0.9. Conditional on a fixed opponent, the player's sequence problem is a box-constrained convex quadratic program. The implementation supplies its analytic gradient and rejects optimizer failures. All 30 unilateral gains were zero to numerical precision.
+For five house configurations, I checked each player against unilateral action sequences while the other player holds its one-shot Nash action. The dog starts at the weighted house midpoint. A coordinate-wise argument gives an exact sufficient certificate: if the house is beyond the player's attainable dog interval and the initial dog is on the same side, the nearest endpoint is the best next state and inertia preserves that side; if the house is attainable and the dog starts there, following earns the maximum possible reward, zero. In all five configurations, every player/coordinate satisfies one of these conditions. Induction proves the fixed-opponent one-shot action is optimal against every unilateral sequence for any horizon and any `w0` in `[0, 1]`.
 
-The regression control matters: the earlier proposed midpoint opponent was accidentally still a best-response case. With blue fixed at `(0, 0)`, red's corrected check finds a gain of about `0.214`. This validates that this control detects at least one profitable deviation; it does not certify the optimizer for arbitrary games or solve feedback strategies. The result is evidence for this restricted finite-horizon test, not the Markov-perfect equilibrium of the full dynamic game.
+The five-setup certificate is coded and tested, and the 15 saved rows at `w0 = 0.3, 0.6, 0.9` report zero unilateral gains. The negative control matters: the earlier midpoint opponent was accidentally still a best-response case. With blue fixed at `(0, 0)`, the certificate fails and the convex optimizer finds red a gain of about `0.214`. This does not solve feedback strategies or establish a universal theorem for arbitrary house/action sets.
 
 ### 2. More training on the hard walking setup
 
@@ -42,7 +42,7 @@ The defensible contribution today is an inspectable educational/research codebas
 
 The handwritten group notes are treated as design context, not as instructions that define missing rules. The current walking interpretation (angle and radius as movement from the player's current location) remains an assumption; the chase sketch has no implemented game. The live simulator's displayed 31-by-31 score is an unconstrained one-shot static proxy; it ignores current dog state, inertia and movement constraints and must not be read as dynamic exploitability.
 
-The strongest next tests are: (i) derive or independently certify the finite-horizon open-loop best-response result; (ii) solve or approximate the full feedback equilibrium under inertia; (iii) increase seeds and report uncertainty for the hard-setup and PPO interaction studies; (iv) test entropy only under a declared, non-selected analysis plan; and (v) compare the walking game against a dynamic-game equilibrium rather than the one-shot corner reference. These are proposals, not completed experiments.
+The strongest next tests are: (i) extend or independently verify the fixed-opponent certificate for broader action sets and initial states; (ii) solve or approximate the full feedback equilibrium under inertia; (iii) increase seeds and report uncertainty for the hard-setup and PPO interaction studies; (iv) test entropy only under a declared, non-selected analysis plan; and (v) compare the walking game against a dynamic-game equilibrium rather than the one-shot corner reference. These are proposals, not completed experiments.
 
 ## Primary references
 

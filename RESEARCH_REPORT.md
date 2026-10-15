@@ -346,9 +346,11 @@ The walking game is judged against the one-shot Nash corners, so this checks the
 
 ### 5.15 Does the one-shot profile survive dog inertia?
 
-For each of the five main-game house setups, I tested the one-shot Nash actions against unilateral open-loop deviations over 20 discounted rounds, with `w0` of 0.3, 0.6 and 0.9 (15 checks). The dog starts at the environment's weighted house midpoint. With the opponent fixed at its Nash action, each player's sequence problem is a box-constrained convex quadratic program; `doggame/inertia_equilibrium.py` minimizes it using an exact gradient. All 30 measured gains were zero to numerical precision. A negative control with an opponent action changed to (0, 0) gives red a 0.214 gain, confirming that the check detects a profitable deviation. The earlier midpoint negative control was invalid for this setup and has been corrected.
+For each of the five main-game house setups, I checked the one-shot Nash actions against unilateral open-loop deviations with the opponent fixed at its Nash action. In this separable squared-distance game, a player's one-step dog target lies in a coordinate-wise interval determined by its action box and the opponent's fixed action. In all five setups, every coordinate satisfies one of two sufficient conditions: (a) the house lies beyond the interval and the initial dog lies on the same side, so the nearest endpoint is the best next dog state and inertia preserves that side; or (b) the dog starts at the house, where following earns the maximum possible reward, zero. Induction therefore proves that repeating the one-shot action maximizes each period's reward against every unilateral action sequence, for any finite or discounted infinite horizon and every `w0` in [0, 1]. The code checks these coordinate conditions in `certifies_open_loop_best_response` and uses a convex optimizer when the certificate does not apply.
 
-- **Scope:** this verifies the one-shot profile against unilateral action sequences while the other player holds its action fixed, for these finite horizons, starts and configurations. It does not solve the full feedback/Markov-perfect equilibrium or establish the result for all parameters. Q19 is therefore partly answered, not closed.
+The certificate covers all five house setups and both players (10 profile checks). The 15 saved rows at `w0` of 0.3, 0.6 and 0.9 report zero unilateral gain. A negative control with an opponent action changed to (0, 0) fails the certificate and the optimizer finds red a 0.214 gain. The earlier midpoint negative control was invalid for this setup and has been corrected.
+
+- **Scope:** this proves the one-shot profile is a best response to unilateral action sequences while the other player holds its action fixed, for the five tested configurations and stated initial states, for any horizon and `w0` in [0, 1]. It does not solve the full feedback/Markov-perfect equilibrium or establish the result for all parameters. Q19 is therefore partly answered, not closed.
 
 ### 5.16 Larger PPO network, dog inertia and longer training on the walking game
 
@@ -394,7 +396,7 @@ The statuses are the same as in [RESEARCH_QUESTIONS.md](RESEARCH_QUESTIONS.md).
 
 **Q11. What transfers to harder games?** *Open.* The state-independent transition (which collapses Nash-Q to one stage game), the unique equilibrium and the one-shot payoffs are dog-game specific. The solver hardening and the verification checks are game-agnostic.
 
-**Q12. Does inertia change anything besides how long it takes?** *Partly answered.* The steady state is unchanged and the tested one-shot actions have no profitable unilateral open-loop deviation on the tested finite-horizon setups (Section 5.15). The feedback equilibrium remains unsolved (Q19).
+**Q12. Does inertia change anything besides how long it takes?** *Partly answered.* The steady state is unchanged. Under the coordinate-wise conditions in Section 5.15, the one-shot profile is optimal against every unilateral open-loop action sequence for any horizon, with the opponent fixed. This is not a feedback-equilibrium result; the full dynamic equilibrium remains unsolved (Q19).
 
 **Q13-Q15.** Q13 (vertex Nash for multi-state games) is open because the dog game has one state. Q14 (LLM play and inverse reward recovery) is a separate research thread. Q15 (disk-shaped action spaces) is partly addressed by the walking version's angle and step length.
 
@@ -450,6 +452,4 @@ The code, results and this report are released under the [MIT license](https://g
 
 ## 9. References
 
-- Wu et al. (2025). [The Battling Influencers Game](https://arxiv.org/abs/2502.01127), arXiv:2502.01127. Its static affine-receiver squared-loss structure overlaps with this game; its background influence is fixed, while this repo's `w0` is previous-state inertia.
-- Hu and Wellman (2003). [Nash Q-Learning for General-Sum Stochastic Games](https://www.jmlr.org/papers/v4/hu03a.html). *JMLR*, 4, 1039-1069.
-- Hambly et al. (2023). [Policy Gradient Methods Find the Nash Equilibrium in N-player General-sum Linear-quadratic Games](https://www.jmlr.org/papers/v24/21-0842.html), *JMLR*, 24(139), 1-56. Their guarantees assume a specified stochastic LQ setting; they do not directly establish convergence for this deterministic clipped policy class. For PPO, see Schulman et al. (2017), [Proximal Policy Optimization](https://arxiv.org/abs/1707.06347).
+**Selected related work:** Wu et al. (2025), [Battling Influencers Game](https://arxiv.org/abs/2502.01127); Hu and Wellman (2003), [Nash-Q](https://www.jmlr.org/papers/v4/hu03a.html); Hambly et al. (2023), [policy gradients for LQ games](https://www.jmlr.org/papers/v24/21-0842.html); Schulman et al. (2017), [PPO](https://arxiv.org/abs/1707.06347). The LQ guarantees do not cover this deterministic clipped setup.
