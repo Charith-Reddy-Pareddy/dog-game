@@ -1,52 +1,70 @@
-# Dog Game: concise research update
+# Dog Game: concise policy-gradient update
 
-**Prepared 15 October 2026 | Internal research note for discussion with a professor or primary researcher**
+**Prepared 15 October 2026 | Research update for discussion with a professor or primary researcher**
 
-## What changed since the last public version
+## What was implemented
 
-This update repairs the published report rendering, corrects one contradictory statement about the PPO follow-up, makes the live simulator's one-shot metric limitation explicit, and integrates the local studies into the reports and question dashboard. It also fixes a faulty negative control in the inertia study. The full assumptions register is available as Markdown and PDF alongside this note.
+The original dog game now supports an absolute polar action policy: each player samples an angle and a normalized ray fraction from the center of the square, which is mapped exactly to a feasible point. The earlier angle-radius policy remains the separate walking game. The DQN/Q-value sketches in the handwritten notes were excluded as requested.
 
-## New evidence worth discussing
+## Results worth discussing
 
-### 1. A restricted dynamic-equilibrium check for dog inertia
+The primary endpoint is the maximum one-shot unilateral expected-payoff gain at episode 1,500, calculated exactly from Monte Carlo-estimated action means and variances. It is evaluated at the reset state, not over the full state distribution. Paired-seed polar contrasts against both Cartesian controls are shown below for every algorithm; negative differences favor polar actions. These ten-seed intervals are exploratory, not confirmatory evidence or a novelty claim.
 
-For five house configurations, I checked each player against unilateral action sequences while the other player holds its one-shot Nash action. The dog starts at the weighted house midpoint. A coordinate-wise argument gives an exact sufficient certificate: if the house is beyond the player's attainable dog interval and the initial dog is on the same side, the nearest endpoint is the best next state and inertia preserves that side; if the house is attainable and the dog starts there, following earns the maximum possible reward, zero. In all five configurations, every player/coordinate satisfies one of these conditions. Induction proves the fixed-opponent one-shot action is optimal against every unilateral sequence for any horizon and any `w0` in `[0, 1]`.
+On the primary setup, the polar policy had higher expected gain than Cartesian Beta in all 30 algorithm-by-seed pairs. The four-house follow-up is mixed: two intervals favor Cartesian Beta, while two include zero; none show a clear polar advantage. This does not support a general improvement from the polar policy package under the tested settings.
 
-The five-setup certificate is coded and tested, and the 15 saved rows at `w0 = 0.3, 0.6, 0.9` report zero unilateral gains. The negative control matters: the earlier midpoint opponent was accidentally still a best-response case. With blue fixed at `(0, 0)`, the certificate fails and the convex optimizer finds red a gain of about `0.214`. This does not solve feedback strategies or establish a universal theorem for arbitrary house/action sets.
+{{figure:polar_learning}}
 
-### 2. More training on the hard walking setup
-
-The 900-episode extension is complete for five seeds per algorithm. Score is the mean distance to the one-shot Nash corners over 10 sampled games at each checkpoint; `under 0.1` uses the project's chosen threshold. Late checkpoints are episodes 450-900 inclusive.
-
-| Method | Mean final distance (SD) | Seeds under 0.1 at episode 900 | Late checkpoints under 0.1 |
+| Algorithm | Clipped Gaussian | Cartesian Beta | Polar Beta x von Mises |
 |---|---:|---:|---:|
-| REINFORCE | 0.563 (0.628) | 2/5 | 29/95 |
-| A2C | 0.103 (0.205) | 4/5 | 68/95 |
-| PPO, four epochs | 1.249 (0.775) | 1/5 | 21/95 |
+| REINFORCE | 0.0193 (0.0022); 0/10 < 0.004 | 0.0281 (0.0007); 0/10 < 0.004 | 0.0689 (0.0060); 0/10 < 0.004 |
+| A2C | 0.0205 (0.0020); 0/10 < 0.004 | 0.0269 (0.0015); 0/10 < 0.004 | 0.0620 (0.0051); 0/10 < 0.004 |
+| PPO | 0.0093 (0.0044); 1/10 < 0.004 | 0.0184 (0.0023); 0/10 < 0.004 | 0.1374 (0.1350); 0/10 < 0.004 |
 
-Four A2C seeds are near the corners, but one remains at 0.470. PPO has one seed at distance 0 and four above 1.17. This is high seed variability from only five runs, not a reliable ranking or a general learnability claim.
+| Algorithm | Polar − Cartesian Beta | Polar − clipped Gaussian |
+|---|---:|---:|
+| REINFORCE | 0.0407 [0.0367, 0.0447] | 0.0496 [0.0453, 0.0539] |
+| A2C | 0.0350 [0.0317, 0.0383] | 0.0415 [0.0378, 0.0451] |
+| PPO | 0.1190 [0.0232, 0.2148] | 0.1282 [0.0318, 0.2245] |
 
-### 3. PPO network width and inertia: exploratory only
+{{figure:polar_actions}}
 
-On the default walking setup (five seeds, 300 episodes), PPO with 64 hidden units and one epoch ends under the 0.1 threshold in 4/5 seeds (mean distance 0.218; 26/35 later checkpoints). The same width with four epochs reaches it in 1/5 (0.704; 7/35). The 16-unit/four-epoch default reaches it in 2/5 (0.371; 14/35). Width and update reuse appear to interact in this small sample; the experiment does not identify a mechanism. No entropy bonus was tested.
+| Algorithm | Representation | Mean action distance to Nash | Mean per-player variance trace |
+|---|---|---:|---:|
+| REINFORCE | Cartesian Gaussian (clipped) | 0.0695 | 0.00262 |
+| REINFORCE | Cartesian Beta | 0.1118 | 0.00289 |
+| REINFORCE | Polar Beta x von Mises | 0.3012 | 0.01514 |
+| A2C | Cartesian Gaussian (clipped) | 0.0763 | 0.00313 |
+| A2C | Cartesian Beta | 0.1046 | 0.00255 |
+| A2C | Polar Beta x von Mises | 0.2670 | 0.01329 |
+| PPO | Cartesian Gaussian (clipped) | 0.0297 | 0.00062 |
+| PPO | Cartesian Beta | 0.0672 | 0.00112 |
+| PPO | Polar Beta x von Mises | 0.3899 | 0.00721 |
 
-PPO with dog inertia ends under threshold in 4/5 seeds at `w0 = 0.3` (mean 0.200; 24/35 later checkpoints) and 2/5 at `w0 = 0.6` (mean 0.569; 9/35). These descriptive counts do not show that inertia helps; they use five seeds and one house setup.
+The analytical equilibrium in this setup is a deterministic corner pair. Every tested actor is stochastic at finite parameters, so action variance can leave positive expected gain even when the mean actions are close to Nash; mean distance alone is not an equilibrium test. The variance column makes that distinction visible.
 
-## Relation to prior work and novelty boundary
+These values are distribution-aware one-shot unilateral gains: action means and covariance traces are estimated from 8,192 samples, and the exact best response to the opponent's estimated moments is projected onto the square. The threshold 0.004 was originally chosen for deterministic action pairs, so its counts here are descriptive only.
 
-The static dog game overlaps the bounded-action, affine-receiver, squared-loss structure of Wu et al.'s Battling Influencers Game (BIG), which already establishes potential-game and pure-equilibrium results. BIG's background influence is fixed; this project's inertia term uses the dog's previous state. Nash-Q and policy-gradient methods also have a substantial literature, including Hu and Wellman's stochastic-game Nash-Q and convergence results for natural policy gradient in specific stochastic linear-quadratic games. Those results do not directly transfer to this deterministic, clipped policy class.
+## Policy sketch and assumptions
 
-The defensible contribution today is an inspectable educational/research codebase and a set of controlled empirical case studies with explicit caveats. I do **not** claim a new general algorithm, a novel static equilibrium theorem, or publication readiness. This review was not a systematic literature search, and the present evidence is not sufficient for a top-conference submission.
+{{figure:polar_pipeline}}
 
-## Assumptions and next research tests
+The state is the current dog location; each house is fixed per training run. The user confirmed that polar actions are absolute points from the square center. Radius is a fraction of the direction-dependent center-to-edge distance. The policy uses a von Mises angle and Beta radial fraction, both with shape/concentration at least 1. See the separate [assumptions register](ASSUMPTIONS.md) and the frozen [study protocol](docs/POLAR_ACTION_PROTOCOL.md).
 
-The handwritten group notes are treated as design context, not as instructions that define missing rules. The current walking interpretation (angle and radius as movement from the player's current location) remains an assumption; the chase sketch has no implemented game. The live simulator's displayed 31-by-31 score is an unconstrained one-shot static proxy; it ignores current dog state, inertia and movement constraints and must not be read as dynamic exploitability.
+## Limits and relation to prior work
 
-The strongest next tests are: (i) extend or independently verify the fixed-opponent certificate for broader action sets and initial states; (ii) solve or approximate the full feedback equilibrium under inertia; (iii) increase seeds and report uncertainty for the hard-setup and PPO interaction studies; (iv) test entropy only under a declared, non-selected analysis plan; and (v) compare the walking game against a dynamic-game equilibrium rather than the one-shot corner reference. These are proposals, not completed experiments.
+The primary comparison is one house setup with ten seeds. It compares policy packages, not pure coordinate geometry: the clipped-Gaussian control retains its clipping/log-density behavior, while both Beta policies have exact bounded support. The intervals are exploratory and do not establish generalization or a new algorithm. Chou et al. analyze bounded Beta policies ([ICML/PMLR 2017](https://proceedings.mlr.press/v70/chou17a.html)); gradient dynamics in continuous games need not converge universally ([UAI/PMLR 2020](https://proceedings.mlr.press/v115/chasnov20a.html)). The dog game also overlaps the static structure of the [Battling Influencers Game](https://arxiv.org/abs/2502.01127). Reddit discussions were treated as informal implementation anecdotes, not evidence for research claims.
 
-## Primary references
+No DQN, action-value network, chase game, or full dynamic equilibrium result is included in this update.
 
-- Wu, Y., Zhu, Y., Cai, J.-Y., and Zhu, X. (2025). [The Battling Influencers Game: Nash Equilibria Structure of a Potential Game and Implications to Value Alignment](https://arxiv.org/abs/2502.01127).
-- Hu, J. and Wellman, M. P. (2003). [Nash Q-Learning for General-Sum Stochastic Games](https://www.jmlr.org/papers/v4/hu03a.html). *Journal of Machine Learning Research*, 4, 1039-1069.
-- Hambly, B., Xu, R., and Yang, H. (2023). [Policy Gradient Methods Find the Nash Equilibrium in N-player General-sum Linear-quadratic Games](https://www.jmlr.org/papers/v24/21-0842.html). *Journal of Machine Learning Research*, 24(139), 1-56.
-- Schulman, J. et al. (2017). [Proximal Policy Optimization Algorithms](https://arxiv.org/abs/1707.06347).
+## Cross-house robustness follow-up
+
+This exploratory follow-up was specified after the primary study began and is kept separate from its pre-run protocol. It compares REINFORCE with polar and Cartesian Beta policies on the four other predefined house setups, ten paired seeds each. Negative differences favor polar. Intervals are unadjusted and reflect seed variation, not Monte Carlo scoring error. The follow-up protocol is in [docs/POLAR_ACTION_ROBUSTNESS_PROTOCOL.md](docs/POLAR_ACTION_ROBUSTNESS_PROTOCOL.md).
+
+{{figure:polar_robustness}}
+
+| House configuration | Cartesian Beta mean (SD) | Polar mean (SD) | Polar − Cartesian Beta [95% t interval] | Polar lower in paired seeds |
+|---|---:|---:|---:|---:|
+| Red (0.8, 0.8) / blue (0.2, 0.3), w=0.3 | 0.0340 (0.0053) | 0.1218 (0.0859) | 0.0879 [0.0290, 0.1467] | 0/10 |
+| Red (0.7, 0.1) / blue (0.6, 0.9), w=0.7 | 0.0238 (0.0026) | 0.0216 (0.0052) | -0.0022 [-0.0065, 0.0020] | 7/10 |
+| Red (0.95, 0.5) / blue (0.05, 0.5), w=0.5 | 0.0219 (0.0079) | 0.0184 (0.0024) | -0.0035 [-0.0097, 0.0027] | 6/10 |
+| Red (0.6, 0.6) / blue (0.4, 0.4), w=0.5 | 0.0065 (0.0004) | 0.0151 (0.0015) | 0.0086 [0.0074, 0.0097] | 0/10 |

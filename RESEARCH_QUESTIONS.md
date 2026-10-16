@@ -197,6 +197,20 @@ with the numbers and the caveats, are in [RESEARCH_REPORT.md](RESEARCH_REPORT.md
     substantially across those settings and are based on five seeds. Entropy
     bonus was not tested. *Status: partly answered for network capacity.*
 
+32. **Does a polar absolute-action policy improve policy-gradient learning on
+    the original dog game?** The angle is von Mises-distributed and the radius
+    is a Beta fraction of the ray from the square center to its boundary.
+    The primary comparison has clipped-Gaussian Cartesian and bounded Beta
+    Cartesian controls, REINFORCE/A2C/PPO, one house setup and ten seeds. Polar
+    has higher expected gain than Cartesian Beta in all 30 paired seeds. The
+    exploratory REINFORCE follow-up on four other setups is mixed: two
+    intervals favor Cartesian Beta and two include zero. The metric is a
+    one-shot score at the reset state, and the policy-family comparison does
+    not isolate coordinate geometry. *Status: partly answered for the tested
+    setups; no general improvement is established.* See Section 5.18 of the
+    [research report](RESEARCH_REPORT.md) and the concise
+    [PG update](PG_RESEARCH_UPDATE.md).
+
 ## Where each question is answered in this repository
 
 | Questions | Evidence |
@@ -218,6 +232,7 @@ with the numbers and the caveats, are in [RESEARCH_REPORT.md](RESEARCH_REPORT.md
 | 30 | studies `walking_houses` (45 runs) and `walking_inertia` (10 runs) |
 | 23 | study `walking_equilibrium` (8 checks), `doggame/walking_equilibrium.py` |
 | walking game | `results/dog_game_runs.jsonl`, `results/dog_game_trajectories.json` |
+| 32 | `docs/POLAR_ACTION_PROTOCOL.md`, `docs/POLAR_ACTION_ROBUSTNESS_PROTOCOL.md`, `doggame/polar_action_study.py`, `doggame/polar_action_robustness.py`, `results/polar_action_pg.jsonl`, `results/polar_action_pg_robustness.jsonl` |
 
 Questions 5b, 11, 13, 14, 19, 27 and 31 are open, and 25 and 30 are partly answered. The studies are in
 [`doggame/dog_game_studies.py`](doggame/dog_game_studies.py) and the tables are

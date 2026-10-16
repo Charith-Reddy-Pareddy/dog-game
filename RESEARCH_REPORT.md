@@ -233,7 +233,7 @@ The same three algorithms on the walking game (Section 5.9's house setup), five 
 - **REINFORCE is slower and more variable.** It reaches the corners later (mean distance 0.34 at 100 episodes against 0.20 for A2C) and spends 24 of 35 later checkpoints there; one seed stays near 0.2.
 - **PPO is the fastest to get there and the worst at staying.** It has the lowest distance at 50 and 100 episodes, but seeds 1, 2 and 4 leave the corners again later (their distance climbs back to about 1.0, meaning a player has left its corner), and it spends only 14 of 35 later checkpoints at the corners.
 - **A single end-of-training number would mislead.** A first run of this study, scored only at 50, 100, 200 and 300 episodes, gave the same order but different per-seed outcomes (PPO seed 3 ended at 1.4 there and at 0.0 here), because evaluating the policy draws random numbers and so changes the training run. The paths are sensitive, which is why this study records every 25 episodes and reports the share of checkpoints.
-- **Why PPO is unstable here is not tested.** Possible causes include repeated updates on a short trajectory batch and the 0.01 learning rate. Section 5.11 tests fewer epochs and a lower learning rate: fewer epochs help, while the lower learning rate does not. These comparisons do not identify the mechanism.
+- **The mechanism behind PPO instability remains unresolved.** Section 5.11 tests fewer epochs and a lower learning rate: fewer epochs improve the observed walking-game score, while the lower rate does not. Those tested settings do not identify why PPO swings away from the corners.
 
 ### 5.11 Where does PPO's speed come from, and can it be made stable?
 
@@ -370,6 +370,31 @@ The standard deviations of the final distances are 0.628, 0.205 and 0.775, respe
 
 The static, no-inertia dog game is a bounded, two-player instance of the affine-receiver squared-loss structure in the Battling Influencers Game (BIG). BIG already proves the potential-game structure and characterizes pure equilibria; this repository does not claim that basic equilibrium structure as new. The repo's contribution is an executable empirical and verification study of policy-gradient and Nash-Q methods on this tractable game, with explicitly modeled inertia and movement-constrained variants. These are exploratory extensions, not evidence of a new general algorithm or a top-conference contribution. See the references in Section 7.
 
+### 5.18 Absolute polar actions on the original dog game
+
+This study implements the policy-gradient part of the handwritten notes. The player actor samples a von Mises angle and a Beta radial fraction from the square's center, then maps that pair to an absolute feasible point using the direction-dependent ray length. The original game's dog location is the state; houses stay fixed for a run. DQN/Q-value sketches and the separate pursuit-game sketch were excluded as requested. The user confirmed the polar origin; remaining choices are in [ASSUMPTIONS.md](ASSUMPTIONS.md).
+
+The primary comparison was fixed at the first house setup, with ten seeds for each representation and REINFORCE, A2C and PPO. It compares the clipped Cartesian Gaussian, a bounded Cartesian Beta control and the polar Beta/von-Mises package. All methods used 1,500 episodes, 20 steps, learning rate 0.01 and separate player networks; PPO used four epochs and clip 0.2. At episode 1,500, the maximum one-shot unilateral expected-payoff gain was computed from 8,192 sampled actions at the reset state. The action-moment payoff was calculated exactly, and the best response was projected onto the square. This is not a score over the full state distribution or a full Markov-game equilibrium.
+
+| Algorithm | Clipped Gaussian mean (SD) | Cartesian Beta mean (SD) | Polar mean (SD) | Polar − Cartesian Beta, paired 95% t interval |
+|---|---:|---:|---:|---:|
+| REINFORCE | 0.0193 (0.0023) | 0.0281 (0.0007) | 0.0689 (0.0060) | 0.0407 [0.0367, 0.0447] |
+| A2C | 0.0205 (0.0020) | 0.0269 (0.0015) | 0.0620 (0.0051) | 0.0350 [0.0317, 0.0383] |
+| PPO | 0.0093 (0.0044) | 0.0184 (0.0023) | 0.1374 (0.1350) | 0.1190 [0.0232, 0.2148] |
+
+Positive differences favor Cartesian Beta. Every primary polar-vs-Beta paired seed had a larger expected gain (30/30 across the three algorithms); the corresponding unadjusted intervals are exploratory. Only 1/10 clipped-Gaussian PPO runs fell below 0.004, and none of the Beta or polar runs did. That legacy cutoff was chosen for deterministic action pairs, so those counts are descriptive. The polar actors also had greater action variance and greater mean-action distance from the analytical corners; the supplied concise [policy-gradient update PDF](docs/PG_RESEARCH_UPDATE.pdf) shows both the learning curves and estimated action means.
+
+After the primary run had begun, a separate exploratory follow-up was specified for REINFORCE on the other four predefined house setups, ten seeds each, comparing only the two exact-support Beta policies. It is reported separately and is not part of the primary protocol:
+
+| Red / blue houses; w | Cartesian Beta mean | Polar mean | Polar − Cartesian Beta, paired 95% t interval | Polar lower in pairs |
+|---|---:|---:|---:|---:|
+| (0.8, 0.8) / (0.2, 0.3); 0.3 | 0.0340 | 0.1218 | 0.0879 [0.0290, 0.1467] | 0/10 |
+| (0.7, 0.1) / (0.6, 0.9); 0.7 | 0.0238 | 0.0216 | -0.0022 [-0.0065, 0.0020] | 7/10 |
+| (0.95, 0.5) / (0.05, 0.5); 0.5 | 0.0219 | 0.0184 | -0.0035 [-0.0097, 0.0027] | 6/10 |
+| (0.6, 0.6) / (0.4, 0.4); 0.5 | 0.0065 | 0.0151 | 0.0086 [0.0074, 0.0097] | 0/10 |
+
+The effect varies with the house setup: two intervals favor Cartesian Beta and two include zero; none shows a clear polar advantage. The follow-up intervals are unadjusted for multiple comparisons and omit Monte Carlo scoring error. This study compares policy packages, not a pure coordinate-system ablation: the Gaussian retains clipping and its existing density handling, and network output sizes differ. It is a useful negative/mixed result, not evidence of novelty or publication readiness. See the fixed primary [protocol](docs/POLAR_ACTION_PROTOCOL.md), separate [robustness protocol](docs/POLAR_ACTION_ROBUSTNESS_PROTOCOL.md), and raw completed runs in [`results/polar_action_pg.jsonl`](results/polar_action_pg.jsonl) and [`results/polar_action_pg_robustness.jsonl`](results/polar_action_pg_robustness.jsonl).
+
 ## 6. Research questions and answers
 
 The statuses are the same as in [RESEARCH_QUESTIONS.md](RESEARCH_QUESTIONS.md).
@@ -424,6 +449,8 @@ The statuses are the same as in [RESEARCH_QUESTIONS.md](RESEARCH_QUESTIONS.md).
 
 **Q31. Does an entropy bonus or a larger network change PPO's instability?** *Partly answered.* A 64-unit network was tested with one and four epochs (Section 5.16); results vary sharply by epoch count and are based on five seeds. An entropy bonus was not tested.
 
+**Q32. Does a polar absolute-action policy improve policy-gradient learning on the original dog game?** *Partly answered for the tested setups.* On the primary house setup, polar had higher one-shot expected gain than Cartesian Beta in all 30 algorithm-by-seed pairs. The REINFORCE follow-up across four additional setups is mixed: Cartesian Beta is better in two and the intervals include zero in two. The comparison changes distribution family as well as coordinates and is scored only at the reset state (Section 5.18); it does not establish a general polar-policy effect.
+
 ## 7. Limits
 
 - Most results rest on five seeds, and the equilibrium-selection study on ten per layout. Percentages are counts out of those, not estimates with error bars.
@@ -432,6 +459,7 @@ The statuses are the same as in [RESEARCH_QUESTIONS.md](RESEARCH_QUESTIONS.md).
 - Policies trained with inertia are scored against the one-shot equilibrium. The walking game is scored against the one-shot corners. Neither is the equilibrium of its own dynamic game.
 - The pre-training study has a single target setup. Most walking studies use one house setup (Section 5.13 adds three), and the step-length, discount and inertia studies use A2C only.
 - The walking-game scores use 10 sampled games per checkpoint and five seeds, and the paths are noisy, so small differences between algorithms should not be read as a ranking.
+- The polar-action comparison uses 10 seeds on one primary setup, plus a separate 10-seed-per-setup REINFORCE follow-up on four configurations. Its score uses Monte Carlo-estimated action moments at the reset state and does not measure the full state distribution; the paired intervals omit that Monte Carlo scoring error.
 - Timings in the resolution table were taken on a heavily loaded machine and show growth, not absolute cost.
 - The Gaussian policy clips actions to the square before taking the log-probability, which biases the gradient slightly. Every algorithm shares this.
 
@@ -444,6 +472,9 @@ python3 -m doggame.dog_game_study          # five-seed convergence and walking r
 python3 -m doggame.dog_game_studies        # the studies in Section 5 (resumable, shardable)
 python3 -m doggame.dog_game_summary        # print every table as Markdown
 python3 -m doggame.research_report_pdf     # build research_report.pdf from this file
+python3 -m doggame.polar_action_study      # run the predeclared 90-run PG comparison (resumable)
+python3 -m doggame.polar_action_robustness # run the 80-run cross-house REINFORCE follow-up
+python3 -m doggame.polar_action_report     # build its concise PDF, Markdown, and site figure
 ```
 
 The studies write one line per finished run, so a stopped run keeps its results and a rerun skips what is done.

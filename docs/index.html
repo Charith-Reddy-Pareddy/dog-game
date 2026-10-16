@@ -196,6 +196,7 @@
       <a href="#experiments">More experiments</a>
       <a href="#trajectories">Walking game</a>
       <a href="#walking-report">Walking-game report</a>
+      <a href="#polar-actions">Polar-action PG study</a>
       <a href="PG_RESEARCH_UPDATE.pdf" target="_blank" rel="noopener">Concise research update</a>
       <a href="#questions">Research questions</a>
       <a href="#assumptions">Assumptions</a>
@@ -212,7 +213,8 @@
       <li><b>Self-play policy gradient converges on the dog game.</b> It does so for every algorithm tried, though how many episodes it needs depends on the algorithm and the setup. <a href="#findings">Training results</a></li>
       <li><b>PPO is fast because it reuses each episode.</b> With one epoch it is no faster than REINFORCE. <a href="#experiments">More experiments</a></li>
       <li><b>The walking game reverses the ranking.</b> A2C is the most reliable there, and PPO is fast but swings away from the corners again; a gentler PPO settles with more training. <a href="#trajectories">Walking game</a> &middot; <a href="#walking-report">Report</a></li>
-      <li><b>18 of 32 research questions are answered, 5 partly, 9 still open.</b> <a href="#questions">Research questions</a></li>
+      <li><b>18 of 33 research questions are answered, 8 partly, 7 open.</b> <a href="#questions">Research questions</a></li>
+      <li><b>Polar actions did not improve the primary policy-gradient comparison.</b> In the first setup, their expected one-shot gain was higher than Cartesian Beta in all 30 paired seeds; the four-house REINFORCE follow-up was mixed. <a href="#polar-actions">See the study</a></li>
     </ul>
   </section>
 
@@ -566,6 +568,35 @@
     </ul>
   </section>
 
+  <section class="card" id="polar-actions">
+    <h2>Polar-action policy gradient on the original dog game</h2>
+    <p class="sub">
+      Each player samples an absolute point using an angle and normalized ray
+      fraction from the square center. The study compares that policy package
+      with Cartesian Beta and the existing clipped Gaussian; the handwritten
+      DQN and Q-value sketches were excluded. The game is scored at its reset
+      state, not over the full training-state distribution.
+    </p>
+    <p class="report-links">
+      <a class="report-link primary" href="PG_RESEARCH_UPDATE.pdf" target="_blank" rel="noopener">Open the concise PG PDF</a>
+      <a class="report-link" href="https://github.com/Charith-Reddy-Pareddy/dog-game/blob/main/PG_RESEARCH_UPDATE.md" target="_blank" rel="noopener">Read the update on GitHub</a>
+      <a class="report-link" href="https://github.com/Charith-Reddy-Pareddy/dog-game/blob/main/docs/POLAR_ACTION_PROTOCOL.md" target="_blank" rel="noopener">Primary protocol</a>
+      <a class="report-link" href="https://github.com/Charith-Reddy-Pareddy/dog-game/blob/main/docs/POLAR_ACTION_ROBUSTNESS_PROTOCOL.md" target="_blank" rel="noopener">Robustness protocol</a>
+    </p>
+    <h3>Expected unilateral gain during training</h3>
+    <p class="hint">Median across ten seeds; IQR whiskers. The 0.004 line is the legacy deterministic-action cutoff and is descriptive here.</p>
+    <div class="traj-chart"><img src="polar_action_learning.svg" alt="Expected one-shot unilateral gain by training episode, comparing Cartesian Gaussian, Cartesian Beta, and polar Beta with von Mises angle." style="width:100%;height:auto;display:block" /></div>
+    <h3>Action means at the end of training</h3>
+    <p class="hint">Each marker is a seed's estimated mean action from 8,192 samples at the reset state. Stars are the analytical Nash actions; markers are means, not sampled action clouds.</p>
+    <div class="traj-chart"><img src="polar_action_means.svg" alt="Seed-level mean actions in the unit square for REINFORCE, A2C and PPO, with analytical Nash corners." style="width:100%;height:auto;display:block" /></div>
+    <h3>What the runs show</h3>
+    <ul class="highlights">
+      <li>On the primary setup, polar had higher expected gain than Cartesian Beta in all 30 algorithm-by-seed pairs. Paired mean differences were 0.0407 for REINFORCE, 0.0350 for A2C and 0.1190 for PPO; positive favors Cartesian Beta.</li>
+      <li>Across the four other setups, a separate REINFORCE-only follow-up found two unadjusted 95% paired intervals favoring Cartesian Beta and two that include zero. None shows a clear polar advantage.</li>
+      <li>These are policy-package comparisons, not a pure coordinate ablation. The primary ten-seed experiment and the post-start robustness follow-up are reported separately; neither establishes generalization or novelty.</li>
+    </ul>
+  </section>
+
   <section class="card notes" id="questions">
     <h2>Research questions</h2>
     <p class="sub" style="margin-bottom:6px">
@@ -613,6 +644,7 @@
     <details class="q"><summary><span class="q-num">Q29</span>Do the slower PPO settings settle with more than 300 episodes?<span class="chip answered">Answered</span></summary><p><b>Status:</b> Answered for one-epoch PPO and the default (30 runs with A2C). One-epoch PPO settles (5 of 5 seeds at the corners after 900 episodes) and default PPO does not (3 of 5, with two seeds stuck far away). The smaller learning rate settings were not run longer.</p></details>
     <details class="q"><summary><span class="q-num">Q30</span>Do the walking-game findings hold on other house setups and with dog inertia?<span class="chip partly">Partly</span></summary><p><b>Status:</b> Partly answered. The 900-episode hard-setup study is complete (5 seeds per algorithm); PPO was also run with inertia at 0.3 and 0.6 (5 seeds each). These small, single-setup comparisons extend evidence but do not establish generalization.</p></details>
     <details class="q"><summary><span class="q-num">Q31</span>Does an entropy bonus or a larger network change PPO&#x27;s instability on the walking game?<span class="chip partly">Partly</span></summary><p>A 64-unit network was tested with one and four epochs. The one-epoch variant ended under the corner threshold in 4/5 seeds (mean distance 0.218); four epochs did so in 1/5 (0.704). The 16-unit default with four epochs did so in 2/5 (0.371). Results are exploratory at five seeds; an entropy bonus was not tested.</p><p><b>Status:</b> Partly answered for network capacity.</p></details>
+    <details class="q"><summary><span class="q-num">Q32</span>Does a polar absolute-action policy improve policy-gradient learning on the original dog game?<span class="chip partly">Partly</span></summary><p>The polar policy had higher expected gain than Cartesian Beta in all 30 paired algorithm-seed comparisons on the primary setup. A separate REINFORCE follow-up on four other setups was mixed: two intervals favor Cartesian Beta and two include zero. The score is at the reset state; action family changes along with coordinates.</p><p><b>Status:</b> Partly answered for the tested configurations. No general polar improvement is established.</p><p><a href="PG_RESEARCH_UPDATE.pdf" target="_blank" rel="noopener">Concise policy-gradient update</a> · <a href="https://github.com/Charith-Reddy-Pareddy/dog-game/blob/main/docs/POLAR_ACTION_PROTOCOL.md" target="_blank" rel="noopener">Primary protocol</a> · <a href="https://github.com/Charith-Reddy-Pareddy/dog-game/blob/main/docs/POLAR_ACTION_ROBUSTNESS_PROTOCOL.md" target="_blank" rel="noopener">Robustness protocol</a></p></details>
   </section>
 
   <section class="card notes" id="assumptions">

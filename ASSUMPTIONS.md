@@ -13,8 +13,11 @@ ideas about (1) dog-game states and joint-action Q values, (2) continuous best
 responses, gradients and angle-radius actions, and (3) a pursuit/chasing game
 with moving targets. The handwriting leaves important rules unspecified.
 The repository implements the separately documented dog and walking games;
-it does not implement a chase game from the third sketch. The interpretation
-of the angle-radius sketch is listed below as an unresolved assumption.
+it does not implement a chase game from the third sketch. In the current
+request, the user resolved the original dog's angle-radius action as an
+absolute point from the square center. The existing walking game's
+move-from-current-position interpretation remains distinct. The Q/DQN
+material was explicitly excluded from this implementation.
 
 ## The game
 
@@ -48,11 +51,57 @@ of the angle-radius sketch is listed below as an unresolved assumption.
 - The state is only the dog's position, and a new policy is trained for
   each house configuration.
 
+## Polar-action policy gradient on the original dog game
+
+- The user clarified that `(theta, radius)` is an absolute action point
+  centered on the square, not a movement from the player's current position.
+  For a square `[low, high]^2`, let `c = (low + high)/2`, `h = (high - low)/2`,
+  and `u` be a normalized radial fraction in `[0, 1]`. The selected point is
+  `a = c + r*(cos(theta), sin(theta))`, with
+  `r = h*u / max(|cos(theta)|, |sin(theta)|)`. This direction-dependent
+  mapping covers the square and returns a feasible action without clipping.
+- The policy observes only the current dog position (2 coordinates), as in
+  the original dog game. Houses remain fixed per training run and are not
+  inputs. Separate player networks produce a von Mises angle and Beta radial
+  fraction; their concentration/shape parameters are at least 1, a
+  single-peaked policy-family restriction.
+- Likelihoods are computed for latent `(theta, u)`. The action transform is
+  parameter-independent and one-to-one except at the square center, so its
+  Jacobian contributes no actor-parameter gradient and cancels from PPO
+  likelihood ratios. The continuous radial distribution assigns probability
+  zero to the exact center; there `atan2(0, 0)` supplies a conventional angle.
+- This differs from the existing walking game, where angle and step length
+  move each player's current position. No DQN, joint-action Q network, or
+  learned best-response surface is part of this PG comparison.
+
+## Polar-action comparison protocol
+
+The frozen plan is in `docs/POLAR_ACTION_PROTOCOL.md`. It compares the
+existing clipped Cartesian Gaussian, a bounded Cartesian Beta control, and
+the polar Beta/von-Mises policy on one primary house configuration, for
+REINFORCE, A2C and PPO, across ten seeds and 1500 episodes. The primary score
+accounts for action means and covariance using the exact best response to
+those estimated moments and is evaluated at the reset state only, not over a
+full training-state distribution. The 8192-action Monte Carlo estimate, one
+setup, ten seeds, and legacy threshold are limitations; intervals reflect
+seed variation but omit Monte Carlo estimation error, and comparisons are
+exploratory.
+The clipped-Gaussian baseline retains its existing clipping/log-density
+behavior, so the comparison is not a pure geometry ablation.
+
+A separate REINFORCE follow-up covers the other four predefined house setups,
+ten seeds each, and compares only polar Beta/von-Mises with Cartesian Beta.
+Its protocol was specified after the primary study began, so it is a separate
+exploratory analysis rather than part of the primary pre-run protocol. Its
+unadjusted intervals also omit Monte Carlo scoring error.
+
 ## Angle-radius version (`polar.py`, `polar_agent.py`)
 
-- I read (theta, r) as a move from the player's current position, with
-  r capped at `max_step`. Players start on their houses. This is a guess
-  at what the notes mean.
+- For the existing walking-game variant, `(theta, r)` is a displacement from
+  each player's current position, with `r` capped at `max_step`; players start
+  on their houses. This is a separate modeling choice. It does not change the
+  user-confirmed absolute, square-center action for the new policy-gradient
+  implementation on the original dog game.
 - The dog is `w0 * dog + w1 * red + w2 * blue`, where red and blue are
   the players' positions. Positions are clipped at the edge of the
   square.
@@ -362,13 +411,12 @@ At round 800, per seed:
 
 ## Still open
 
-1. Is the angle-radius action (theta, r) a per-step move of the player's
-   own position (with r up to some delta), or an absolute polar point?
-2. In `w0*dog + w1*x_red + w2*x_blue`, are `x_red` and `x_blue` the
+1. In `w0*dog + w1*x_red + w2*x_blue`, are `x_red` and `x_blue` the
    players' positions? Is `w0*dog` the dog's current position or the
    paper's fixed `x0`? Must the weights sum to 1?
-3. Should the soccer comparison use the group's own game (7x5, random move
+2. Should the soccer comparison use the group's own game (7x5, random move
    order, or the "A10" rules) instead of mine?
-4. The angle-radius game has a deep Nash-Q. Should the original dog game
-   have one too?
-5. How should the angle's wraparound and the board edge be handled?
+3. How should the angle's wraparound and the board edge be handled in other
+   future variants? The new main-game implementation wraps angles and maps
+   radii to the square boundary; the original note does not specify another
+   convention.

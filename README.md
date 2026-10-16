@@ -25,7 +25,9 @@ solver, an analytical equilibrium to check both against, a live simulator, and
 a set of saved experiments that answer research questions:
 
 - **Policy gradient:** self-play with REINFORCE, A2C and PPO, over three network
-  layouts (separate, shared, partly shared).
+  layouts (separate, shared, partly shared). The original dog game now also has
+  an exact-support polar action policy (absolute point from the square center),
+  alongside the clipped Gaussian and a bounded Cartesian Beta control.
 - **Nash-Q on a grid:** a deep-Q style method whose Bellman targets need a stage-game
   equilibrium, solved approximately (fictitious play) or exactly (Lemke-Howson).
 - **Verification:** exploitability and an indifference check, so "did it converge?"
@@ -55,8 +57,9 @@ Two variants are included:
   direction (an angle) and a step length of up to 0.2, then walks that way from
   where it stands. The dog moves to the average of the two players' new positions.
   The state is the dog's position plus both players' positions, and an action is an
-  (angle, step length) pair. This is my reading of "angle-radius action"; see
-  [ASSUMPTIONS.md](ASSUMPTIONS.md).
+  (angle, step length) pair. This remains separate from the original game's
+  new polar policy, which returns an absolute point from the square center;
+  see [ASSUMPTIONS.md](ASSUMPTIONS.md).
 
 ## Results at a glance
 
@@ -101,6 +104,15 @@ from the saved runs in `results/`:
   learning works, and one setup is much harder (no algorithm learns it in 300 episodes).
 - **PPO's speed comes from reusing each episode.** With one epoch (one gradient step per
   episode, like REINFORCE) it is no faster than REINFORCE.
+- **Polar actions did not improve the primary setup.** At episode 1,500, expected
+  one-shot gain was higher than Cartesian Beta in all 30 paired algorithm-seed
+  comparisons. On four additional setups, the REINFORCE follow-up was mixed: two
+  unadjusted intervals favor Cartesian Beta and two include zero. These are
+  exploratory policy-package comparisons scored at the reset state. See the
+  [concise PG update](PG_RESEARCH_UPDATE.md) ([PDF](docs/PG_RESEARCH_UPDATE.pdf)),
+  the [primary protocol](docs/POLAR_ACTION_PROTOCOL.md), the separate
+  [robustness protocol](docs/POLAR_ACTION_ROBUSTNESS_PROTOCOL.md), and the two raw
+  result files in `results/polar_action_pg*.jsonl`.
 
 ## Figures
 
@@ -138,6 +150,23 @@ policy = TwoPlayerPolicy(env.domain, architecture="shared")  # or "separate" / "
 train_self_play(env, policy, episodes=1500)                   # REINFORCE
 train_actor_critic(env, policy, "ppo", episodes=1500)         # or "a2c"
 ```
+
+The polar absolute-action policy and the bounded Cartesian Beta control use the
+same REINFORCE/A2C/PPO training functions:
+
+```python
+from doggame.agents import PolarActionPolicy
+
+policy = PolarActionPolicy(env.domain, architecture="separate", seed=0)
+train_self_play(env, policy, episodes=1500)                    # REINFORCE
+train_actor_critic(env, policy, "ppo", episodes=1500)         # or "a2c"
+```
+
+Run the fixed polar-action comparison with `python3 -m doggame.polar_action_study`
+and print its summary with `python3 -m doggame.polar_action_study summary`.
+The separate four-setup REINFORCE follow-up is
+`python3 -m doggame.polar_action_robustness`; rebuild the concise PDF, Markdown and
+site figures with `python3 -m doggame.polar_action_report`.
 
 The walking game, with the same three algorithms:
 
@@ -187,6 +216,10 @@ python3 -m doggame.dog_game_study     # five-seed convergence and walking runs
 python3 -m doggame.dog_game_studies   # all registered studies (resumable; add 0/4 to shard)
 python3 -m doggame.dog_game_summary   # print every table as Markdown
 python3 -m doggame.research_report_pdf   # rebuild research_report.pdf from RESEARCH_REPORT.md
+python3 -m doggame.polar_action_study       # primary 90-run polar-action comparison
+python3 -m doggame.polar_action_robustness  # 80-run cross-house follow-up
+python3 -m doggame.polar_action_report      # concise PG PDF, Markdown and graphs
+python3 -m doggame.research_report_pdf ASSUMPTIONS.md docs/ASSUMPTIONS.pdf
 ```
 
 Each study appends one line per finished run to a file in `results/`, so a stopped
@@ -245,7 +278,8 @@ run keeps what it finished and a rerun skips it.
   `docs/walking_game_report.pdf` (from `WALKING_GAME_REPORT.md`).
 - `doggame/figures.py` -- the link-preview image and the README charts (needs poppler's `pdftoppm`).
 - `results/` -- the saved runs: `dog_game_runs.jsonl`, `dog_game_studies.jsonl`,
-  `dog_game_trajectories.json`; see [results/README.md](results/README.md) for every field.
+  `dog_game_trajectories.json`, and the 90 primary plus 80 robustness PG runs;
+  see [results/README.md](results/README.md) for every field.
 
 **The website**
 
@@ -261,8 +295,9 @@ run keeps what it finished and a rerun skips it.
 
 ## Tests
 
-`python3 -m pytest` runs the whole suite (188 tests). Defects found while testing are fixed
-in commits labelled "debug", each with a regression test.
+`python3 -m pytest -q` passed locally: 202 passed. Two NumPy warnings came from the
+existing soccer-averaging empty-slice test; neither failed the suite. Defects found while
+testing are fixed with regression tests.
 
 ## License
 

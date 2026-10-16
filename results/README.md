@@ -40,6 +40,17 @@ experiment keeps what it finished and a rerun skips it. Print every table with
 - **`dog_game_trajectories.json`**: the paths of red, blue and the dog in one sampled 15-step walking
   game, before and after training, for five seeds and both methods. It feeds the website's
   trajectory plot and the results PDF.
+- **`polar_action_pg.jsonl`**, from `python3 -m doggame.polar_action_study`: 90 completed runs
+  (three action-policy packages × three algorithms × ten seeds) on the original dog game.
+  `curve` stores checkpoints at 100, 250, 500, 1,000 and 1,500 episodes. The final score is
+  one-shot unilateral expected gain at the reset state, computed from 8,192 sampled action
+  pairs and their mean/variance. Each row includes the fixed protocol, representation,
+  algorithm, seed and house-configuration index. It does not represent a full dynamic-game
+  exploitability score.
+- **`polar_action_pg_robustness.jsonl`**, from `python3 -m doggame.polar_action_robustness`:
+  80 completed REINFORCE runs (two exact-support policy packages × four additional predefined
+  house configurations × ten seeds). Its score fields match the primary file. This follow-up
+  was specified after the primary study started and is exploratory; it is analyzed separately.
 
 ## Companion code (grid soccer)
 

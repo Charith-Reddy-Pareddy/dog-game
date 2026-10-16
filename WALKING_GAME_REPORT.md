@@ -224,7 +224,7 @@ The reference for all of this is the one-shot Nash corner pair, but the walking 
 - **Five seeds per setting.** The counts are out of five, so small differences between settings are patterns, not a ranking. The step-length and discount study uses A2C only.
 - **The corners are a resting-state equilibrium.** Section 4.8 shows that the corner pair is an exact equilibrium once both players are there and that walking straight to it is a near-equilibrium. The equilibrium of the full game with feedback strategies has not been computed.
 - **My choices.** The 0.1 threshold, the 300-episode budget, the learning rate and the network sizes were not tuned for each algorithm.
-- **Why the ranking differs from the main game is not tested.** The causes of PPO's instability here are unknown; reusing each episode seems to contribute, but that is a hypothesis.
+- **Why the ranking differs from the main game remains unresolved.** Fewer PPO epochs improve the observed result, but the mechanism behind its instability is unknown; reusing each episode may contribute, which remains a hypothesis.
 
 ## 6. Open questions
 
@@ -238,9 +238,11 @@ These are the walking-game questions in [RESEARCH_QUESTIONS.md](RESEARCH_QUESTIO
 ## 7. Reproducing
 
 ```
-python3 -m doggame.dog_game_studies walking ppo_variants ppo_long walking_settings walking_houses walking_inertia walking_equilibrium   # the runs (resumable, shardable)
-python3 -m doggame.dog_game_summary                                                  # print every table
-python3 -m doggame.research_report_pdf WALKING_GAME_REPORT.md docs/walking_game_report.pdf
+python3 -m doggame.dog_game_studies \
+  walking ppo_variants ppo_long walking_settings walking_houses walking_inertia walking_equilibrium
+python3 -m doggame.dog_game_summary
+python3 -m doggame.research_report_pdf \
+  WALKING_GAME_REPORT.md docs/walking_game_report.pdf
 ```
 
 The code, results and this report are released under the [MIT license](https://github.com/Charith-Reddy-Pareddy/dog-game/blob/main/LICENSE).
