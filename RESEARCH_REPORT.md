@@ -568,7 +568,16 @@ The study draws N houses from a skewed distribution (Beta(2, 5)) with equal weig
 - **The one-shot dog converges to the solution of `d = 1 - F(d)`** (0.339 here), not to the median house (0.264): the mean rule's generalized median, as Renault and Trannoy show.
 - **A pivot is inside the box about two times in three**, and then holding is never Markov-perfect at any inertia. The share without a pivot settles near `1 / (1 + f(d))` (0.34), where `f` is the houses' density at the limit dog; this is a heuristic renewal argument, not a proof.
 - **Without a pivot, the largest inertia that keeps holding Markov-perfect shrinks like 1/N** (about 0.35/N here), because the houses nearest the dog leave the edge players a slack of order 1/N. So for any fixed inertia, the static equilibrium of a game with many houses is almost never a feedback equilibrium.
-- **Open:** the feedback equilibrium itself with many houses, where several players can want to leave their edges at once, and a mean-field formulation of it.
+- **The feedback equilibrium with many houses has the same target form.** If every player aims the next dog position at its own target, each round is the one-shot many-house game with the targets as houses, so the dog lands at the generalized median of the targets (`next_dog` in `doggame/many_houses.py`). Targets from the fixed point (`target_equilibrium`) on random games with uniform houses and random weights, inertia and discount:
+
+| Players | Games | Target form is an equilibrium | with single-peaked objectives | with several peaks | Largest gain | Holding is Markov-perfect |
+|---|---|---|---|---|---|---|
+| 3 | 20 | 20 of 20 | 19 of 19 | 1 of 1 | 4.8e-07 | 4 of 20 |
+| 5 | 20 | 18 of 20 | 14 of 14 | 4 of 6 | 2.6e-04 | 0 of 20 |
+| 8 | 20 | 17 of 20 | 9 of 9 | 8 of 11 | 5.7e-04 | 1 of 20 |
+
+  Aiming at the targets is a feedback equilibrium in 55 of 60 games and in every game where all players' one-round objectives are single-peaked (42 of 42), as the argument behind Proposition 2 suggests; all 5 failures have a player whose objective has several peaks, which become more common with more players. Holding the one-shot actions is Markov-perfect in only 5 of the 60.
+- **Open:** a proof for many houses, a mean-field formulation of the feedback equilibrium, and what learners find there.
 
 ### 5.22 Does self-play learn the feedback equilibrium?
 
