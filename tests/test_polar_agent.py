@@ -74,3 +74,19 @@ def test_the_walking_game_callbacks_report_the_episodes_done_so_far():
     train_polar_actor_critic(env, PolarPolicy(seed=0), "ppo", episodes=4, steps=3, callback=ppo.append)
 
     assert reinforce == ppo == [1, 2, 3, 4]
+
+
+def test_the_polar_policy_entropy_matches_scipy_for_the_angle_and_beta_for_the_radius():
+    import numpy as np
+    import torch
+    from scipy.stats import beta, vonmises
+
+    from doggame.polar_agent import STATE_DIM, PolarPolicy
+
+    policy = PolarPolicy(seed=0)
+    states = torch.rand(3, STATE_DIM)
+    red, _ = policy.entropy(states)
+    angle, radius = policy._distributions(policy.red, states)
+    expected = [vonmises(k).entropy() + beta(a, b).entropy() for k, a, b in
+                zip(angle.concentration.detach().numpy(), radius.concentration1.detach().numpy(), radius.concentration0.detach().numpy())]
+    assert np.allclose(red.detach().numpy(), expected, atol=1e-4)

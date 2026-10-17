@@ -22,11 +22,13 @@ def _value_net(state_dim, hidden=32):
 
 
 def train_actor_critic(env, policy, algorithm="a2c", episodes=500, steps_per_episode=20, lr=0.01, seed=0,
-                       callback=None, ppo_epochs=4, clip=0.2, rollout=run_episode, state_dim=2):
+                       callback=None, ppo_epochs=4, clip=0.2, rollout=run_episode, state_dim=2, entropy=0.0):
     """Train `policy` by self-play with A2C or PPO. `callback(episodes_done)`, if
     given, is called after every update. `rollout` plays one episode and `state_dim` is
     the size of its states, so the same loop trains the walking game's policy too
-    (see doggame.polar_agent). Returns the two players' value networks."""
+    (see doggame.polar_agent). With `entropy` > 0, each player's loss also rewards its
+    policy's entropy by that coefficient (the policy needs an `entropy(states)` method).
+    Returns the two players' value networks."""
     if algorithm not in ALGORITHMS:
         raise ValueError(f"algorithm must be one of {ALGORITHMS}")
     torch.manual_seed(seed)
@@ -44,7 +46,8 @@ def train_actor_critic(env, policy, algorithm="a2c", episodes=500, steps_per_epi
         for _ in range(ppo_epochs if algorithm == "ppo" else 1):
             logps = policy.log_prob(states_t, actions_red_t, actions_blue_t)
             loss = 0.0
-            for logp, old_logp, value_net, ret in zip(logps, old, values, returns):
+            entropies = policy.entropy(states_t) if entropy else (0.0, 0.0)
+            for logp, old_logp, value_net, ret, ent in zip(logps, old, values, returns, entropies):
                 value = value_net(states_t).squeeze(1)
                 advantage = (ret - value).detach()
                 if algorithm == "ppo":
@@ -53,7 +56,7 @@ def train_actor_critic(env, policy, algorithm="a2c", episodes=500, steps_per_epi
                     gain = torch.min(ratio * advantage, ratio.clamp(1 - clip, 1 + clip) * advantage).mean()
                 else:
                     gain = (logp * advantage).mean()
-                loss = loss - gain + 0.5 * nn.functional.mse_loss(value, ret)
+                loss = loss - gain + 0.5 * nn.functional.mse_loss(value, ret) - entropy * torch.as_tensor(ent).mean()
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
