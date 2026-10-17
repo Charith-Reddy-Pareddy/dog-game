@@ -187,10 +187,11 @@ with the numbers and the caveats, are in [RESEARCH_REPORT.md](RESEARCH_REPORT.md
     0.1); REINFORCE is slower (4 of 5, 24 of 35); PPO gets there fastest but
     does not stay (2 of 5, 14 of 35).*
 27. **Why is PPO unstable on the walking game?**
-    *Status: open on the mechanism. A smaller learning rate does not help, fewer epochs
-    help, and default PPO's failures persist (two of five seeds never return to the corners
-    in 900 episodes), so it is not just slow; reusing each episode seems to contribute, but that
-    is a hypothesis.*
+    *Status: answered for these settings (five seeds each). Reusing each short episode for
+    several epochs moves the policy too far per update: fewer epochs help, and so does a
+    tighter clipping range with four epochs (clip 0.05: mean distance 0.046 after 900
+    episodes against 0.669, 4 of 5 seeds at the corners against 3 of 5), while a smaller
+    learning rate and an entropy bonus do not.*
 28. **Does a smaller learning rate or fewer epochs make PPO reliable on the walking game?**
     *Status: answered for the settings tried. Fewer epochs help (4 of 5 seeds after 300
     episodes, 5 of 5 after 900), a smaller learning rate does not (1 of 5 and 2 of 5 after 300),
@@ -299,6 +300,6 @@ with the numbers and the caveats, are in [RESEARCH_REPORT.md](RESEARCH_REPORT.md
 | walking game | `results/dog_game_runs.jsonl`, `results/dog_game_trajectories.json` |
 | 32 | `docs/POLAR_ACTION_PROTOCOL.md`, `docs/POLAR_ACTION_ROBUSTNESS_PROTOCOL.md`, `doggame/polar_action_study.py`, `doggame/polar_action_robustness.py`, `results/polar_action_pg.jsonl`, `results/polar_action_pg_robustness.jsonl` |
 
-Questions 11, 13, 14 and 27 are open, and 7, 12, 15, 25, 30, 32, 34, 35 and 36 are partly answered. The studies are in
+Questions 11, 13 and 14 are open, and 7, 12, 15, 25, 30, 32, 34, 35 and 36 are partly answered. The studies are in
 [`doggame/dog_game_studies.py`](doggame/dog_game_studies.py) and the tables are
 produced by [`doggame/dog_game_summary.py`](doggame/dog_game_summary.py).
