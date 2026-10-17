@@ -32,3 +32,22 @@ def rewards(a_red, a_blue, house_red, house_blue, w):
 def slope_along_flat_move(house_red, house_blue, w):
     """How fast Phi changes per unit of the dog-preserving move, per coordinate."""
     return 2 * w * (1 - w) * (np.asarray(house_red, dtype=float) - np.asarray(house_blue, dtype=float))
+
+
+def clipped_moments(mean, std):
+    """E[c] and E[c^2] for c = clip(N(mean, std^2), 0, 1)."""
+    from scipy.stats import norm
+
+    a, b = -mean / std, (1 - mean) / std
+    mass, above = norm.cdf(b) - norm.cdf(a), norm.sf(b)
+    first = above + mean * mass + std * (norm.pdf(a) - norm.pdf(b))
+    second = above + (mean ** 2 + std ** 2) * mass + 2 * mean * std * (norm.pdf(a) - norm.pdf(b)) + std ** 2 * (a * norm.pdf(a) - b * norm.pdf(b))
+    return first, second
+
+
+def smoothed_potential(mean_red, mean_blue, house_red, house_blue, w, std):
+    """Phi averaged over Gaussian exploration noise with clipped actions, in one coordinate. It is an exact potential
+    of the noisy game: each player's expected reward differs from it by a term that does not depend on its own mean."""
+    (m_red, s_red), (m_blue, s_blue) = clipped_moments(mean_red, std), clipped_moments(mean_blue, std)
+    dog_sq = w ** 2 * s_red + (1 - w) ** 2 * s_blue + 2 * w * (1 - w) * m_red * m_blue
+    return -dog_sq + 2 * w * house_red * m_red + 2 * (1 - w) * house_blue * m_blue

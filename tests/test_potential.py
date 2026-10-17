@@ -47,3 +47,20 @@ def test_the_potential_cannot_tell_the_interior_equilibrium_from_the_two_boundar
     red_top = phi((1, 1.0), (0, 0.0))       # where most self-play runs end
     red_bottom = phi((1, 0.0), (0, 1.0))    # the mirror image
     assert np.isclose(interior, red_top) and np.isclose(interior, red_bottom)
+
+
+def test_the_smoothed_potential_tracks_expected_reward_changes_and_dips_at_the_interior():
+    from doggame.potential import clipped_moments, smoothed_potential
+
+    rng = np.random.default_rng(0)
+    draws = np.clip(rng.normal(0.8, 0.4, 1_000_000), 0, 1)
+    assert np.allclose(clipped_moments(0.8, 0.4), (draws.mean(), (draws ** 2).mean()), atol=2e-3)
+
+    def expected_reward(mean_red, mean_blue, h=0.5, w=0.5, std=0.4, n=400_000):
+        a, b = (np.clip(rng.normal(m, std, n), 0, 1) for m in (mean_red, mean_blue))
+        return -np.mean((w * a + (1 - w) * b - h) ** 2)
+
+    change = smoothed_potential(0.9, 0.1, 0.5, 0.5, 0.5, 0.4) - smoothed_potential(0.3, 0.1, 0.5, 0.5, 0.5, 0.4)
+    assert abs(change - (expected_reward(0.9, 0.1) - expected_reward(0.3, 0.1))) < 2e-3
+    line = [smoothed_potential(t, 1 - t, 0.5, 0.5, 0.5, 0.37) for t in np.linspace(0, 1, 11)]
+    assert np.argmin(line) == 5 and np.isclose(line[0], line[-1])
