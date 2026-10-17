@@ -299,6 +299,22 @@ def inertia_random_table(rows):
     return table
 
 
+def many_houses_table(rows):
+    """Per number of houses: the one-shot dog against its mean-field limit, how often no pivot is inside the box
+    (against the limit 1 / (1 + f(d))), and the largest inertia that keeps the one-shot actions Markov-perfect."""
+    from scipy.stats import beta
+
+    from doggame.many_houses import mean_field_dog
+    limit = mean_field_dog(lambda d: beta.cdf(d, 2, 5))
+    table = [["Houses N", f"One-shot dog: mean (sd); limit {limit:.3f}", f"No pivot inside (limit {1 / (1 + beta.pdf(limit, 2, 5)):.2f})",
+              "Largest inertia: mean", "N times it, median when no pivot"]]
+    for r in sorted(study(rows, "many_houses"), key=lambda r: r["key"]["n"]):
+        n, crit, free = r["key"]["n"], np.array(r["critical"]), ~np.array(r["pivot"])
+        table.append([str(n), f"{np.mean(r['dog']):.3f} ({np.std(r['dog']):.3f})", f"{free.mean():.2f}", f"{crit.mean():.4f}",
+                      f"{np.median(n * crit[free]):.2f}" if free.any() else "-"])
+    return table
+
+
 def inertia_dp_table(rows):
     """The exact feedback equilibrium against holding the one-shot Nash actions: the largest action gap on the path from
     the starting dog position, and the share of dog positions (per coordinate) where the two differ."""
@@ -482,7 +498,7 @@ if __name__ == "__main__":
                         ("walking hard long", walking_hard_long_table(studies)), ("inertia equilibrium", inertia_equilibrium_table(studies)),
                         ("selection noise", selection_noise_table(studies)), ("inertia dp", inertia_dp_table(studies)),
                         ("markov potential", markov_potential_table(studies)), ("selection clip", selection_clip_table(studies)),
-                        ("inertia explicit", inertia_explicit_table(studies)), ("inertia random", inertia_random_table(studies))):
+                        ("inertia explicit", inertia_explicit_table(studies)), ("inertia random", inertia_random_table(studies)), ("many houses", many_houses_table(studies))):
         print(f"\n### {name}\n\n{markdown(table)}")
     print("\nconvergence counts:", convergence_counts(runs))
     print("inertia median distance:", inertia_distances(studies))
