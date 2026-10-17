@@ -513,7 +513,17 @@ in which each player aims the next dog position at its own target, as far as its
 | (0.6, 0.6) / (0.4, 0.4), w = 0.5 | x 16% / 15%; 0.00, y 16% / 15%; 0.00 | x 51% / 51%; 0.00, y 51% / 51%; 0.00 | x 68% / 68%; 0.00, y 68% / 68%; 0.00 |
 
 - **Both propositions match the dynamic program**: the shares agree to about one percentage point, and the explicit policy is within one action-grid step (0.01) everywhere. Its largest one-round deviation gain, with continuation values from simulating the dog rather than from a grid, is below 1e-31 over 101 dog positions in every straddling coordinate.
-- **The shared-y coordinate is not covered.** Its houses coincide, so both one-shot actions are interior; the dynamic program picks another member of its continuum.
+- **The shared-y coordinate is not covered.** Its houses coincide, so both one-shot actions are interior; the dynamic program picks another member of its continuum. Choosing instead each state's equilibrium with the largest total value ("vertex Nash", `selection="vertex"`) changes the actions but no player's value:
+
+| Coordinate | Inertia w0 | Mean total value: default / vertex | States whose actions differ | Largest value difference |
+|---|---|---|---|---|
+| setup 4 y | 0.6 | -0.0023 / -0.0023 | 66% | 4.7e-19 |
+| setup 4 y | 0.9 | -0.1659 / -0.1659 | 10% | 6.9e-18 |
+| setup 3 x | 0.6 | -0.1112 / -0.1112 | 0% | 0.0e+00 |
+| setup 3 x | 0.9 | -0.3714 / -0.3714 | 0% | 0.0e+00 |
+| setup 1 y | 0.6 | -1.8897 / -1.8897 | 0% | 0.0e+00 |
+| setup 1 y | 0.9 | -2.2996 / -2.2996 | 0% | 0.0e+00 |
+
 
 On 200 random one-coordinate games (houses, weight, inertia and discount drawn uniformly; deviation gains over 41 dog positions):
 
@@ -651,7 +661,7 @@ The statuses are the same as in [RESEARCH_QUESTIONS.md](RESEARCH_QUESTIONS.md).
 
 **Q12. Does inertia change anything besides how long it takes?** *Partly answered.* The steady state is unchanged. Under the coordinate-wise conditions in Section 5.15, the one-shot profile is optimal against every unilateral open-loop action sequence for any horizon, with the opponent fixed. The exact feedback equilibrium, solved by dynamic programming, agrees on the equilibrium path but not off it (Q19, Section 5.15).
 
-**Q13-Q15.** Q13 (vertex Nash for multi-state games) is open because the dog game has one state. Q14 (LLM play and inverse reward recovery) is a separate research thread. Q15 (disk-shaped action spaces) is partly addressed by the walking version's angle and step length.
+**Q13-Q15.** Q13 (vertex Nash for multi-state games) is answered for the game with inertia: picking each state's equilibrium with the largest total value changes the actions in the shared coordinate but no value, because those equilibria are payoff-equivalent (Section 5.20). Q14 (LLM play and inverse reward recovery) is a separate research thread. Q15 (disk-shaped action spaces) is partly addressed by the walking version's angle and step length.
 
 **Q16. Do A2C and PPO beat REINFORCE?** *Answered.* On the main game PPO is much faster per episode and A2C is not faster than REINFORCE (Section 5.2). With one epoch, matching REINFORCE on gradient steps, PPO is no faster than REINFORCE, so its speed comes from reusing each episode (Section 5.11, Q24). On the walking game the order changes: A2C is the most reliable and PPO is fast but unstable (Section 5.10, Q26).
 

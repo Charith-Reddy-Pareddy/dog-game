@@ -106,7 +106,12 @@ with the numbers and the caveats, are in [RESEARCH_REPORT.md](RESEARCH_REPORT.md
     changes the equilibrium of the dynamic game is untested.*
 13. Can a "vertex Nash" choice (the equilibrium with the largest sum of values)
     give a more useful equilibrium selection for multi-state games?
-    *Status: open. The dog game has one state.*
+    *Status: answered for the dog game with inertia, which has a state (the dog's
+    position). Choosing each state's pure equilibrium with the largest total value changes
+    the actions played in the shared-y coordinate (in 66% of states at w0 = 0.6) but no
+    player's value (differences below 1e-17), because all its equilibria put the dog in the
+    same place; where the houses differ the stage equilibria are unique. So in this game the
+    selection is harmless but not useful; a game with payoff-distinct equilibria is needed.*
 14. (Adjacent thread.) Can an LLM's behavior in a repeated game be modeled as
     bounded-rationality play over a continuous action space, and can its
     choices be inverted into a reward function?
@@ -287,6 +292,7 @@ with the numbers and the caveats, are in [RESEARCH_REPORT.md](RESEARCH_REPORT.md
 | 12, 18 | study `inertia` (40 runs) |
 | 19, 34 | studies `inertia_dp` (15 solves), `inertia_explicit` (15) and `inertia_random` (200 games), `doggame/inertia_dp.py`, `doggame/inertia_mpe.py`, `doggame/inertia_theory.py` |
 | 33 | study `markov_potential` (8 cycles), `doggame/markov_potential.py` |
+| 13 | study `vertex_selection` (6 solves), `selection` in `doggame/inertia_dp.py` |
 | 36 | study `many_houses` (2,000 draws), `doggame/many_houses.py` |
 | 37 | studies `feedback_learning` (55 rows) and `exact_play` (24 runs), `doggame/feedback_learning.py`, `doggame/exact_play.py` |
 | 35 | study `noisy_inertia` (9 solves), `continuous_limit` in `doggame/inertia_theory.py`, `noise` in `doggame/inertia_dp.py` |
@@ -300,6 +306,6 @@ with the numbers and the caveats, are in [RESEARCH_REPORT.md](RESEARCH_REPORT.md
 | walking game | `results/dog_game_runs.jsonl`, `results/dog_game_trajectories.json` |
 | 32 | `docs/POLAR_ACTION_PROTOCOL.md`, `docs/POLAR_ACTION_ROBUSTNESS_PROTOCOL.md`, `doggame/polar_action_study.py`, `doggame/polar_action_robustness.py`, `results/polar_action_pg.jsonl`, `results/polar_action_pg_robustness.jsonl` |
 
-Questions 11, 13 and 14 are open, and 7, 12, 15, 25, 30, 32, 34, 35 and 36 are partly answered. The studies are in
+Questions 11 and 14 are open, and 7, 12, 15, 25, 30, 32, 34, 35 and 36 are partly answered. The studies are in
 [`doggame/dog_game_studies.py`](doggame/dog_game_studies.py) and the tables are
 produced by [`doggame/dog_game_summary.py`](doggame/dog_game_summary.py).
