@@ -1159,3 +1159,12 @@
 {"study": "exact_play", "key": {"setup": 4, "w0": 0.9, "kind": "network", "squash": "sigmoid", "hidden": 64, "seed": 4}, "gap_explicit": 0.9999994039535522, "gap_holding": 1.0, "gain": 0.10419487112120207}
 {"study": "exact_play", "key": {"setup": 4, "w0": 0.9, "kind": "network", "squash": "sigmoid", "hidden": 64, "seed": 2}, "gap_explicit": 0.9999996423721313, "gap_holding": 8.015790808713064e-05, "gain": 0.10419513804181979}
 {"study": "exact_play", "key": {"setup": 4, "w0": 0.9, "kind": "network", "squash": "sigmoid", "hidden": 64, "seed": 3}, "gap_explicit": 0.9999984502792358, "gap_holding": 1.0, "gain": 0.10419468717917912}
+{"study": "noisy_inertia", "key": {"dt": 0.05, "sigma": 0.0, "clipped": true}, "red": 0.725, "blue": 0.52, "sweeps": 554, "unresolved": 0}
+{"study": "noisy_inertia", "key": {"dt": 0.025, "sigma": 0.0, "clipped": true}, "red": 0.71, "blue": 0.53, "sweeps": 1107, "unresolved": 0}
+{"study": "noisy_inertia", "key": {"dt": 0.05, "sigma": 0.0, "clipped": false}, "red": 0.7250000000000001, "blue": 0.52, "sweeps": 554, "unresolved": 0}
+{"study": "noisy_inertia", "key": {"dt": 0.05, "sigma": 0.1, "clipped": true}, "red": 0.76, "blue": 0.53, "sweeps": 550, "unresolved": 0}
+{"study": "noisy_inertia", "key": {"dt": 0.05, "sigma": 0.2, "clipped": true}, "red": 0.765, "blue": 0.545, "sweeps": 559, "unresolved": 0}
+{"study": "noisy_inertia", "key": {"dt": 0.025, "sigma": 0.2, "clipped": true}, "red": 0.765, "blue": 0.55, "sweeps": 1117, "unresolved": 0}
+{"study": "noisy_inertia", "key": {"dt": 0.05, "sigma": 0.2, "clipped": false}, "red": 0.7650000000000001, "blue": 0.5449999999999999, "sweeps": 559, "unresolved": 0}
+{"study": "noisy_inertia", "key": {"dt": 0.05, "sigma": 0.4, "clipped": false}, "red": 0.7750000000000001, "blue": 0.585, "sweeps": 605, "unresolved": 0}
+{"study": "noisy_inertia", "key": {"dt": 0.05, "sigma": 0.4, "clipped": true}, "red": 0.79, "blue": 0.585, "sweeps": 8000, "unresolved": 0}
