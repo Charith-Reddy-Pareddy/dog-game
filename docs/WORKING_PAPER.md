@@ -218,6 +218,9 @@ linear-quadratic benchmark with an action cost would not show (its policies are 
 | clipped to [0, 1] | 0.025 | 0.0 | 0.710 | 0.530 | 1107 sweeps |
 | clipped to [0, 1] | 0.025 | 0.2 | 0.765 | 0.550 | 1117 sweeps |
 | unclipped | 0.05 | 0.0 | 0.725 | 0.520 | 554 sweeps |
+| unclipped | 0.05 | 0.02 | 0.730 | 0.525 | 551 sweeps |
+| unclipped | 0.05 | 0.05 | 0.740 | 0.525 | 548 sweeps |
+| unclipped | 0.05 | 0.1 | 0.760 | 0.530 | 550 sweeps |
 | unclipped | 0.05 | 0.2 | 0.765 | 0.545 | 559 sweeps |
 | unclipped | 0.05 | 0.4 | 0.775 | 0.585 | 605 sweeps |
 
