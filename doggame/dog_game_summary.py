@@ -299,6 +299,21 @@ def inertia_random_table(rows):
     return table
 
 
+def pretraining_mechanism_table(rows):
+    """Training on setup 2 after pre-training on setup 1 (flipped corners), with the exploration noise reset, the
+    sigmoid de-saturated, or both, against training from scratch (10 seeds each)."""
+    runs = study(rows, "pretraining_mechanism")
+    table = [["Start", "Under 0.004 after 100", "after 300", "Median exploitability after 300", "After pre-training: largest pre-sigmoid output, mean log-std"]]
+    for variant in ("scratch", "pretrained", "reset noise", "desaturated", "both"):
+        mine = [r for r in runs if r["key"]["variant"] == variant]
+        if mine:
+            at = lambda e: [r["curve"][str(e)] for r in mine]
+            sat = [r["saturation"] for r in mine if r["saturation"]]
+            table.append([variant, f"{sum(v < CONVERGED for v in at(100))} of {len(mine)}", f"{sum(v < CONVERGED for v in at(300))} of {len(mine)}",
+                          f"{np.median(at(300)):.4f}", f"{np.median([x['raw'] for x in sat]):.1f}, {np.median([x['log_std'] for x in sat]):.2f}" if sat else "-"])
+    return table
+
+
 def noisy_inertia_table(rows):
     """Where the equilibrium actions switch (below 0.5) with a noisy dog, next to the noise-free closed form at the same
     time step and its continuous-time limit."""
@@ -553,7 +568,7 @@ if __name__ == "__main__":
                         ("walking hard long", walking_hard_long_table(studies)), ("inertia equilibrium", inertia_equilibrium_table(studies)),
                         ("selection noise", selection_noise_table(studies)), ("inertia dp", inertia_dp_table(studies)),
                         ("markov potential", markov_potential_table(studies)), ("selection clip", selection_clip_table(studies)),
-                        ("inertia explicit", inertia_explicit_table(studies)), ("inertia random", inertia_random_table(studies)), ("many houses", many_houses_table(studies)), ("feedback learning", feedback_learning_table(studies)), ("exact play", exact_play_table(studies)), ("noisy inertia", noisy_inertia_table(studies))):
+                        ("inertia explicit", inertia_explicit_table(studies)), ("inertia random", inertia_random_table(studies)), ("many houses", many_houses_table(studies)), ("feedback learning", feedback_learning_table(studies)), ("exact play", exact_play_table(studies)), ("noisy inertia", noisy_inertia_table(studies)), ("pretraining mechanism", pretraining_mechanism_table(studies))):
         print(f"\n### {name}\n\n{markdown(table)}")
     print("\nconvergence counts:", convergence_counts(runs))
     print("inertia median distance:", inertia_distances(studies))
