@@ -1,6 +1,7 @@
 import json
 
 import numpy as np
+import torch
 
 import doggame.dog_game_studies as studies
 from doggame.agents import TwoPlayerPolicy
@@ -148,3 +149,14 @@ def test_the_exact_play_study_compares_tables_with_networks_in_two_settings():
 def test_the_noisy_inertia_study_varies_the_noise_the_time_step_and_the_clipping():
     keys = [k for k, _ in studies.study_noisy_inertia(range(5))]
     assert len(keys) == 12 and {k["clipped"] for k in keys} == {True, False} and {k["dt"] for k in keys} == {0.05, 0.025}
+
+
+def test_desaturating_keeps_the_corners_but_caps_the_pre_sigmoid_output():
+    policy = TwoPlayerPolicy(studies.make_env(studies.DEFAULT_CONFIGS[0]).domain, seed=0)
+    with torch.no_grad():
+        policy.network.red.out.bias.fill_(8.0), policy.network.blue.out.bias.fill_(-8.0)
+    studies.desaturate(policy)
+    with torch.no_grad():
+        red, blue = policy.network(torch.tensor([[0.5, 0.5]]))
+    assert red.max() <= 2.0 + 1e-6 and red.min() > 0 and blue.max() < 0 and blue.min() >= -2.0 - 1e-6
+    assert len([k for k, _ in studies.study_pretraining_mechanism(range(5))]) == 50
