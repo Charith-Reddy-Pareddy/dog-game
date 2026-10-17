@@ -427,9 +427,36 @@ At round 800, per seed:
   game; zero cycles for constant policies are only evidence for the open-loop
   claim, which the one-shot potential also implies.
 - The selection-noise study varies only the initial log standard deviation of
-  the policy (-2, -1, -0.5 by default, and 0), with 10 seeds each on the
-  shared-y setup and the `separate` layout. Fisher's exact test compares the
-  counts of the two mirror outcomes; I did not correct for multiple comparisons.
+  the policy (-2, -1, -0.5 by default, and 0), with 50 seeds each on the
+  shared-y setup and the `separate` layout. Seeds 0-9 at the default repeat the
+  `selection` study exactly (checked). The binomial test assumes the two mirror
+  images are equally likely, which the setup's symmetry (swap the players and
+  reflect x) implies; I did not correct for testing four noise levels. A first
+  version used 10 seeds per level and reported an effect that 50 seeds did not
+  confirm.
+- The no-clipping ablation replaces the square with one whose `clip` does
+  nothing, so sampled actions and the dog can leave [0, 1]; the policy's means
+  stay sigmoid-bounded. The linear ablation also makes the y-mean `0.5` plus the
+  network's output, unbounded, and keeps the sigmoid in x so that the x
+  coordinate (where the houses differ) still has a bounded equilibrium. These
+  change the game, so they test the mechanism, not the original game.
+- The noise-smoothed potential assumes independent Gaussian exploration with a
+  fixed standard deviation, while training also learns the standard deviation.
+
+## The closed form and explicit equilibrium with inertia
+
+- Propositions 1 and 2 (report Section 5.20) assume one coordinate at a time,
+  the stage reward on the next dog position, actions in [0, 1], `w0` in [0, 1)
+  and a discount in [0, 1). Proposition 2 covers only coordinates where the
+  houses lie on either side of the dog position the players' edges give. Its
+  proof is a sketch I wrote; it has not been checked by anyone else.
+- The numerical checks of Proposition 2 test one-round deviations on a grid of
+  2001 actions (1001 for the random games) plus the policy's own action, with
+  continuation values from 300 (400) simulated rounds. A deviation between grid
+  actions could in principle gain slightly more.
+- The random games draw both houses and the inertia uniformly, the weight
+  from [0.05, 0.95] and the discount from [0.05, 0.99]; one fixed draw per
+  game number.
 
 ## Settled points
 
