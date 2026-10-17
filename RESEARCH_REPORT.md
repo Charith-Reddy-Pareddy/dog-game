@@ -150,7 +150,17 @@ REINFORCE on setup 2, the slowest one, five seeds. "Pre-trained" means 1500 self
 
 - **It depends on the source.** Pre-training on setup 5, which has the same corners as setup 2, put all 5 runs under 0.004 after 100 episodes, where training from scratch had none.
 - **It can hurt.** Pre-training on setup 1, whose corners are flipped, left every run worse than scratch after 300 episodes (median 0.23 against 0.0048).
-- **One target setup and five seeds.** The mechanism is not tested; a plausible one is that the network has to un-learn a boundary direction it already committed to.
+- **Why: pre-training collapses the exploration noise.** A follow-up (10 seeds) pre-trains on setup 1 and then resets the policy's exploration noise to its initial value, de-saturates its sigmoid (scales the output layer so the largest pre-sigmoid output is 2, still pointing at the same corners), or both, before training on setup 2:
+
+| Start | Under 0.004 after 100 | after 300 | Median exploitability after 300 | After pre-training: largest pre-sigmoid output, mean log-std |
+|---|---|---|---|---|
+| scratch | 0 of 10 | 5 of 10 | 0.0043 | - |
+| pretrained | 0 of 10 | 0 of 10 | 0.2248 | 8.5, -2.81 |
+| reset noise | 0 of 10 | 3 of 10 | 0.0078 | 8.5, -2.81 |
+| desaturated | 0 of 10 | 0 of 10 | 0.1938 | 8.5, -2.81 |
+| both | 0 of 10 | 6 of 10 | 0.0036 | 8.5, -2.81 |
+
+  After pre-training the noise has shrunk to a standard deviation of about 0.06 (mean log-std -2.81) and the sigmoid is saturated (pre-sigmoid outputs up to 8.5). Resetting the noise removes most of the harm (median 0.0078 against 0.22) and de-saturating alone does not (0.19); with both, the runs do as well as from scratch (6 of 10 against 5 of 10 under the threshold). So the harm comes mainly from collapsed exploration, not from having to un-learn a direction; de-saturating also moves the actions part of the way to the center, so it is not a pure test of saturation.
 
 ### 5.6 How precisely must the stage game be solved?
 
@@ -623,7 +633,7 @@ The statuses are the same as in [RESEARCH_QUESTIONS.md](RESEARCH_QUESTIONS.md).
 
 **Q16. Do A2C and PPO beat REINFORCE?** *Answered.* On the main game PPO is much faster per episode and A2C is not faster than REINFORCE (Section 5.2). With one epoch, matching REINFORCE on gradient steps, PPO is no faster than REINFORCE, so its speed comes from reusing each episode (Section 5.11, Q24). On the walking game the order changes: A2C is the most reliable and PPO is fast but unstable (Section 5.10, Q26).
 
-**Q17-Q20.** Q17 (which mirror image, and why never interior) is answered for the shared-y setup: the mirror image is a fair coin, and learning random-walks along the flat direction of the potential until the box stops it, as two ablations show (Section 5.19). Q18 is answered (Section 5.4). Q19 is answered below. Q20 (why mismatched pre-training hurts) has a measured pattern but an untested mechanism.
+**Q17-Q20.** Q17 (which mirror image, and why never interior) is answered for the shared-y setup: the mirror image is a fair coin, and learning random-walks along the flat direction of the potential until the box stops it, as two ablations show (Section 5.19). Q18 is answered (Section 5.4). Q19 is answered below. Q20 (why mismatched pre-training hurts) is answered: pre-training collapses the exploration noise, and resetting it removes most of the harm (Section 5.5).
 
 **Q21. Does re-solving less often change the fixed point?** *Answered.* No, in this game (Section 5.6).
 
