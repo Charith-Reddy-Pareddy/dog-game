@@ -17,14 +17,14 @@ from doggame.networks import make_policy_network
 
 
 class TwoPlayerPolicy(nn.Module):
-    def __init__(self, domain, architecture="separate", seed=None, **network_kwargs):
+    def __init__(self, domain, architecture="separate", seed=None, init_log_std=-0.5, **network_kwargs):
         super().__init__()
         if seed is not None:
             torch.manual_seed(seed)
         self.domain = domain
         self.network = make_policy_network(architecture, **network_kwargs)
-        self.log_std_red = nn.Parameter(torch.full((2,), -0.5))
-        self.log_std_blue = nn.Parameter(torch.full((2,), -0.5))
+        self.log_std_red = nn.Parameter(torch.full((2,), float(init_log_std)))
+        self.log_std_blue = nn.Parameter(torch.full((2,), float(init_log_std)))
 
     def means(self, state):
         raw_red, raw_blue = self.network(state)

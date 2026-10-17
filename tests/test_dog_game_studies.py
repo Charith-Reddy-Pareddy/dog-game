@@ -104,3 +104,9 @@ def test_the_walking_equilibrium_study_checks_four_setups_resting_and_walking():
     keys = [k for k, _ in studies.study_walking_equilibrium(range(5))]
 
     assert len(keys) == 8 and {k["start"] for k in keys} == {"houses", "corners"} and {k["setup"] for k in keys} == {"default", 0, 1, 2}
+
+
+def test_the_selection_noise_study_varies_only_the_initial_noise():
+    keys = [k for k, _ in studies.study_selection_noise(range(5))]
+
+    assert len(keys) == 30 and sorted({k["log_std"] for k in keys}) == [-2.0, -1.0, 0.0]

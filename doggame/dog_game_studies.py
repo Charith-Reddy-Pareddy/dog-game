@@ -230,6 +230,19 @@ def study_inertia_equilibrium(seeds):
             yield dict(setup=setup, w0=w0), run
 
 
+def study_selection_noise(seeds):
+    """Does the initial exploration noise decide which equilibrium self-play finds when the houses share a y-coordinate?
+    The default (log-std -0.5) is in the `selection` study."""
+    for log_std in (-2.0, -1.0, 0.0):
+        for seed in range(10):
+            def run(log_std=log_std, seed=seed):
+                env = make_env(DEFAULT_CONFIGS[DEGENERATE])
+                policy = TwoPlayerPolicy(env.domain, architecture="separate", seed=seed, init_log_std=log_std)
+                train_self_play(env, policy, episodes=EPISODES, seed=seed)
+                return score(policy, env)
+            yield dict(log_std=log_std, seed=seed), run
+
+
 def study_selection(seeds):
     for architecture in ("separate", "shared", "partial"):
         for seed in range(10):  # equilibrium selection is a question about frequencies, so use more seeds
@@ -324,7 +337,7 @@ def study_noise(seeds, resolution=9):
     yield dict(iterations="exact", seed=0), lambda: dict(spread=float(spread), gap=float(gap), support=int((exact_red > 1e-3).sum()), top=float(exact_red.max()))
 
 
-STUDIES = dict(algorithms=study_algorithms, walking=study_walking, ppo_variants=study_ppo_variants, ppo_long=study_ppo_long,
+STUDIES = dict(selection_noise=study_selection_noise, algorithms=study_algorithms, walking=study_walking, ppo_variants=study_ppo_variants, ppo_long=study_ppo_long,
                walking_settings=study_walking_settings, walking_houses=study_walking_houses, walking_inertia=study_walking_inertia,
                walking_equilibrium=study_walking_equilibrium, walking_capacity=study_walking_capacity, walking_ppo_inertia=study_walking_ppo_inertia,
                walking_hard_long=study_walking_hard_long, inertia_equilibrium=study_inertia_equilibrium, selection=study_selection, inertia=study_inertia, pretraining=study_pretraining,

@@ -64,3 +64,15 @@ def test_three_architectures_are_all_selectable():
         action_red, action_blue = policy.act([0.4, 0.6])
         assert action_red.shape == (2,)
         assert action_blue.shape == (2,)
+
+
+def test_the_initial_exploration_noise_can_be_set():
+    import numpy as np
+    import torch
+    from doggame.agents import TwoPlayerPolicy
+    from doggame.env import Square
+
+    policy = TwoPlayerPolicy(Square(0.0, 1.0), seed=0, init_log_std=-2.0)
+
+    assert torch.allclose(policy.log_std_red, torch.full((2,), -2.0)) and np.isclose(float(torch.exp(policy.log_std_blue[0])), np.exp(-2.0))
+    assert torch.allclose(TwoPlayerPolicy(Square(0.0, 1.0), seed=0).log_std_red, torch.full((2,), -0.5))  # the default is unchanged
