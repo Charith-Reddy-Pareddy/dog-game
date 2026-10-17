@@ -51,3 +51,22 @@ def test_holding_stops_being_markov_perfect_just_above_the_critical_inertia():
 def test_the_mean_field_dog_solves_d_equals_one_minus_the_cdf():
     assert np.isclose(mean_field_dog(lambda d: d), 0.5)
     assert np.isclose(mean_field_dog(lambda d: d ** 2), (np.sqrt(5) - 1) / 2)
+
+
+def test_aiming_at_targets_lands_the_dog_on_the_generalized_median_of_the_targets():
+    from doggame.many_houses import next_dog
+
+    rng = np.random.default_rng(0)
+    for _ in range(50):
+        n = rng.integers(2, 6)
+        targets, weights, w0, x = rng.uniform(-0.3, 1.3, n), rng.dirichlet(np.ones(n)), rng.uniform(0.1, 0.9), rng.random(4)
+        expected = [w0 * xk + (1 - w0) * one_shot((targets - w0 * xk) / (1 - w0), weights)[1] for xk in x]
+        assert np.allclose(next_dog(x, targets, weights, w0), expected)
+
+
+def test_the_many_house_target_fixed_point_is_a_feedback_equilibrium():
+    from doggame.many_houses import deviation_gain, target_equilibrium
+
+    houses, weights = np.array([0.8, 0.45, 0.1]), np.array([0.3, 0.3, 0.4])
+    targets, _ = target_equilibrium(houses, weights, 0.6)
+    assert deviation_gain(targets, houses, weights, 0.6, states=11, grid=101) < 1e-5
