@@ -29,6 +29,7 @@ to do only the second of four shards.
 - selection:    which equilibrium self-play finds when the houses share a coordinate
 - inertia:      does giving the dog momentum (w0) change where training ends up
 - pretraining:  does starting from a policy trained on another setup help
+- pretraining_mechanism: whether resetting exploration or de-saturating the policy removes the harm of pre-training
 - stage_solver: how precisely the Nash-Q stage game has to be solved
 - resolution:   how the action-grid resolution affects the discretized solution
 - noise:        how much of fictitious play's mixing is just noise
@@ -485,6 +486,42 @@ def study_pretraining(seeds):
             yield dict(source=source, seed=seed), run
 
 
+def desaturate(policy, cap=2.0):
+    """Scale each player's output layer so its largest pre-sigmoid output over the square is at most `cap`: the policy
+    keeps pointing at the same corners, but its sigmoid is no longer saturated."""
+    grid = torch.as_tensor(np.stack(np.meshgrid(np.linspace(0, 1, 11), np.linspace(0, 1, 11)), -1).reshape(-1, 2), dtype=torch.float32)
+    with torch.no_grad():
+        for net in (policy.network.red, policy.network.blue):
+            biggest = float(net(grid).abs().max())
+            if biggest > cap:
+                net.out.weight.mul_(cap / biggest), net.out.bias.mul_(cap / biggest)
+
+
+def study_pretraining_mechanism(seeds):
+    """Why does pre-training on setup 1, whose equilibrium corners are flipped, hurt on setup 2? Pre-train, then
+    optionally reset the exploration noise to its initial value, de-saturate the sigmoid (`desaturate`), or both,
+    and train on setup 2 as in the `pretraining` study. 10 seeds."""
+    checkpoints = (100, 300)
+    for variant in ("scratch", "pretrained", "reset noise", "desaturated", "both"):
+        for seed in range(10):
+            def run(variant=variant, seed=seed):
+                policy = TwoPlayerPolicy(make_env(DEFAULT_CONFIGS[SLOW]).domain, architecture="separate", seed=seed)
+                saturation = None
+                if variant != "scratch":
+                    train_self_play(make_env(DEFAULT_CONFIGS[0]), policy, episodes=EPISODES, seed=seed)
+                    with torch.no_grad():
+                        raw = torch.cat(policy.network(torch.as_tensor(make_env(DEFAULT_CONFIGS[SLOW]).reset(), dtype=torch.float32).unsqueeze(0)), -1)
+                    saturation = dict(raw=float(raw.abs().max()), log_std=float(torch.cat([policy.log_std_red, policy.log_std_blue]).mean()))
+                    if variant in ("reset noise", "both"):
+                        with torch.no_grad():
+                            policy.log_std_red.fill_(-0.5), policy.log_std_blue.fill_(-0.5)
+                    if variant in ("desaturated", "both"):
+                        desaturate(policy)
+                env = make_env(DEFAULT_CONFIGS[SLOW])
+                return dict(curve=train_with_curve(env, policy, "reinforce", 300, checkpoints, seed), saturation=saturation)
+            yield dict(variant=variant, seed=seed), run
+
+
 def stage_game(resolution, config=STAGE_CONFIG):
     domain = Square(0.0, 1.0)
     grid = action_grid(domain, resolution)
@@ -543,7 +580,7 @@ def study_noise(seeds, resolution=9):
     yield dict(iterations="exact", seed=0), lambda: dict(spread=float(spread), gap=float(gap), support=int((exact_red > 1e-3).sum()), top=float(exact_red.max()))
 
 
-STUDIES = dict(noisy_inertia=study_noisy_inertia, exact_play=study_exact_play, feedback_learning=study_feedback_learning, many_houses=study_many_houses, selection_linear=study_selection_linear, selection_clip=study_selection_clip, inertia_explicit=study_inertia_explicit, inertia_random=study_inertia_random, selection_noise=study_selection_noise, inertia_dp=study_inertia_dp, markov_potential=study_markov_potential, algorithms=study_algorithms, walking=study_walking, ppo_variants=study_ppo_variants, ppo_long=study_ppo_long,
+STUDIES = dict(pretraining_mechanism=study_pretraining_mechanism, noisy_inertia=study_noisy_inertia, exact_play=study_exact_play, feedback_learning=study_feedback_learning, many_houses=study_many_houses, selection_linear=study_selection_linear, selection_clip=study_selection_clip, inertia_explicit=study_inertia_explicit, inertia_random=study_inertia_random, selection_noise=study_selection_noise, inertia_dp=study_inertia_dp, markov_potential=study_markov_potential, algorithms=study_algorithms, walking=study_walking, ppo_variants=study_ppo_variants, ppo_long=study_ppo_long,
                walking_settings=study_walking_settings, walking_houses=study_walking_houses, walking_inertia=study_walking_inertia,
                walking_equilibrium=study_walking_equilibrium, walking_capacity=study_walking_capacity, walking_ppo_inertia=study_walking_ppo_inertia,
                walking_hard_long=study_walking_hard_long, inertia_equilibrium=study_inertia_equilibrium, selection=study_selection, inertia=study_inertia, pretraining=study_pretraining,
