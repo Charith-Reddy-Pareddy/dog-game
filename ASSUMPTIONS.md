@@ -395,6 +395,42 @@ At round 800, per seed:
   review. The static dog game overlaps the Battling Influencers Game (BIG)
   structure; novelty is not claimed for the basic static equilibrium result.
 
+## Feedback equilibrium and potential tests
+
+- The dynamic program treats the two coordinates as separate 1D games. This
+  is exact here because rewards, dog dynamics and the action box all act
+  coordinate by coordinate; it would not hold for a round action set.
+- Each 1D game uses 401 dog positions and 101 actions on [0, 1], discount
+  0.9, and linear interpolation of values between grid positions. Value
+  iteration stops when values change by less than 1e-10 or after 2000 sweeps.
+- At each state the stage game is solved for a pure equilibrium on the action
+  grid by iterated best response, starting the first sweep from red at 1 and
+  blue at 0 and each later sweep from the previous actions; ties go to the
+  lowest action index. Off-grid dog positions use the nearest grid state. States where no pure equilibrium is found within 200
+  rounds are counted as unresolved (56 states in one setting) and keep the last
+  iterate. I did not compute mixed equilibria there.
+- When the stage game has several equilibria (the shared-y setup), the program
+  returns one of them, so a different answer from the one-shot profile there is
+  a selection, not a disagreement. I do not claim the feedback equilibrium is
+  unique.
+- Whether holding the one-shot actions everywhere is Markov-perfect is decided
+  by the one-shot deviation principle on a 41 by 41 grid of dog positions,
+  using the closed-form value of constant actions and an exact per-coordinate
+  maximization of the deviation. This is a check on that grid, not a proof for
+  every dog position.
+- The Markov-potential test uses one 4-cycle per setting, on setup 1, from the
+  starting dog position. Both players start from their one-shot Nash corners.
+  The alternatives are my own choice: constant actions (0.6, 0.4) and (0.3, 0.7)
+  for "fixed", and red playing 1 - x and blue playing x at dog position x for
+  "reacting". Values are summed over 400 deterministic rounds, where the discounted
+  tail is below 1e-18. A nonzero cycle proves the game is not a Markov potential
+  game; zero cycles for constant policies are only evidence for the open-loop
+  claim, which the one-shot potential also implies.
+- The selection-noise study varies only the initial log standard deviation of
+  the policy (-2, -1, -0.5 by default, and 0), with 10 seeds each on the
+  shared-y setup and the `separate` layout. Fisher's exact test compares the
+  counts of the two mirror outcomes; I did not correct for multiple comparisons.
+
 ## Settled points
 
 - **Which game for PG:** any one where the solver is correct and the comparison
