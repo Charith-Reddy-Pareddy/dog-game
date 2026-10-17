@@ -25,6 +25,7 @@ to do only the second of four shards.
 - many_targets: feedback equilibria in target form with 3, 5 and 8 players
 - feedback_learning: whether self-play from random dog positions learns a feedback equilibrium with inertia
 - exact_play: noise-free gradient play on feedback policies, a table against a shared network
+- exact_play_many: the same with 3 and 5 players
 - vertex_selection: whether a largest-total-value equilibrium selection changes the feedback equilibrium
 - noisy_inertia: where the equilibrium switches when the dog gets a Gaussian shock, as the time step shrinks
 - inertia_explicit: the closed-form hold condition and explicit feedback equilibrium against the dynamic program
@@ -380,6 +381,31 @@ def study_exact_play(seeds):
             yield dict(setup=setup, w0=w0, kind=kind, squash=squash, hidden=hidden, seed=seed), run
 
 
+def study_exact_play_many(seeds):
+    """Exact gradient play with 3 and 5 players (doggame.exact_play.play_many), five random games each (uniform houses,
+    random weights, inertia 0.6): a table of actions against one small network per player, scored by the largest
+    one-round deviation gain, next to holding the one-shot actions and the target-form equilibrium."""
+    from doggame.exact_play import GRID, deviation_gain_many, play_many
+    from doggame.many_houses import one_shot, target_equilibrium
+
+    for n in (3, 5):
+        for game in range(5):
+            rng = np.random.default_rng(2000 * n + game)
+            houses, weights = rng.random(n), rng.dirichlet(np.ones(n))
+            for kind in ("holding", "target", "table", "network"):
+                def run(houses=houses, weights=weights, kind=kind):
+                    xs = np.linspace(0, 1, GRID)
+                    if kind == "holding":
+                        actions = np.tile(one_shot(houses, weights)[0][:, None], (1, GRID))
+                    elif kind == "target":
+                        targets, _ = target_equilibrium(houses, weights, 0.6)
+                        actions = np.stack([one_shot((targets - 0.6 * x) / 0.4, weights)[0] for x in xs], 1)
+                    else:
+                        actions = play_many(houses, weights, 0.6, kind)
+                    return dict(gain=deviation_gain_many(actions, houses, weights, 0.6))
+                yield dict(n=n, game=game, kind=kind), run
+
+
 def study_feedback_learning(seeds):
     """Self-play from random dog positions on setup 3 with inertia 0.6: the learned policy's feedback exploitability
     (doggame.feedback_learning), next to Proposition 2's policy and holding the one-shot actions. Gaussian and Beta
@@ -664,7 +690,7 @@ def study_noise(seeds, resolution=9):
     yield dict(iterations="exact", seed=0), lambda: dict(spread=float(spread), gap=float(gap), support=int((exact_red > 1e-3).sum()), top=float(exact_red.max()))
 
 
-STUDIES = dict(many_targets=study_many_targets, target_random=study_target_random, cross_play=study_cross_play, vertex_selection=study_vertex_selection, walking_clip=study_walking_clip, walking_entropy=study_walking_entropy, pretraining_mechanism=study_pretraining_mechanism, noisy_inertia=study_noisy_inertia, exact_play=study_exact_play, feedback_learning=study_feedback_learning, many_houses=study_many_houses, selection_linear=study_selection_linear, selection_clip=study_selection_clip, inertia_explicit=study_inertia_explicit, inertia_random=study_inertia_random, selection_noise=study_selection_noise, inertia_dp=study_inertia_dp, markov_potential=study_markov_potential, algorithms=study_algorithms, walking=study_walking, ppo_variants=study_ppo_variants, ppo_long=study_ppo_long,
+STUDIES = dict(exact_play_many=study_exact_play_many, many_targets=study_many_targets, target_random=study_target_random, cross_play=study_cross_play, vertex_selection=study_vertex_selection, walking_clip=study_walking_clip, walking_entropy=study_walking_entropy, pretraining_mechanism=study_pretraining_mechanism, noisy_inertia=study_noisy_inertia, exact_play=study_exact_play, feedback_learning=study_feedback_learning, many_houses=study_many_houses, selection_linear=study_selection_linear, selection_clip=study_selection_clip, inertia_explicit=study_inertia_explicit, inertia_random=study_inertia_random, selection_noise=study_selection_noise, inertia_dp=study_inertia_dp, markov_potential=study_markov_potential, algorithms=study_algorithms, walking=study_walking, ppo_variants=study_ppo_variants, ppo_long=study_ppo_long,
                walking_settings=study_walking_settings, walking_houses=study_walking_houses, walking_inertia=study_walking_inertia,
                walking_equilibrium=study_walking_equilibrium, walking_capacity=study_walking_capacity, walking_ppo_inertia=study_walking_ppo_inertia,
                walking_hard_long=study_walking_hard_long, inertia_equilibrium=study_inertia_equilibrium, selection=study_selection, inertia=study_inertia, pretraining=study_pretraining,
