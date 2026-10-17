@@ -172,3 +172,7 @@ def test_the_walking_clip_study_tries_two_tighter_clips():
 
 def test_the_cross_play_study_trains_every_layout_on_setup_1():
     assert {k["architecture"] for k, _ in studies.study_cross_play(range(5))} == {"separate", "shared", "partial"}
+
+
+def test_the_target_study_uses_the_same_200_games():
+    assert [k["game"] for k, _ in studies.study_target_random(range(5))] == list(range(200))
