@@ -108,3 +108,10 @@ def deviation_gain(act, house, w, w0, x, red=True, discount=0.9, rounds=300, gri
         z = w0 * z + (1 - w0) * (w * r + (1 - w) * b)
         total -= discount ** k * (z - house) ** 2
     return float(max(total[:-1].max() - total[-1], 0.0))
+
+
+def continuous_limit(rate):
+    """Continuous-time limits of k and rho, with time step dt, w0 = 1 - dt and discount exp(-rate dt) as dt -> 0:
+    k -> (rate + 2) / (rate + 1) and rho -> (rate + 1) / (rate + 2). Proposition 2's policy then becomes bang-bang:
+    each player pushes its edge toward its target d* + k (h - d*) and switches there."""
+    return (rate + 2) / (rate + 1), (rate + 1) / (rate + 2)
