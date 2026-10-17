@@ -161,6 +161,11 @@ its own payoff averaged over starting positions.
 
 {md(S.exact_play_table(studies))}
 
+With 3 and 5 players the same holds: a table of actions comes within about 0.001 of the equilibrium in 10 of 10
+random games, while one network per player stays at holding in 6 of 10 and never reaches it.
+
+{md(S.exact_play_many_table(studies))}
+
 A table of actions reaches the feedback equilibrium every time and a shared network never does, so function
 approximation, not sampling noise, is what stops the learners; a plausible but untested mechanism is that the network
 carries "push to the edge" from the many positions where it is right to the few where easing off is right. Low

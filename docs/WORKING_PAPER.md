@@ -191,6 +191,20 @@ its own payoff averaged over starting positions.
 | setup 5 x, w0 = 0.9 | network, 16 units | 5 | 0 of 5 | 2 of 5 | 0.1042 (0.1042 to 0.1042) |
 | setup 5 x, w0 = 0.9 | network, 64 units | 5 | 0 of 5 | 1 of 5 | 0.1042 (0.1042 to 0.1042) |
 
+With 3 and 5 players the same holds: a table of actions comes within about 0.001 of the equilibrium in 10 of 10
+random games, while one network per player stays at holding in 6 of 10 and never reaches it.
+
+| Players | Policy | Games | Largest one-round gain: median (range) | Below holding's gain in |
+|---|---|---|---|---|
+| 3 | target-form equilibrium | 5 | 0.0000 (0.0000 to 0.0000) | 5 of 5 (by half or more) |
+| 3 | hold the one-shot actions | 5 | 0.0646 (0.0350 to 0.1022) | - |
+| 3 | exact play, table | 5 | 0.0006 (0.0003 to 0.0010) | 5 of 5 (by half or more) |
+| 3 | exact play, network | 5 | 0.0350 (0.0150 to 0.0887) | 2 of 5 (by half or more) |
+| 5 | target-form equilibrium | 5 | 0.0000 (0.0000 to 0.0000) | 5 of 5 (by half or more) |
+| 5 | hold the one-shot actions | 5 | 0.0696 (0.0097 to 0.0766) | - |
+| 5 | exact play, table | 5 | 0.0003 (0.0000 to 0.0008) | 5 of 5 (by half or more) |
+| 5 | exact play, network | 5 | 0.0177 (0.0027 to 0.0696) | 2 of 5 (by half or more) |
+
 A table of actions reaches the feedback equilibrium every time and a shared network never does, so function
 approximation, not sampling noise, is what stops the learners; a plausible but untested mechanism is that the network
 carries "push to the edge" from the many positions where it is right to the few where easing off is right. Low

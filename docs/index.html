@@ -558,6 +558,14 @@
     <ul>
       <li>Aiming at fixed-point targets is an equilibrium in 55 of 60 games and in every game whose players&#x27; one-round objectives are single-peaked; the failures all have a player with several peaks.</li>
     </ul>
+    <p class="hint" style="margin:10px 0 6px">Noise-free gradient play with 3 and 5 players (five random games each, w&#8320; = 0.6).</p>
+    <p class="hint scroll-hint">Swipe the table sideways to see every column.</p>
+    <div class="table-scroll">
+    <table><thead><tr><th>Players</th><th>Policy</th><th>Games</th><th>Largest one-round gain: median (range)</th><th>Below holding&#x27;s gain in</th></tr></thead><tbody><tr><td>3</td><td>target-form equilibrium</td><td>5</td><td>0.0000 (0.0000 to 0.0000)</td><td>5 of 5 (by half or more)</td></tr><tr><td>3</td><td>hold the one-shot actions</td><td>5</td><td>0.0646 (0.0350 to 0.1022)</td><td>-</td></tr><tr><td>3</td><td>exact play, table</td><td>5</td><td>0.0006 (0.0003 to 0.0010)</td><td>5 of 5 (by half or more)</td></tr><tr><td>3</td><td>exact play, network</td><td>5</td><td>0.0350 (0.0150 to 0.0887)</td><td>2 of 5 (by half or more)</td></tr><tr><td>5</td><td>target-form equilibrium</td><td>5</td><td>0.0000 (0.0000 to 0.0000)</td><td>5 of 5 (by half or more)</td></tr><tr><td>5</td><td>hold the one-shot actions</td><td>5</td><td>0.0696 (0.0097 to 0.0766)</td><td>-</td></tr><tr><td>5</td><td>exact play, table</td><td>5</td><td>0.0003 (0.0000 to 0.0008)</td><td>5 of 5 (by half or more)</td></tr><tr><td>5</td><td>exact play, network</td><td>5</td><td>0.0177 (0.0027 to 0.0696)</td><td>2 of 5 (by half or more)</td></tr></tbody></table>
+    </div>
+    <ul>
+      <li>A table of actions finds the equilibrium every time; a network per player stays at holding in 6 of 10 games and never reaches it.</li>
+    </ul>
 
     <h3>Potential structure and what selects the equilibrium</h3>
     <p class="hint" style="margin:0 0 6px">The one-shot game is an exact potential game (as proved for the Battling Influencers Game), and its potential is exactly flat along the shared-y continuum, so it cannot choose. Fifty REINFORCE runs per initial exploration noise, separate layout; the last column tests that the two mirror images are equally likely, as the setup&#x27;s symmetry says.</p>
