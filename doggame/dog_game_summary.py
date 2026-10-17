@@ -235,16 +235,66 @@ def inertia_equilibrium_table(rows):
     return table
 
 
+def mirror_p(top, bottom):
+    """Two-sided binomial test that the two mirror equilibria are equally likely (they are by symmetry)."""
+    from scipy.stats import binomtest
+    return binomtest(top, top + bottom).pvalue if top + bottom else float("nan")
+
+
 def selection_noise_table(rows):
-    """Where self-play ends in the shared-y setup for each initial exploration noise (separate layout, 10 seeds)."""
+    """Where self-play ends in the shared-y setup for each initial exploration noise (separate layout). The default
+    noise comes from this study when it has run there, otherwise from the `selection` study."""
     outcomes = ("red top, blue bottom", "red bottom, blue top", "both at y = 0.5", "other")
-    groups = [(-0.5, [r for r in study(rows, "selection") if r["key"]["architecture"] == "separate"])]
-    groups += [(s, [r for r in study(rows, "selection_noise") if r["key"]["log_std"] == s]) for s in (-2.0, -1.0, 0.0)]
-    table = [["Initial noise (std)"] + list(outcomes)]
+    noise = study(rows, "selection_noise")
+    default = [r for r in noise if r["key"]["log_std"] == -0.5] or [r for r in study(rows, "selection") if r["key"]["architecture"] == "separate"]
+    groups = [(-0.5, default)] + [(s, [r for r in noise if r["key"]["log_std"] == s]) for s in (-2.0, -1.0, 0.0)]
+    table = [["Initial noise (std)"] + list(outcomes) + ["p (mirror images equally likely)"]]
     for log_std, runs in sorted(groups):
         if runs:
             found = [selection_outcome(r["red"], r["blue"]) for r in runs]
-            table.append([f"{np.exp(log_std):.2f}" + (" (default)" if log_std == -0.5 else "")] + [f"{found.count(o)} of {len(runs)}" for o in outcomes])
+            table.append([f"{np.exp(log_std):.2f}" + (" (default)" if log_std == -0.5 else "")] + [f"{found.count(o)} of {len(runs)}" for o in outcomes]
+                         + [f"{mirror_p(found.count(outcomes[0]), found.count(outcomes[1])):.2f}"])
+    return table
+
+
+def selection_clip_table(rows):
+    """The default selection runs with and without clipping of actions and the dog: outcomes and red's final y."""
+    outcomes = ("red top, blue bottom", "red bottom, blue top", "both at y = 0.5", "other")
+    table = [["Actions and dog"] + list(outcomes) + ["Red's final y: quartiles"]]
+    clipped = [r for r in study(rows, "selection_noise") if r["key"]["log_std"] == -0.5]
+    for label, runs in (("clipped to the square", clipped), ("not clipped", study(rows, "selection_clip"))):
+        if runs:
+            found = [selection_outcome(r["red"], r["blue"]) for r in runs]
+            q = np.percentile([r["red"][1] for r in runs], [25, 50, 75])
+            table.append([label] + [f"{found.count(o)} of {len(runs)}" for o in outcomes] + [" / ".join(f"{v:.2f}" for v in q)])
+    return table
+
+
+def inertia_explicit_table(rows):
+    """Per setup and inertia: the share of dog positions where holding the one-shot actions fails, by the closed form
+    and in the dynamic program, and the explicit equilibrium's largest gap to the dynamic program (x, y)."""
+    runs = study(rows, "inertia_explicit")
+    w0s = sorted({r["key"]["w0"] for r in runs})
+    table = [["House setup"] + [f"w0 = {w}: hold fails, theory / DP; gap to DP" for w in w0s]]
+    for setup in sorted({r["key"]["setup"] for r in runs}):
+        row = [houses(setup)]
+        for w0 in w0s:
+            r = next(x for x in runs if x["key"]["setup"] == setup and x["key"]["w0"] == w0)
+            cell = lambda c: (f"{100 * r['theory'][c]:.0f}% / {100 * r['dp'][c]:.0f}%; " + (f"{r['gap'][c]:.2f}" if r["kind"][c] != "shared" else "shared"))
+            row.append(f"x {cell(0)}, y {cell(1)}")
+        table.append(row)
+    return table
+
+
+def inertia_random_table(rows):
+    """The explicit feedback equilibrium on random one-coordinate games, by the kind of one-shot equilibrium."""
+    runs = study(rows, "inertia_random")
+    table = [["One-shot equilibrium", "Games", "Explicit policy is an equilibrium (gain < 1e-9)", "Largest one-round gain", "Holding is Markov-perfect"]]
+    for kind in ("straddle", "interior", "shared"):
+        mine = [r for r in runs if r["kind"] == kind]
+        if mine:
+            table.append([kind, str(len(mine)), f"{sum(r['gain'] < 1e-9 for r in mine)} of {len(mine)}", f"{max(r['gain'] for r in mine):.1e}",
+                          f"{sum(r['holds'] for r in mine)} of {len(mine)}"])
     return table
 
 
@@ -430,7 +480,8 @@ if __name__ == "__main__":
                         ("walking capacity", walking_capacity_table(studies)), ("walking ppo inertia", walking_ppo_inertia_table(studies)),
                         ("walking hard long", walking_hard_long_table(studies)), ("inertia equilibrium", inertia_equilibrium_table(studies)),
                         ("selection noise", selection_noise_table(studies)), ("inertia dp", inertia_dp_table(studies)),
-                        ("markov potential", markov_potential_table(studies))):
+                        ("markov potential", markov_potential_table(studies)), ("selection clip", selection_clip_table(studies)),
+                        ("inertia explicit", inertia_explicit_table(studies)), ("inertia random", inertia_random_table(studies))):
         print(f"\n### {name}\n\n{markdown(table)}")
     print("\nconvergence counts:", convergence_counts(runs))
     print("inertia median distance:", inertia_distances(studies))
