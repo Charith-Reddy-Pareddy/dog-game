@@ -132,3 +132,8 @@ def test_the_dp_and_markov_potential_studies_define_their_checks():
 
 def test_the_many_houses_study_covers_two_to_1024_houses():
     assert [k["n"] for k, _ in studies.study_many_houses(range(5))] == [2 ** k for k in range(1, 11)]
+
+
+def test_the_feedback_learning_study_has_two_baselines_and_three_algorithms():
+    keys = [k for k, _ in studies.study_feedback_learning(range(5))]
+    assert [k["algorithm"] for k in keys[:2]] == ["explicit", "holding"] and len(keys) == 17
