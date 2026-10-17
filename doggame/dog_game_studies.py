@@ -26,6 +26,7 @@ to do only the second of four shards.
 - feedback_learning: whether self-play from random dog positions learns a feedback equilibrium with inertia
 - exact_play: noise-free gradient play on feedback policies, a table against a shared network
 - exact_play_many: the same with 3 and 5 players
+- soccer_exact_play: exact gradient play on the soccer game, a table against a network
 - vertex_selection: whether a largest-total-value equilibrium selection changes the feedback equilibrium
 - noisy_inertia: where the equilibrium switches when the dog gets a Gaussian shock, as the time step shrinks
 - inertia_explicit: the closed-form hold condition and explicit feedback equilibrium against the dynamic program
@@ -406,6 +407,19 @@ def study_exact_play_many(seeds):
                 yield dict(n=n, game=game, kind=kind), run
 
 
+def study_soccer_exact_play(seeds):
+    """A second game for exact gradient play (doggame.soccer_exact_play): the 7 x 5 soccer game, whose equilibrium is
+    pure in every state, with a table of logits against a network per player (2000 Adam steps)."""
+    from doggame.soccer import Soccer
+    from doggame.soccer_exact_play import play
+
+    for policy, seed in [("table", 0)] + [("network", s) for s in seeds]:
+        def run(policy=policy, seed=seed):
+            rows = play(Soccer(), policy, seed=seed)
+            return dict(curve=[list(r) for r in rows])
+        yield dict(policy=policy, seed=seed), run
+
+
 def study_feedback_learning(seeds):
     """Self-play from random dog positions on setup 3 with inertia 0.6: the learned policy's feedback exploitability
     (doggame.feedback_learning), next to Proposition 2's policy and holding the one-shot actions. Gaussian and Beta
@@ -690,7 +704,7 @@ def study_noise(seeds, resolution=9):
     yield dict(iterations="exact", seed=0), lambda: dict(spread=float(spread), gap=float(gap), support=int((exact_red > 1e-3).sum()), top=float(exact_red.max()))
 
 
-STUDIES = dict(exact_play_many=study_exact_play_many, many_targets=study_many_targets, target_random=study_target_random, cross_play=study_cross_play, vertex_selection=study_vertex_selection, walking_clip=study_walking_clip, walking_entropy=study_walking_entropy, pretraining_mechanism=study_pretraining_mechanism, noisy_inertia=study_noisy_inertia, exact_play=study_exact_play, feedback_learning=study_feedback_learning, many_houses=study_many_houses, selection_linear=study_selection_linear, selection_clip=study_selection_clip, inertia_explicit=study_inertia_explicit, inertia_random=study_inertia_random, selection_noise=study_selection_noise, inertia_dp=study_inertia_dp, markov_potential=study_markov_potential, algorithms=study_algorithms, walking=study_walking, ppo_variants=study_ppo_variants, ppo_long=study_ppo_long,
+STUDIES = dict(soccer_exact_play=study_soccer_exact_play, exact_play_many=study_exact_play_many, many_targets=study_many_targets, target_random=study_target_random, cross_play=study_cross_play, vertex_selection=study_vertex_selection, walking_clip=study_walking_clip, walking_entropy=study_walking_entropy, pretraining_mechanism=study_pretraining_mechanism, noisy_inertia=study_noisy_inertia, exact_play=study_exact_play, feedback_learning=study_feedback_learning, many_houses=study_many_houses, selection_linear=study_selection_linear, selection_clip=study_selection_clip, inertia_explicit=study_inertia_explicit, inertia_random=study_inertia_random, selection_noise=study_selection_noise, inertia_dp=study_inertia_dp, markov_potential=study_markov_potential, algorithms=study_algorithms, walking=study_walking, ppo_variants=study_ppo_variants, ppo_long=study_ppo_long,
                walking_settings=study_walking_settings, walking_houses=study_walking_houses, walking_inertia=study_walking_inertia,
                walking_equilibrium=study_walking_equilibrium, walking_capacity=study_walking_capacity, walking_ppo_inertia=study_walking_ppo_inertia,
                walking_hard_long=study_walking_hard_long, inertia_equilibrium=study_inertia_equilibrium, selection=study_selection, inertia=study_inertia, pretraining=study_pretraining,

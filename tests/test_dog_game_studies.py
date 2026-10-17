@@ -185,3 +185,8 @@ def test_the_many_targets_study_covers_three_five_and_eight_players():
 def test_the_many_player_exact_play_study_has_four_policies_per_game():
     keys = [k for k, _ in studies.study_exact_play_many(range(5))]
     assert len(keys) == 2 * 5 * 4 and {k["kind"] for k in keys} == {"holding", "target", "table", "network"}
+
+
+def test_the_soccer_exact_play_study_has_one_table_and_a_network_per_seed():
+    keys = [k for k, _ in studies.study_soccer_exact_play(range(5))]
+    assert keys[0] == dict(policy="table", seed=0) and len(keys) == 6
