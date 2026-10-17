@@ -465,6 +465,13 @@ At round 800, per seed:
   draws per N and discount 0.9. The 1 / (1 + f(d)) limit for the share without a pivot is
   a heuristic, checked only against these draws.
 
+## Learning the feedback equilibrium
+
+- The feedback-learning study scores the learned policy's mean actions, not its noisy
+  samples, on an 11 x 11 grid of dog positions with one-round deviations on a 21 x 21 grid
+  and 120 simulated rounds; a deviation between grid points could gain slightly more. It
+  uses one setup (3), one inertia (0.6), 3000 episodes and five seeds per algorithm.
+
 ## Settled points
 
 - **Which game for PG:** any one where the solver is correct and the comparison
