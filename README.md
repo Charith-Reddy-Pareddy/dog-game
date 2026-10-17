@@ -5,6 +5,7 @@
 **Live demo:** https://charith-reddy-pareddy.github.io/dog-game/
 **Research report:** [RESEARCH_REPORT.md](RESEARCH_REPORT.md) ([PDF](research_report.pdf), built from it)
 **Walking-game report:** [WALKING_GAME_REPORT.md](WALKING_GAME_REPORT.md) ([PDF](docs/walking_game_report.pdf)), policy gradient on the angle-radius game
+**Poster:** [docs/poster.pdf](docs/poster.pdf) (48 x 36 in, built from the results), abstract in [POSTER_ABSTRACT.md](POSTER_ABSTRACT.md)
 **Research questions:** [RESEARCH_QUESTIONS.md](RESEARCH_QUESTIONS.md), with the status of each
 **Results PDF:** [dog_game_results.pdf](dog_game_results.pdf) (convergence over seeds, the walking game and its paths)
 **Professor-facing update:** [PG_RESEARCH_UPDATE.md](PG_RESEARCH_UPDATE.md) ([PDF](docs/PG_RESEARCH_UPDATE.pdf))
@@ -228,6 +229,7 @@ python3 -m doggame.polar_action_study       # primary 90-run polar-action compar
 python3 -m doggame.polar_action_robustness  # 80-run cross-house follow-up
 python3 -m doggame.polar_action_report      # concise PG PDF, Markdown and graphs
 python3 -m doggame.research_report_pdf ASSUMPTIONS.md docs/ASSUMPTIONS.pdf
+python3 -m doggame.poster                # rebuild docs/poster.pdf from the saved results
 ```
 
 Each study appends one line per finished run to a file in `results/`, so a stopped
