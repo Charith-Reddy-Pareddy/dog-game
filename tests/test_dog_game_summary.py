@@ -1,4 +1,4 @@
-from doggame.dog_game_summary import (feedback_learning_table, many_houses_table, inertia_dp_table, inertia_explicit_table, inertia_random_table, mirror_p, selection_clip_table, markov_potential_table, selection_noise_table, algorithms_table, convergence_counts, markdown, noise_table, resolution_table,
+from doggame.dog_game_summary import (exact_play_table, feedback_learning_table, many_houses_table, inertia_dp_table, inertia_explicit_table, inertia_random_table, mirror_p, selection_clip_table, markov_potential_table, selection_noise_table, algorithms_table, convergence_counts, markdown, noise_table, resolution_table,
                                       selection_outcome, selection_table, walking_algorithms_table, walking_share_series, walking_table,
                                       ppo_epochs_table, ppo_long_table, ppo_walking_table, walking_equilibrium_table, walking_houses_table, walking_inertia_table,
                                       walking_settings_table)
@@ -219,3 +219,13 @@ def test_the_feedback_learning_table_puts_baselines_before_learners():
     table = feedback_learning_table(rows)
     assert table[1] == ["setup 3, w0 = 0.6", "hold the one-shot actions", "1", "0.0756", "0.0114"]
     assert table[2] == ["setup 3, w0 = 0.6", "A2C", "2", "0.0600 (0.0500 to 0.0700)", "0.0150"]
+
+
+def test_the_exact_play_table_lists_tables_before_networks():
+    key = lambda kind, squash, hidden, seed: dict(setup=2, w0=0.6, kind=kind, squash=squash, hidden=hidden, seed=seed)
+    rows = [run("exact_play", key("network", "sigmoid", 16, 0), gap_explicit=1.0, gap_holding=0.0, gain=0.0756),
+            run("exact_play", key("network", "sigmoid", 16, 1), gap_explicit=0.6, gap_holding=1.0, gain=0.03),
+            run("exact_play", key("table", "sigmoid", 16, 0), gap_explicit=0.015, gap_holding=1.0, gain=0.0007)]
+    table = exact_play_table(rows)
+    assert table[1] == ["setup 3 x, w0 = 0.6", "table, sigmoid", "1", "1 of 1", "0 of 1", "0.0007"]
+    assert table[2] == ["setup 3 x, w0 = 0.6", "network, 16 units", "2", "0 of 2", "1 of 2", "0.0528 (0.0300 to 0.0756)"]
