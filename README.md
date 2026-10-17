@@ -97,7 +97,13 @@ from the saved runs in `results/`:
   of the walking game, and the best deviation from walking straight there gains 0.13% to 4.7% of the reward.
 - **Under inertia, a coordinate-wise argument certifies** that the one-shot profile is optimal against any
   unilateral action sequence in all five tested house configurations when the opponent holds its action,
-  for every horizon and `w0` in [0, 1]. This does not solve the full feedback equilibrium; see Q19.
+  for every horizon and `w0` in [0, 1]. The exact feedback equilibrium, by
+  dynamic programming, plays the same actions on the equilibrium path but eases off at some dog
+  positions off it, so holding the one-shot actions everywhere is not Markov-perfect (Q19).
+- **The one-shot game is an exact potential game, the dynamic game is not a Markov potential game.**
+  The potential is flat along the shared-coordinate continuum, and the initial exploration noise flips
+  which mirror image self-play finds (Fisher p = 0.0014). With policies that react to the dog, 4-cycles of
+  unilateral changes sum to +1.85 to +7.90 instead of 0 (Q17, Q33).
 - **The hard walking setup at 900 episodes remains seed-sensitive.** A2C has 4/5 final seeds under the corner
   threshold, REINFORCE 2/5, and PPO 1/5. These exploratory results use five seeds per algorithm.
 - **The walking-game ranking holds on other house setups.** A2C is again the most reliable wherever
