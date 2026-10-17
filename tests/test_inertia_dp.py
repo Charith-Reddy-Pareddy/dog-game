@@ -43,3 +43,13 @@ def test_value_iteration_converges_and_values_are_nonpositive():
     part = solve_1d(0.9, 0.1, 0.5, 0.6, **SMALL)
 
     assert part["sweeps"] < 2000 and np.all(part["v_red"] <= 0) and np.all(part["v_blue"] <= 0)
+
+
+def test_a_noisy_dog_keeps_the_equilibrium_bang_bang_and_lowers_both_values():
+    from doggame.inertia_dp import solve_1d
+
+    calm = solve_1d(0.7, 0.6, 0.7, 0.9, discount=0.95, states=61, actions=11, tol=1e-8)
+    noisy = solve_1d(0.7, 0.6, 0.7, 0.9, discount=0.95, states=61, actions=11, tol=1e-8, noise=0.05)
+    for sol in (calm, noisy):
+        assert np.mean((sol["red"] > 0) & (sol["red"] < 1)) < 0.1 and np.mean((sol["blue"] > 0) & (sol["blue"] < 1)) < 0.1
+    assert noisy["v_red"].mean() < calm["v_red"].mean() and noisy["v_blue"].mean() < calm["v_blue"].mean()
