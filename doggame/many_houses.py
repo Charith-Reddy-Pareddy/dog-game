@@ -62,3 +62,54 @@ def mean_field_dog(cdf, tol=1e-12):
         mid = (low + high) / 2
         low, high = (mid, high) if mid < 1 - cdf(mid) else (low, mid)
     return (low + high) / 2
+
+
+def next_dog(x, targets, weights, w0):
+    """The next dog position (vectorized over x) when every player aims it at its own target: the round is the one-shot
+    game with the targets as houses, so in action units the dog lands at the generalized median
+    clip(max_k min(W_k, u_(k)), 0, 1), with u the shifted targets (t - w0 x) / (1 - w0) sorted downward and W their
+    cumulative weights."""
+    order = np.argsort(-np.asarray(targets, dtype=float))
+    cumulative = np.cumsum(np.asarray(weights, dtype=float)[order])
+    shifted = (np.asarray(targets, dtype=float)[order][None, :] - w0 * np.asarray(x, dtype=float)[:, None]) / (1 - w0)
+    return w0 * np.asarray(x, dtype=float) + (1 - w0) * np.clip(np.max(np.minimum(cumulative[None, :], shifted), 1), 0, 1)
+
+
+def _values(x, targets, houses, weights, w0, discount, rounds):
+    """Each player's discounted payoff from dog positions x when everyone aims at the targets."""
+    x, total = np.asarray(x, dtype=float), np.zeros((len(houses), len(x)))
+    for k in range(rounds):
+        x = next_dog(x, targets, weights, w0)
+        total -= discount ** k * (x[None, :] - np.asarray(houses, dtype=float)[:, None]) ** 2
+    return total
+
+
+def target_equilibrium(houses, weights, w0, discount=0.9, grid=801, rounds=200, tol=1e-9, max_iter=200):
+    """Targets at which aiming the dog is a feedback equilibrium of the many-house game with inertia, by damped
+    fixed-point iteration: each target is where its player's one-round objective peaks under the current targets.
+    Starts from the two-player formula d* + k (h - d*). Returns (targets, iterations)."""
+    houses = np.asarray(houses, dtype=float)
+    _, d_star, _ = one_shot(houses, weights)
+    targets = d_star + (1 - discount * w0 ** 2) / (1 - discount * w0) * (houses - d_star)
+    zs = np.linspace(0, 1, grid)
+    for it in range(1, max_iter + 1):
+        objective = -(zs[None, :] - houses[:, None]) ** 2 + discount * _values(zs, targets, houses, weights, w0, discount, rounds)
+        new = zs[objective.argmax(1)]
+        if np.abs(new - targets).max() < tol:
+            return new, it
+        targets = 0.5 * targets + 0.5 * new
+    return targets, max_iter
+
+
+def deviation_gain(targets, houses, weights, w0, discount=0.9, states=21, grid=201, rounds=200):
+    """The most any player gains at any of `states` dog positions by changing its action for one round and then
+    aiming at the targets again (others aiming throughout)."""
+    houses, weights, best = np.asarray(houses, dtype=float), np.asarray(weights, dtype=float), 0.0
+    for x in np.linspace(0, 1, states):
+        actions = one_shot((np.asarray(targets) - w0 * x) / (1 - w0), weights)[0]
+        for i in range(len(houses)):
+            own = np.append(np.linspace(0, 1, grid), actions[i])
+            z = w0 * x + (1 - w0) * (actions @ weights - weights[i] * actions[i] + weights[i] * own)
+            total = -(z - houses[i]) ** 2 + discount * _values(z, targets, houses, weights, w0, discount, rounds)[i]
+            best = max(best, float(total[:-1].max() - total[-1]))
+    return best
