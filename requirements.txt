@@ -4,3 +4,4 @@ torch>=2.0
 scipy>=1.10
 nashpy>=0.0.35
 reportlab>=4.0
+matplotlib>=3.7
