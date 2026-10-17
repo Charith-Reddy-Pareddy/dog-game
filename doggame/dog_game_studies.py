@@ -19,6 +19,7 @@ to do only the second of four shards.
 - inertia_equilibrium: is the one-shot Nash profile an equilibrium of the main game with dog inertia?
 - selection_clip: the selection study with actions and the dog left unclipped
 - selection_linear: the same with an unbounded linear policy mean in y
+- many_houses: the one-coordinate game with N houses, its one-shot dog and how much inertia it tolerates
 - inertia_explicit: the closed-form hold condition and explicit feedback equilibrium against the dynamic program
 - inertia_random: the explicit feedback equilibrium on random one-coordinate games
 - walking_equilibrium: is walking to the one-shot corners an equilibrium of the walking game?
@@ -304,6 +305,23 @@ def study_markov_potential(seeds):
                    lambda w0=w0, red_alt=red_alt, blue_alt=blue_alt: dict(cycle=cycle_sum(red, red_alt, blue, blue_alt, houses, w, w0, start)))
 
 
+def study_many_houses(seeds):
+    """The one-coordinate game with N houses drawn from Beta(2, 5) and equal weights, 200 draws per N: where the
+    one-shot dog lands, whether a pivot ends inside the box, and the largest inertia (discount 0.9) at which holding
+    the one-shot actions stays Markov-perfect (doggame.many_houses)."""
+    from doggame.many_houses import critical_inertia, one_shot
+
+    for n in (2, 4, 8, 16, 32, 64, 128, 256, 512, 1024):
+        def run(n=n):
+            rng, out = np.random.default_rng(n), dict(dog=[], pivot=[], critical=[])
+            for _ in range(200):
+                houses, weights = rng.beta(2, 5, n), np.full(n, 1 / n)
+                _, d_star, pivot = one_shot(houses, weights)
+                out["dog"].append(d_star), out["pivot"].append(pivot is not None), out["critical"].append(critical_inertia(houses, weights))
+            return out
+        yield dict(n=n), run
+
+
 class LinearY(TwoPlayerPolicy):
     """Sigmoid means in x as usual, but an unbounded linear mean in y (0.5 plus the network's output)."""
 
@@ -460,7 +478,7 @@ def study_noise(seeds, resolution=9):
     yield dict(iterations="exact", seed=0), lambda: dict(spread=float(spread), gap=float(gap), support=int((exact_red > 1e-3).sum()), top=float(exact_red.max()))
 
 
-STUDIES = dict(selection_linear=study_selection_linear, selection_clip=study_selection_clip, inertia_explicit=study_inertia_explicit, inertia_random=study_inertia_random, selection_noise=study_selection_noise, inertia_dp=study_inertia_dp, markov_potential=study_markov_potential, algorithms=study_algorithms, walking=study_walking, ppo_variants=study_ppo_variants, ppo_long=study_ppo_long,
+STUDIES = dict(many_houses=study_many_houses, selection_linear=study_selection_linear, selection_clip=study_selection_clip, inertia_explicit=study_inertia_explicit, inertia_random=study_inertia_random, selection_noise=study_selection_noise, inertia_dp=study_inertia_dp, markov_potential=study_markov_potential, algorithms=study_algorithms, walking=study_walking, ppo_variants=study_ppo_variants, ppo_long=study_ppo_long,
                walking_settings=study_walking_settings, walking_houses=study_walking_houses, walking_inertia=study_walking_inertia,
                walking_equilibrium=study_walking_equilibrium, walking_capacity=study_walking_capacity, walking_ppo_inertia=study_walking_ppo_inertia,
                walking_hard_long=study_walking_hard_long, inertia_equilibrium=study_inertia_equilibrium, selection=study_selection, inertia=study_inertia, pretraining=study_pretraining,
