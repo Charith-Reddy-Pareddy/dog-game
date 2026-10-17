@@ -168,3 +168,7 @@ def test_the_walking_entropy_study_tries_four_coefficients():
 
 def test_the_walking_clip_study_tries_two_tighter_clips():
     assert sorted({k["clip"] for k, _ in studies.study_walking_clip(range(5))}) == [0.05, 0.1]
+
+
+def test_the_cross_play_study_trains_every_layout_on_setup_1():
+    assert {k["architecture"] for k, _ in studies.study_cross_play(range(5))} == {"separate", "shared", "partial"}

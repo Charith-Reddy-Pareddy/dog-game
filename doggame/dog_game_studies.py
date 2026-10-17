@@ -30,6 +30,7 @@ to do only the second of four shards.
 - inertia_random: the explicit feedback equilibrium on random one-coordinate games
 - walking_equilibrium: is walking to the one-shot corners an equilibrium of the walking game?
 - selection:    which equilibrium self-play finds when the houses share a coordinate
+- cross_play:   setup 1 policies per layout, for pairing players from independently trained runs
 - inertia:      does giving the dog momentum (w0) change where training ends up
 - pretraining:  does starting from a policy trained on another setup help
 - pretraining_mechanism: whether resetting exploration or de-saturating the policy removes the harm of pre-training
@@ -484,6 +485,19 @@ def study_inertia_random(seeds):
         yield dict(game=game), run
 
 
+def study_cross_play(seeds):
+    """Self-play policies on setup 1 (a unique equilibrium) for each layout, kept so that red from one run can be
+    paired with blue from another; the shared-y setup's runs are in the `selection` study."""
+    for architecture in ("separate", "shared", "partial"):
+        for seed in seeds:
+            def run(architecture=architecture, seed=seed):
+                env = make_env(DEFAULT_CONFIGS[0])
+                policy = TwoPlayerPolicy(env.domain, architecture=architecture, seed=seed)
+                train_self_play(env, policy, episodes=EPISODES, seed=seed)
+                return score(policy, env)
+            yield dict(architecture=architecture, seed=seed), run
+
+
 def study_selection(seeds):
     for architecture in ("separate", "shared", "partial"):
         for seed in range(10):  # equilibrium selection is a question about frequencies, so use more seeds
@@ -614,7 +628,7 @@ def study_noise(seeds, resolution=9):
     yield dict(iterations="exact", seed=0), lambda: dict(spread=float(spread), gap=float(gap), support=int((exact_red > 1e-3).sum()), top=float(exact_red.max()))
 
 
-STUDIES = dict(vertex_selection=study_vertex_selection, walking_clip=study_walking_clip, walking_entropy=study_walking_entropy, pretraining_mechanism=study_pretraining_mechanism, noisy_inertia=study_noisy_inertia, exact_play=study_exact_play, feedback_learning=study_feedback_learning, many_houses=study_many_houses, selection_linear=study_selection_linear, selection_clip=study_selection_clip, inertia_explicit=study_inertia_explicit, inertia_random=study_inertia_random, selection_noise=study_selection_noise, inertia_dp=study_inertia_dp, markov_potential=study_markov_potential, algorithms=study_algorithms, walking=study_walking, ppo_variants=study_ppo_variants, ppo_long=study_ppo_long,
+STUDIES = dict(cross_play=study_cross_play, vertex_selection=study_vertex_selection, walking_clip=study_walking_clip, walking_entropy=study_walking_entropy, pretraining_mechanism=study_pretraining_mechanism, noisy_inertia=study_noisy_inertia, exact_play=study_exact_play, feedback_learning=study_feedback_learning, many_houses=study_many_houses, selection_linear=study_selection_linear, selection_clip=study_selection_clip, inertia_explicit=study_inertia_explicit, inertia_random=study_inertia_random, selection_noise=study_selection_noise, inertia_dp=study_inertia_dp, markov_potential=study_markov_potential, algorithms=study_algorithms, walking=study_walking, ppo_variants=study_ppo_variants, ppo_long=study_ppo_long,
                walking_settings=study_walking_settings, walking_houses=study_walking_houses, walking_inertia=study_walking_inertia,
                walking_equilibrium=study_walking_equilibrium, walking_capacity=study_walking_capacity, walking_ppo_inertia=study_walking_ppo_inertia,
                walking_hard_long=study_walking_hard_long, inertia_equilibrium=study_inertia_equilibrium, selection=study_selection, inertia=study_inertia, pretraining=study_pretraining,
