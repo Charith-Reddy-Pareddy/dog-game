@@ -247,6 +247,11 @@ with the numbers and the caveats, are in [RESEARCH_REPORT.md](RESEARCH_REPORT.md
     rule. With inertia, holding the one-shot actions is Markov-perfect only when no pivot player is
     inside the box (about one draw in three) and the inertia is below roughly 0.35/N. The
     many-house feedback equilibrium and what learners find are open.*
+37. **Does policy-gradient self-play learn a feedback equilibrium of the game with inertia?**
+    *Status: answered for setup 3 at w0 = 0.6: no. Starting every episode from a random dog
+    position, A2C (5 of 5 seeds) and PPO (4 of 5) learn to hold the one-shot actions at every
+    position, whose one-round deviation gain off the path is 0.0756, and REINFORCE ends further
+    away. The policies' sigmoid outputs are saturated at the box's edges.*
 
 ## Where each question is answered in this repository
 
@@ -264,6 +269,7 @@ with the numbers and the caveats, are in [RESEARCH_REPORT.md](RESEARCH_REPORT.md
 | 19, 34 | studies `inertia_dp` (15 solves), `inertia_explicit` (15) and `inertia_random` (200 games), `doggame/inertia_dp.py`, `doggame/inertia_mpe.py`, `doggame/inertia_theory.py` |
 | 33 | study `markov_potential` (8 cycles), `doggame/markov_potential.py` |
 | 36 | study `many_houses` (2,000 draws), `doggame/many_houses.py` |
+| 37 | study `feedback_learning` (17 rows), `doggame/feedback_learning.py` |
 | 26 | study `walking` (15 runs) |
 | walking game, all questions | [WALKING_GAME_REPORT.md](WALKING_GAME_REPORT.md) ([PDF](docs/walking_game_report.pdf)) |
 | 24, 27, 28 | study `ppo_variants` (65 runs) |
