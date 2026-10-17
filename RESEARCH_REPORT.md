@@ -649,7 +649,12 @@ The statuses are the same as in [RESEARCH_QUESTIONS.md](RESEARCH_QUESTIONS.md).
 
 **Q6. How does resolution trade off against quality?** *Answered.* Section 5.7: quality is exact from 5 x 5, cost grows steeply, and the equilibrium is always a single action pair. A function approximator becomes attractive when the action set grows past a few hundred actions, which is where the exact solve already takes seconds to minutes.
 
-**Q7. Which network architecture?** *Partly answered.* All three converge (24, 25 and 25 of 25). Cross-play between independently trained layouts is untested.
+**Q7. Which network architecture?** *Answered for the dog game.* All three converge (24, 25 and 25 of 25), and cross-play between independently trained layouts works where the equilibrium is unique; where the houses share a coordinate it fails exactly for pairs from runs that picked different mirror images (Section 5.3):
+
+| Setup | Runs | Own pairs: median exploitability | Cross pairs: median | Cross pairs above 0.004 | Cross pairs: largest |
+|---|---|---|---|---|---|
+| setup 1 (unique equilibrium) | 15 | 0.00023 | 0.00032 | 0 of 150 | 0.000 |
+| shared y (mirror equilibria) | 30 | 0.00010 | 0.00019 | 216 of 600 | 0.249 |
 
 **Q8. When is the equilibrium unique?** *Answered.* When the houses differ in every coordinate; each shared coordinate opens a continuum (Section 2.2, confirmed by Section 5.3).
 
