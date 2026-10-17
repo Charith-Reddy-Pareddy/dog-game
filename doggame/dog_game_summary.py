@@ -267,6 +267,19 @@ def mirror_p(top, bottom):
     return binomtest(top, top + bottom).pvalue if top + bottom else float("nan")
 
 
+def target_random_table(rows):
+    """On the same 200 random one-coordinate games: how often Proposition 2's policy and the target fixed point are
+    feedback equilibria (largest one-round gain below 1e-6)."""
+    explicit, fixed = study(rows, "inertia_random"), study(rows, "target_random")
+    table = [["One-shot equilibrium", "Games", "Proposition 2's policy", "Target fixed point", "Fixed point: largest gain", "Fixed point: iterations (max)"]]
+    for kind in ("straddle", "interior"):
+        a, b = [r for r in explicit if r["kind"] == kind], [r for r in fixed if r["kind"] == kind]
+        if b:
+            table.append([kind, str(len(b)), f"{sum(r['gain'] < 1e-6 for r in a)} of {len(a)}" if a else "-", f"{sum(r['gain'] < 1e-6 for r in b)} of {len(b)}",
+                          f"{max(r['gain'] for r in b):.1e}", str(max(r["iterations"] for r in b))])
+    return table
+
+
 def selection_noise_table(rows):
     """Where self-play ends in the shared-y setup for each initial exploration noise (separate layout). The default
     noise comes from this study when it has run there, otherwise from the `selection` study."""
@@ -620,7 +633,7 @@ if __name__ == "__main__":
                         ("walking hard long", walking_hard_long_table(studies)), ("inertia equilibrium", inertia_equilibrium_table(studies)),
                         ("selection noise", selection_noise_table(studies)), ("inertia dp", inertia_dp_table(studies)),
                         ("markov potential", markov_potential_table(studies)), ("selection clip", selection_clip_table(studies)),
-                        ("inertia explicit", inertia_explicit_table(studies)), ("inertia random", inertia_random_table(studies)), ("many houses", many_houses_table(studies)), ("feedback learning", feedback_learning_table(studies)), ("exact play", exact_play_table(studies)), ("noisy inertia", noisy_inertia_table(studies)), ("pretraining mechanism", pretraining_mechanism_table(studies)), ("walking entropy", walking_entropy_table(studies)), ("walking clip", walking_clip_table(studies)), ("vertex selection", vertex_selection_table(studies)), ("cross play", cross_play_table(studies))):
+                        ("inertia explicit", inertia_explicit_table(studies)), ("inertia random", inertia_random_table(studies)), ("many houses", many_houses_table(studies)), ("feedback learning", feedback_learning_table(studies)), ("exact play", exact_play_table(studies)), ("noisy inertia", noisy_inertia_table(studies)), ("pretraining mechanism", pretraining_mechanism_table(studies)), ("walking entropy", walking_entropy_table(studies)), ("walking clip", walking_clip_table(studies)), ("vertex selection", vertex_selection_table(studies)), ("cross play", cross_play_table(studies)), ("target random", target_random_table(studies))):
         print(f"\n### {name}\n\n{markdown(table)}")
     print("\nconvergence counts:", convergence_counts(runs))
     print("inertia median distance:", inertia_distances(studies))
