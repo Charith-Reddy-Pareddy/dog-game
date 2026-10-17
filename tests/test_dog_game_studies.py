@@ -160,3 +160,7 @@ def test_desaturating_keeps_the_corners_but_caps_the_pre_sigmoid_output():
         red, blue = policy.network(torch.tensor([[0.5, 0.5]]))
     assert red.max() <= 2.0 + 1e-6 and red.min() > 0 and blue.max() < 0 and blue.min() >= -2.0 - 1e-6
     assert len([k for k, _ in studies.study_pretraining_mechanism(range(5))]) == 50
+
+
+def test_the_walking_entropy_study_tries_four_coefficients():
+    assert sorted({k["entropy"] for k, _ in studies.study_walking_entropy(range(5))}) == [0.0, 0.01, 0.03, 0.1]
