@@ -217,4 +217,5 @@ def test_the_feedback_learning_table_puts_baselines_before_learners():
             run("feedback_learning", dict(algorithm="a2c", seed=0), max_gain=0.07, mean_gain=0.01),
             run("feedback_learning", dict(algorithm="a2c", seed=1), max_gain=0.05, mean_gain=0.02)]
     table = feedback_learning_table(rows)
-    assert table[1] == ["hold the one-shot actions", "1", "0.0756", "0.0114"] and table[2] == ["A2C", "2", "0.0600 (0.0500 to 0.0700)", "0.0150"]
+    assert table[1] == ["setup 3, w0 = 0.6", "hold the one-shot actions", "1", "0.0756", "0.0114"]
+    assert table[2] == ["setup 3, w0 = 0.6", "A2C", "2", "0.0600 (0.0500 to 0.0700)", "0.0150"]
