@@ -211,8 +211,11 @@ with the numbers and the caveats, are in [RESEARCH_REPORT.md](RESEARCH_REPORT.md
     generalization.*
 31. **Does an entropy bonus or a larger network change PPO's instability on the walking game?**
     A 64-unit network was tried with one and four PPO epochs; results differed
-    substantially across those settings and are based on five seeds. Entropy
-    bonus was not tested. *Status: partly answered for network capacity.*
+    substantially across those settings and are based on five seeds. An entropy
+    bonus of 0.03 lowers default PPO's mean distance after 900 episodes from 0.67 to 0.06
+    but leaves 3 of 5 seeds at the corners, as without it; 0.1 is worse.
+    *Status: answered for these settings: neither a larger network nor an entropy bonus
+    makes default PPO reliable (five seeds per setting).*
 
 32. **Does a polar absolute-action policy improve policy-gradient learning on
     the original dog game?** The angle is von Mises-distributed and the radius
@@ -296,6 +299,6 @@ with the numbers and the caveats, are in [RESEARCH_REPORT.md](RESEARCH_REPORT.md
 | walking game | `results/dog_game_runs.jsonl`, `results/dog_game_trajectories.json` |
 | 32 | `docs/POLAR_ACTION_PROTOCOL.md`, `docs/POLAR_ACTION_ROBUSTNESS_PROTOCOL.md`, `doggame/polar_action_study.py`, `doggame/polar_action_robustness.py`, `results/polar_action_pg.jsonl`, `results/polar_action_pg_robustness.jsonl` |
 
-Questions 11, 13, 14 and 27 are open, and 7, 12, 15, 25, 30, 31, 32, 34, 35 and 36 are partly answered. The studies are in
+Questions 11, 13, 14 and 27 are open, and 7, 12, 15, 25, 30, 32, 34, 35 and 36 are partly answered. The studies are in
 [`doggame/dog_game_studies.py`](doggame/dog_game_studies.py) and the tables are
 produced by [`doggame/dog_game_summary.py`](doggame/dog_game_summary.py).
