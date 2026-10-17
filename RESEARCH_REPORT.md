@@ -403,6 +403,17 @@ The standard deviations of the final distances are 0.628, 0.205 and 0.775, respe
 
 - **A moderate bonus helps on average but does not make PPO reliable.** At 0.03 the mean distance after 900 episodes falls from 0.67 to 0.06 and the late checkpoints at the corners rise from 50 to 66 of 95, but still only 3 of 5 seeds end at the corners, as without the bonus; a large bonus (0.1) is worse. One-epoch PPO (77 of 95, 5 of 5) and A2C (95 of 95, 5 of 5) remain more reliable, which again points at the reuse of each episode.
 
+**A tighter clipping range.** If four epochs on one 15-step episode move the policy too far, limiting each update's step should help. PPO with four epochs and a tighter clip, 900 episodes, five seeds per setting:
+
+| PPO setting | Before training | At 300 | At 600 | At 900 | Late checkpoints at the corners (from 450) | Seeds at the corners at the end |
+|---|---|---|---|---|---|---|
+| 4 epochs, clip 0.2 (default) | 1.49 | 0.371 | 0.499 | 0.669 | 50 of 95 | 3 of 5 |
+| 4 epochs, clip 0.1 | 1.49 | 0.416 | 0.326 | 0.372 | 60 of 95 | 3 of 5 |
+| 4 epochs, clip 0.05 | 1.49 | 0.217 | 0.160 | 0.046 | 80 of 95 | 4 of 5 |
+| 1 epoch, clip 0.2 | 1.49 | 0.123 | 0.033 | 0.007 | 77 of 95 | 5 of 5 |
+
+- **Tighter clipping steadies PPO step by step.** With clip 0.05 the mean distance after 900 episodes is 0.046 (0.669 at the default 0.2), 80 of 95 late checkpoints are at the corners and 4 of 5 seeds end there, close to one-epoch PPO. Together with the epoch and learning-rate results, this supports the explanation that PPO is unstable here because reusing each short episode for several epochs moves the policy too far per update; it rests on five seeds per setting.
+
 ### 5.17 Relation to prior work and claims boundary
 
 The static, no-inertia dog game is a bounded, two-player instance of the affine-receiver squared-loss structure in the Battling Influencers Game (BIG). BIG already proves the potential-game structure and characterizes pure equilibria; this repository does not claim that basic equilibrium structure as new. The repo's contribution is an executable empirical and verification study of policy-gradient and Nash-Q methods on this tractable game, with explicitly modeled inertia and movement-constrained variants. These are exploratory extensions, not evidence of a new general algorithm or a top-conference contribution. The dynamic results (the feedback equilibrium with inertia and the Markov-potential counterexample) are, as far as the literature checked here goes, not reported for this game, but they are instances of known phenomena rather than new theory. See the references in Section 9.
@@ -660,7 +671,7 @@ The statuses are the same as in [RESEARCH_QUESTIONS.md](RESEARCH_QUESTIONS.md).
 
 **Q30. Do the walking-game findings hold on other house setups and with inertia?** *Partly answered.* A2C stays the most reliable where learning works, one setup is much harder, and inertia slows learning. New five-seed PPO inertia results extend, but do not resolve, generalization (Sections 5.13 and 5.16). **Q31** is partly answered for network capacity; entropy remains untested.
 
-**Q27. Why is PPO unstable on the walking game?** *Open on the mechanism.* A smaller learning rate does not help and fewer epochs do; default PPO's failures persist for two seeds in 900 episodes (Sections 5.11 and 5.12).
+**Q27. Why is PPO unstable on the walking game?** *Answered for these settings.* Reusing each short episode for several epochs moves the policy too far per update: fewer epochs and a tighter clipping range both steady it (clip 0.05 brings 4 of 5 seeds to the corners after 900 episodes, against 3 of 5 at the default), while a smaller learning rate and an entropy bonus do not (Section 5.16); five seeds per setting.
 
 **Q28-Q29.** *Answered for the settings tried.* One-epoch PPO reaches the corners in 4/5 seeds after 300 and 5/5 after 900 episodes, but stays slower than A2C; a smaller learning rate does not help; default PPO does not settle with more training (Sections 5.11 and 5.12). The smaller-learning-rate settings were not run longer.
 
