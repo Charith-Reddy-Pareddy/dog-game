@@ -268,7 +268,7 @@ with the numbers and the caveats, are in [RESEARCH_REPORT.md](RESEARCH_REPORT.md
 |---|---|
 | 1, 2, 7, 8 | `results/dog_game_runs.jsonl` (75 REINFORCE runs), `doggame/experiments.py` |
 | 1, 2, 16 | `results/dog_game_studies.jsonl`, study `algorithms` (75 runs), `doggame/train_ac.py` |
-| 3, 20 | study `pretraining` (15 runs), and `pretraining_mechanism` (50 runs) |
+| 3, 20 | studies `pretraining` (15 runs) and `pretraining_mechanism` (50 runs) |
 | 4, 17 | studies `selection` (30 runs), `selection_noise` (200), `selection_clip` (50) and `selection_linear` (50), `doggame/potential.py` |
 | 5, 21 | study `stage_solver` (90 runs) |
 | 6, 22 | study `resolution` (25 games) |
