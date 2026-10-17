@@ -411,6 +411,24 @@ def many_targets_table(rows):
     return table
 
 
+def exact_play_many_table(rows):
+    """Exact gradient play with 3 and 5 players: the largest one-round deviation gain of a table of actions and of a
+    small network per player, next to holding the one-shot actions and the target-form equilibrium (five games each)."""
+    runs = study(rows, "exact_play_many")
+    table = [["Players", "Policy", "Games", "Largest one-round gain: median (range)", "Below holding's gain in"]]
+    labels = dict(target="target-form equilibrium", holding="hold the one-shot actions", table="exact play, table", network="exact play, network")
+    for n in sorted({r["key"]["n"] for r in runs}):
+        hold = {r["key"]["game"]: r["gain"] for r in runs if r["key"]["n"] == n and r["key"]["kind"] == "holding"}
+        for kind, label in labels.items():
+            mine = [r for r in runs if r["key"]["n"] == n and r["key"]["kind"] == kind]
+            if mine:
+                gains = [r["gain"] for r in mine]
+                below = sum(r["gain"] < 0.5 * hold.get(r["key"]["game"], 0) for r in mine)
+                table.append([str(n), label, str(len(mine)), f"{np.median(gains):.4f} ({min(gains):.4f} to {max(gains):.4f})",
+                              "-" if kind == "holding" else f"{below} of {len(mine)} (by half or more)"])
+    return table
+
+
 def feedback_learning_table(rows):
     """Feedback exploitability (largest and mean one-round gain over dog positions) of policies learned from random
     starts, next to Proposition 2's policy and holding the one-shot actions."""
@@ -647,7 +665,7 @@ if __name__ == "__main__":
                         ("walking hard long", walking_hard_long_table(studies)), ("inertia equilibrium", inertia_equilibrium_table(studies)),
                         ("selection noise", selection_noise_table(studies)), ("inertia dp", inertia_dp_table(studies)),
                         ("markov potential", markov_potential_table(studies)), ("selection clip", selection_clip_table(studies)),
-                        ("inertia explicit", inertia_explicit_table(studies)), ("inertia random", inertia_random_table(studies)), ("many houses", many_houses_table(studies)), ("feedback learning", feedback_learning_table(studies)), ("exact play", exact_play_table(studies)), ("noisy inertia", noisy_inertia_table(studies)), ("pretraining mechanism", pretraining_mechanism_table(studies)), ("walking entropy", walking_entropy_table(studies)), ("walking clip", walking_clip_table(studies)), ("vertex selection", vertex_selection_table(studies)), ("cross play", cross_play_table(studies)), ("target random", target_random_table(studies)), ("many targets", many_targets_table(studies))):
+                        ("inertia explicit", inertia_explicit_table(studies)), ("inertia random", inertia_random_table(studies)), ("many houses", many_houses_table(studies)), ("feedback learning", feedback_learning_table(studies)), ("exact play", exact_play_table(studies)), ("noisy inertia", noisy_inertia_table(studies)), ("pretraining mechanism", pretraining_mechanism_table(studies)), ("walking entropy", walking_entropy_table(studies)), ("walking clip", walking_clip_table(studies)), ("vertex selection", vertex_selection_table(studies)), ("cross play", cross_play_table(studies)), ("target random", target_random_table(studies)), ("many targets", many_targets_table(studies)), ("exact play many", exact_play_many_table(studies))):
         print(f"\n### {name}\n\n{markdown(table)}")
     print("\nconvergence counts:", convergence_counts(runs))
     print("inertia median distance:", inertia_distances(studies))
