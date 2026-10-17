@@ -11,6 +11,7 @@ to do only the second of four shards.
 - ppo_variants: PPO with fewer epochs or a smaller learning rate, on both games
 - ppo_long:     the PPO settings trained three times longer on the walking game
 - walking_entropy: default PPO on the walking game with an entropy bonus
+- walking_clip: PPO on the walking game with a tighter clipping range
 - walking_settings: the walking game with a shorter or longer step and a lower or higher discount
 - walking_houses: the three algorithms on three other house setups
 - walking_inertia: A2C on the walking game with dog inertia
@@ -175,6 +176,14 @@ def study_walking_entropy(seeds):
         for seed in seeds:
             yield (dict(entropy=coefficient, seed=seed),
                    lambda coefficient=coefficient, seed=seed: walking_run("ppo", seed, episodes=900, every=25, entropy=coefficient))
+
+
+def study_walking_clip(seeds):
+    """Is PPO unstable on the walking game because four epochs on one episode move the policy too far? A tighter
+    clipping range limits each update's step; 900 episodes, four epochs (the default clip, 0.2, is in `ppo_long`)."""
+    for clip in (0.05, 0.1):
+        for seed in seeds:
+            yield dict(clip=clip, seed=seed), lambda clip=clip, seed=seed: walking_run("ppo", seed, episodes=900, every=25, clip=clip)
 
 
 def study_walking_settings(seeds):
@@ -589,7 +598,7 @@ def study_noise(seeds, resolution=9):
     yield dict(iterations="exact", seed=0), lambda: dict(spread=float(spread), gap=float(gap), support=int((exact_red > 1e-3).sum()), top=float(exact_red.max()))
 
 
-STUDIES = dict(walking_entropy=study_walking_entropy, pretraining_mechanism=study_pretraining_mechanism, noisy_inertia=study_noisy_inertia, exact_play=study_exact_play, feedback_learning=study_feedback_learning, many_houses=study_many_houses, selection_linear=study_selection_linear, selection_clip=study_selection_clip, inertia_explicit=study_inertia_explicit, inertia_random=study_inertia_random, selection_noise=study_selection_noise, inertia_dp=study_inertia_dp, markov_potential=study_markov_potential, algorithms=study_algorithms, walking=study_walking, ppo_variants=study_ppo_variants, ppo_long=study_ppo_long,
+STUDIES = dict(walking_clip=study_walking_clip, walking_entropy=study_walking_entropy, pretraining_mechanism=study_pretraining_mechanism, noisy_inertia=study_noisy_inertia, exact_play=study_exact_play, feedback_learning=study_feedback_learning, many_houses=study_many_houses, selection_linear=study_selection_linear, selection_clip=study_selection_clip, inertia_explicit=study_inertia_explicit, inertia_random=study_inertia_random, selection_noise=study_selection_noise, inertia_dp=study_inertia_dp, markov_potential=study_markov_potential, algorithms=study_algorithms, walking=study_walking, ppo_variants=study_ppo_variants, ppo_long=study_ppo_long,
                walking_settings=study_walking_settings, walking_houses=study_walking_houses, walking_inertia=study_walking_inertia,
                walking_equilibrium=study_walking_equilibrium, walking_capacity=study_walking_capacity, walking_ppo_inertia=study_walking_ppo_inertia,
                walking_hard_long=study_walking_hard_long, inertia_equilibrium=study_inertia_equilibrium, selection=study_selection, inertia=study_inertia, pretraining=study_pretraining,

@@ -164,3 +164,7 @@ def test_desaturating_keeps_the_corners_but_caps_the_pre_sigmoid_output():
 
 def test_the_walking_entropy_study_tries_four_coefficients():
     assert sorted({k["entropy"] for k, _ in studies.study_walking_entropy(range(5))}) == [0.0, 0.01, 0.03, 0.1]
+
+
+def test_the_walking_clip_study_tries_two_tighter_clips():
+    assert sorted({k["clip"] for k, _ in studies.study_walking_clip(range(5))}) == [0.05, 0.1]
