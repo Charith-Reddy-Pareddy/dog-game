@@ -558,6 +558,35 @@ Section 5.20 gives a feedback equilibrium that differs from the one-shot actions
   Exact gradient play reaches Proposition 2's equilibrium with a table in every case, and with a shared network in none of 20 runs: the networks end at holding or learn only one player's off-path easing. A plausible mechanism, not tested: a shared network carries "push to the edge" from the many positions where it is right to the few where easing is right, saturating them before their own gradient arrives, which a table cannot do.
 - **Consequence.** Low exploitability on the equilibrium path, which the earlier sections measure, does not show that a learned policy is a feedback equilibrium of the dynamic game.
 
+### 5.23 Continuous time and a noisy dog
+
+Shrink the time step: with step `dt`, inertia `w0 = 1 - dt` (the dog moves a fraction `dt` toward the players' average) and discount `exp(-r dt)`, the dog follows `dx/dt = w a_red + (1 - w) a_blue - x` in the limit. Then `k -> (r + 2)/(r + 1)` and `rho -> (r + 1)/(r + 2)` (`continuous_limit` in `doggame/inertia_theory.py`), so:
+
+- **Holding the one-shot actions is a feedback equilibrium in continuous time iff every edge player's slack is at least (1 + r)/(2 + r)**, which is 1/2 for patient players.
+- **Proposition 2's equilibrium becomes bang-bang**: the band of dog positions where a player's action is strictly inside the box shrinks in proportion to `dt`, so each player pushes its edge toward its target `d* + (r + 2)/(r + 1) (h - d*)` and switches there. This is a statement about the limit of the discrete-time equilibria; that the limit is an equilibrium of the continuous-time game is not proved here.
+- **The box is what makes the cost-free game well posed.** Without it each player's Hamiltonian is linear in its action and unbounded, which is why a Riccati benchmark for this game needs an action cost; with one, linear-quadratic feedback policies are affine and do not depend on the noise (certainty equivalence; Basar and Olsder, 1999).
+
+**A noisy dog.** Add a Gaussian shock of standard deviation `sigma sqrt(dt)` to each step (the time discretization of `sigma dW`) and solve the dynamic program with Gauss-Hermite expectations (`noise` in `doggame/inertia_dp.py`), on setup 3's x coordinate with `r = 0.5`:
+
+| Dog | Time step | Noise sigma | Red switches at | Blue switches at | Value iteration |
+|---|---|---|---|---|---|
+| closed form (Proposition 2) | 0.05 | 0 | 0.718 | 0.520 | - |
+| closed form (Proposition 2) | 0.025 | 0 | 0.709 | 0.527 | - |
+| continuous-time limit | 0 | 0 | 0.700 | 0.533 | - |
+| clipped to [0, 1] | 0.05 | 0.0 | 0.725 | 0.520 | 554 sweeps |
+| clipped to [0, 1] | 0.05 | 0.1 | 0.760 | 0.530 | 550 sweeps |
+| clipped to [0, 1] | 0.05 | 0.2 | 0.765 | 0.545 | 559 sweeps |
+| clipped to [0, 1] | 0.05 | 0.4 | 0.790 | 0.585 | did not converge |
+| clipped to [0, 1] | 0.025 | 0.0 | 0.710 | 0.530 | 1107 sweeps |
+| clipped to [0, 1] | 0.025 | 0.2 | 0.765 | 0.550 | 1117 sweeps |
+| unclipped | 0.05 | 0.0 | 0.725 | 0.520 | 554 sweeps |
+| unclipped | 0.05 | 0.2 | 0.765 | 0.545 | 559 sweeps |
+| unclipped | 0.05 | 0.4 | 0.775 | 0.585 | 605 sweeps |
+
+- **The equilibrium stays bang-bang, but noise moves the switching points.** Red, whose house is at the one-shot dog, waits longer before easing off (0.725 without noise to 0.765 at `sigma = 0.2`), and blue pushes up over a wider range (0.520 to 0.545), unlike the linear-quadratic benchmark, whose policies ignore the noise.
+- **It is not the clipping.** With the dog living on [-0.5, 1.5], so that it is never clipped inside [0, 1], the switching points are the same. The shift is also the same with half the time step, and finer state and action grids give the same values (checked separately).
+- **Limits.** One setup; the clipped run at `sigma = 0.4` did not converge in 8000 sweeps; why noise moves the switching points this way is not tested. Continuous-time q-learning on this game (the direction of Jia and Zhou, 2023) is open.
+
 ## 6. Research questions and answers
 
 The statuses are the same as in [RESEARCH_QUESTIONS.md](RESEARCH_QUESTIONS.md).
@@ -620,7 +649,7 @@ The statuses are the same as in [RESEARCH_QUESTIONS.md](RESEARCH_QUESTIONS.md).
 
 **Q34. Is there an explicit piecewise-affine feedback equilibrium?** *Partly answered.* Yes whenever the houses straddle the dog (Proposition 2, with a proof; 77 of 77 random games and all straddling setups); open when a one-shot action is interior (Section 5.20).
 
-**Q35.** A noisy continuous-time version (which needs an action cost for a Riccati benchmark) is open.
+**Q35. What happens in a noisy, continuous-time dog game?** *Partly answered.* In the continuous-time limit Proposition 2's equilibrium becomes bang-bang with explicit switching points, and holding needs slack at least (1 + r)/(2 + r); a noisy dog keeps the equilibrium bang-bang but moves the switching points, unlike a linear-quadratic benchmark (Section 5.23). Continuous-time q-learning is open.
 
 **Q37. Does self-play learn a feedback equilibrium with inertia?** *Answered for two settings: no.* From random starts, A2C and PPO learn to hold the one-shot actions everywhere, which is exploitable off the equilibrium path; longer training and a Beta policy do not change this. Noise-free gradient play finds the equilibrium with a table of actions but not with a shared network, so function approximation, not sampling noise, is what stops it (Section 5.22).
 
@@ -660,4 +689,4 @@ The code, results and this report are released under the [MIT license](https://g
 
 ## 9. References
 
-**Selected related work:** Wu et al. (2025), [Battling Influencers Game](https://arxiv.org/abs/2502.01127); Hu and Wellman (2003), [Nash-Q](https://www.jmlr.org/papers/v4/hu03a.html); Hambly et al. (2023), [policy gradients for LQ games](https://www.jmlr.org/papers/v24/21-0842.html); Schulman et al. (2017), [PPO](https://arxiv.org/abs/1707.06347); Leonardos et al., [Markov potential games](https://arxiv.org/abs/2106.01969); Kavuncu, Yaraneri and Mehr (RSS 2021), [Potential iLQR](https://arxiv.org/abs/2107.04926); Benenati and Belgioioso (2025), [explicit constrained LQ games](https://arxiv.org/abs/2512.07749); [constrained nonlinear dynamic games](https://arxiv.org/abs/2001.01826) (piecewise-affine feedback Nash); Monderer and Shapley (1996), potential games; Blume (1993), log-linear learning; Fudenberg and Tirole (1991), *Game Theory* (the one-shot deviation principle); Renault and Trannoy (2005), Protecting minorities through the average voting rule, *Journal of Public Economic Theory* 7, 169-199. The LQ guarantees do not cover this deterministic clipped setup.
+**Selected related work:** Wu et al. (2025), [Battling Influencers Game](https://arxiv.org/abs/2502.01127); Hu and Wellman (2003), [Nash-Q](https://www.jmlr.org/papers/v4/hu03a.html); Hambly et al. (2023), [policy gradients for LQ games](https://www.jmlr.org/papers/v24/21-0842.html); Schulman et al. (2017), [PPO](https://arxiv.org/abs/1707.06347); Leonardos et al., [Markov potential games](https://arxiv.org/abs/2106.01969); Kavuncu, Yaraneri and Mehr (RSS 2021), [Potential iLQR](https://arxiv.org/abs/2107.04926); Benenati and Belgioioso (2025), [explicit constrained LQ games](https://arxiv.org/abs/2512.07749); [constrained nonlinear dynamic games](https://arxiv.org/abs/2001.01826) (piecewise-affine feedback Nash); Monderer and Shapley (1996), potential games; Blume (1993), log-linear learning; Fudenberg and Tirole (1991), *Game Theory* (the one-shot deviation principle); Renault and Trannoy (2005), Protecting minorities through the average voting rule, *Journal of Public Economic Theory* 7, 169-199; Basar and Olsder (1999), *Dynamic Noncooperative Game Theory*; Jia and Zhou (2023), q-learning in continuous time, *JMLR*. The LQ guarantees do not cover this deterministic clipped setup.
