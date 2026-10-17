@@ -85,7 +85,8 @@ from the saved runs in `results/`:
 - **Dog inertia slows training**, sharply on the harder setup (4, 5, 1 and 0 of 5 runs
   converge at `w0` of 0, 0.3, 0.6 and 0.9).
 - **Pre-training helps or hurts** depending on whether the source setup has the same
-  equilibrium corners as the target.
+  equilibrium corners as the target. It hurts mainly because pre-training collapses the exploration noise:
+  resetting the noise removes most of the harm (Q20).
 - **Nash-Q:** the stage-game error falls about as 1 over the fictitious-play iterations,
   the grid is exact from 5 x 5, and the exact equilibrium is always one action pair, so
   fictitious play's apparent mixing is noise.
