@@ -63,3 +63,15 @@ def test_the_explicit_policy_matches_the_dynamic_program():
     sol = solve_1d(h_red, h_blue, c["w"], w0, states=81, actions=51)
     red, blue = explicit_policy(h_red, h_blue, c["w"], *nash_1d(h_red, h_blue, c["w"])[:2], w0)(sol["z"])
     assert max(np.abs(red - sol["red"]).max(), np.abs(blue - sol["blue"]).max()) <= 0.03
+
+
+def test_small_time_steps_approach_the_continuous_time_limits_and_a_bang_bang_policy():
+    from doggame.inertia_theory import continuous_limit, kappa
+    from doggame.many_houses import rho
+
+    k_limit, rho_limit = continuous_limit(0.5)
+    dt = 1e-4
+    w0, g = 1 - dt, np.exp(-0.5 * dt)
+    assert abs(kappa(w0, g) - k_limit) < 1e-3 and abs(rho(w0, g) - rho_limit) < 1e-3
+    red, blue = explicit_policy(0.7, 0.6, 0.7, 1.0, 0.0, w0, g)(np.linspace(0, 1, 10001))
+    assert np.mean((red > 0) & (red < 1)) < 1e-3 and np.mean((blue > 0) & (blue < 1)) < 1e-3
