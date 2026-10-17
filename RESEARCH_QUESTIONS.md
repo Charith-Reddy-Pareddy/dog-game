@@ -280,8 +280,11 @@ with the numbers and the caveats, are in [RESEARCH_REPORT.md](RESEARCH_REPORT.md
     *Status: partly answered. With equal weights the one-shot dog converges to the generalized
     median d = 1 - F(d) of the houses' distribution, the known Nash outcome of the average voting
     rule. With inertia, holding the one-shot actions is Markov-perfect only when no pivot player is
-    inside the box (about one draw in three) and the inertia is below roughly 0.35/N. The
-    many-house feedback equilibrium and what learners find are open.*
+    inside the box (about one draw in three) and the inertia is below roughly 0.35/N. The feedback
+    equilibrium has target form: each round is the one-shot game with the players' targets as
+    houses, and targets from a fixed point give an equilibrium in 55 of 60 random games with 3 to 8
+    players, including every game whose players' objectives are single-peaked. A proof, a
+    mean-field formulation and what learners find are open.*
 37. **Does policy-gradient self-play learn a feedback equilibrium of the game with inertia?**
     *Status: answered for setup 3 at w0 = 0.6 and setup 5 at w0 = 0.9: no. Starting every
     episode from a random dog position, A2C and PPO learn to hold the one-shot actions at every
@@ -307,7 +310,7 @@ with the numbers and the caveats, are in [RESEARCH_REPORT.md](RESEARCH_REPORT.md
 | 33 | study `markov_potential` (8 cycles), `doggame/markov_potential.py` |
 | 7 | studies `cross_play` (15 runs) and `selection` (30 runs) |
 | 13 | study `vertex_selection` (6 solves), `selection` in `doggame/inertia_dp.py` |
-| 36 | study `many_houses` (2,000 draws), `doggame/many_houses.py` |
+| 36 | studies `many_houses` (2,000 draws) and `many_targets` (60 games), `doggame/many_houses.py` |
 | 37 | studies `feedback_learning` (55 rows) and `exact_play` (24 runs), `doggame/feedback_learning.py`, `doggame/exact_play.py` |
 | 35 | study `noisy_inertia` (9 solves), `continuous_limit` in `doggame/inertia_theory.py`, `noise` in `doggame/inertia_dp.py` |
 | 26 | study `walking` (15 runs) |
