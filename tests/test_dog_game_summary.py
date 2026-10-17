@@ -1,4 +1,4 @@
-from doggame.dog_game_summary import (target_random_table, cross_play_table, vertex_selection_table, walking_clip_table, walking_entropy_table, pretraining_mechanism_table, noisy_inertia_table, exact_play_table, feedback_learning_table, many_houses_table, inertia_dp_table, inertia_explicit_table, inertia_random_table, mirror_p, selection_clip_table, markov_potential_table, selection_noise_table, algorithms_table, convergence_counts, markdown, noise_table, resolution_table,
+from doggame.dog_game_summary import (many_targets_table, target_random_table, cross_play_table, vertex_selection_table, walking_clip_table, walking_entropy_table, pretraining_mechanism_table, noisy_inertia_table, exact_play_table, feedback_learning_table, many_houses_table, inertia_dp_table, inertia_explicit_table, inertia_random_table, mirror_p, selection_clip_table, markov_potential_table, selection_noise_table, algorithms_table, convergence_counts, markdown, noise_table, resolution_table,
                                       selection_outcome, selection_table, walking_algorithms_table, walking_share_series, walking_table,
                                       ppo_epochs_table, ppo_long_table, ppo_walking_table, walking_equilibrium_table, walking_houses_table, walking_inertia_table,
                                       walking_settings_table)
@@ -277,3 +277,9 @@ def test_the_target_table_compares_proposition_2_with_the_fixed_point():
     rows = [run("inertia_random", dict(game=0), kind="interior", gain=0.01, holds=False),
             run("target_random", dict(game=0), kind="interior", gain=0.0, iterations=12, targets=[0.6, 0.3])]
     assert target_random_table(rows)[1] == ["interior", "1", "0 of 1", "1 of 1", "0.0e+00", "12"]
+
+
+def test_the_many_targets_table_splits_by_single_peaked_objectives():
+    rows = [run("many_targets", dict(n=5, game=0), gain=1e-7, iterations=20, holds=False, peaks=1),
+            run("many_targets", dict(n=5, game=1), gain=2e-4, iterations=25, holds=False, peaks=2)]
+    assert many_targets_table(rows)[1] == ["5", "2", "1 of 2", "1 of 1", "0 of 1", "2.0e-04", "0 of 2"]
