@@ -486,6 +486,12 @@ At round 800, per seed:
   actions. A switching point is the first grid position where a player's action is below 0.5.
   The finer-grid and smaller-step checks quoted in the report were run separately, not in the study.
 
+## Entropy bonus on the walking game
+
+- The entropy bonus adds the coefficient times each player's policy entropy (von Mises
+  angle plus Beta radius, averaged over the episode's states) to that player's objective,
+  in every PPO epoch. Coefficients 0, 0.01, 0.03 and 0.1 were chosen by me; five seeds each.
+
 ## Settled points
 
 - **Which game for PG:** any one where the solver is correct and the comparison
