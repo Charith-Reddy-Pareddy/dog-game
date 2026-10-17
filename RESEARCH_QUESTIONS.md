@@ -240,7 +240,11 @@ with the numbers and the caveats, are in [RESEARCH_REPORT.md](RESEARCH_REPORT.md
     quadratic action cost: without one, each player's Hamiltonian is linear in its own
     action and, without the box, no equilibrium exists. Does continuous-time
     q-learning recover the box-constrained equilibrium as that cost goes to zero?
-    *Status: open.*
+    *Status: partly answered. As the time step shrinks, Proposition 2's equilibrium becomes
+    bang-bang with switching points d* + (r + 2)/(r + 1) (h - d*), and holding needs slack at
+    least (1 + r)/(2 + r). With a noisy dog the equilibrium stays bang-bang but the switching
+    points move (red's from 0.725 to 0.765 at sigma = 0.2), also without clipping, unlike the
+    linear-quadratic benchmark. Continuous-time q-learning is open.*
 36. **Does the many-house game have a mean-field limit, and what do learners find there?**
     *Status: partly answered. With equal weights the one-shot dog converges to the generalized
     median d = 1 - F(d) of the houses' distribution, the known Nash outcome of the average voting
@@ -272,6 +276,7 @@ with the numbers and the caveats, are in [RESEARCH_REPORT.md](RESEARCH_REPORT.md
 | 33 | study `markov_potential` (8 cycles), `doggame/markov_potential.py` |
 | 36 | study `many_houses` (2,000 draws), `doggame/many_houses.py` |
 | 37 | studies `feedback_learning` (55 rows) and `exact_play` (24 runs), `doggame/feedback_learning.py`, `doggame/exact_play.py` |
+| 35 | study `noisy_inertia` (9 solves), `continuous_limit` in `doggame/inertia_theory.py`, `noise` in `doggame/inertia_dp.py` |
 | 26 | study `walking` (15 runs) |
 | walking game, all questions | [WALKING_GAME_REPORT.md](WALKING_GAME_REPORT.md) ([PDF](docs/walking_game_report.pdf)) |
 | 24, 27, 28 | study `ppo_variants` (65 runs) |
@@ -282,6 +287,6 @@ with the numbers and the caveats, are in [RESEARCH_REPORT.md](RESEARCH_REPORT.md
 | walking game | `results/dog_game_runs.jsonl`, `results/dog_game_trajectories.json` |
 | 32 | `docs/POLAR_ACTION_PROTOCOL.md`, `docs/POLAR_ACTION_ROBUSTNESS_PROTOCOL.md`, `doggame/polar_action_study.py`, `doggame/polar_action_robustness.py`, `results/polar_action_pg.jsonl`, `results/polar_action_pg_robustness.jsonl` |
 
-Questions 5b, 11, 13, 14, 20, 27 and 35 are open, and 7, 12, 15, 25, 30, 31, 32, 34 and 36 are partly answered. The studies are in
+Questions 5b, 11, 13, 14, 20 and 27 are open, and 7, 12, 15, 25, 30, 31, 32, 34, 35 and 36 are partly answered. The studies are in
 [`doggame/dog_game_studies.py`](doggame/dog_game_studies.py) and the tables are
 produced by [`doggame/dog_game_summary.py`](doggame/dog_game_summary.py).

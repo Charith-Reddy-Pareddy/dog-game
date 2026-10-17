@@ -478,6 +478,14 @@ At round 800, per seed:
   tanh network. "Within 0.05" compares actions on the 41-position grid; the clamp variant uses a
   straight-through gradient.
 
+## Continuous time and a noisy dog
+
+- The continuous-time game is approximated by the discrete game with w0 = 1 - dt, discount
+  exp(-0.5 dt) and a Gaussian shock of standard deviation sigma sqrt(dt) per step, with 7
+  Gauss-Hermite points, 201 (clipped) or 401 (unclipped, on [-0.5, 1.5]) dog positions and 21
+  actions. A switching point is the first grid position where a player's action is below 0.5.
+  The finer-grid and smaller-step checks quoted in the report were run separately, not in the study.
+
 ## Settled points
 
 - **Which game for PG:** any one where the solver is correct and the comparison

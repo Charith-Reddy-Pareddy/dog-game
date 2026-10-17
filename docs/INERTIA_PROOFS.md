@@ -149,6 +149,15 @@ has slack at least rho(w0, g) and, when w0 > 0, no player (the pivot) is strictl
 equilibrium, which is the generalized median of Renault and Trannoy (2005), at most one player is inside. The
 study `many_houses` measures how often there is none, and how the largest admissible inertia scales with N.
 
+## Continuous-time limit
+
+With time step dt, w0 = 1 - dt and g = exp(-r dt), 1 - g w0 = (r + 1) dt + O(dt^2) and
+1 - g w0^2 = (r + 2) dt + O(dt^2), so k -> (r + 2) / (r + 1) and rho -> (r + 1) / (r + 2). In Proposition 2,
+(T_i - z_h(x)) / ((1 - w0) w_i) = (T_i - x + dt (x - d*)) / (dt w_i), which tends to +infinity where x < T_i and to
+-infinity where x > T_i, so the policy tends to the bang-bang rule "push the edge toward T_i", with the interior band
+of width O(dt). This describes the limit of the discrete-time equilibria; that it is an equilibrium of the
+continuous-time game is not proved here.
+
 ## What the propositions do not cover
 
 - **Interior one-shot actions.** If a player's one-shot action is strictly inside the box, its hold region is the
