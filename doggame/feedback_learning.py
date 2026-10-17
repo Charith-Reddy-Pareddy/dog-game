@@ -9,7 +9,7 @@ continuation simulated exactly. A feedback equilibrium scores 0, whichever equil
 import numpy as np
 import torch
 
-from doggame.agents import TwoPlayerPolicy
+from doggame.agents import BoundedCartesianPolicy, TwoPlayerPolicy
 from doggame.env import DogGameEnv, make_inertial_transition
 from doggame.inertia_theory import explicit_policy, nash_1d
 from doggame.train import train_self_play
@@ -24,9 +24,10 @@ class RandomStart(DogGameEnv):
         return self.dog.copy()
 
 
-def learn(config, w0, algorithm, seed, episodes):
+def learn(config, w0, algorithm, seed, episodes, family="gaussian"):
+    """Self-play from random starts with a Gaussian policy (sigmoid mean, clipped actions) or a Beta policy."""
     env = RandomStart(**config, discount=0.9, transition_fn=make_inertial_transition(w0), seed=seed)
-    policy = TwoPlayerPolicy(env.domain, architecture="separate", seed=seed)
+    policy = (TwoPlayerPolicy if family == "gaussian" else BoundedCartesianPolicy)(env.domain, architecture="separate", seed=seed)
     if algorithm == "reinforce":
         train_self_play(env, policy, episodes=episodes, seed=seed)
     else:
