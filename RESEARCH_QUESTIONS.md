@@ -293,7 +293,9 @@ with the numbers and the caveats, are in [RESEARCH_REPORT.md](RESEARCH_REPORT.md
     position (19 of 20 Gaussian runs), which is exploitable off the path. Five times longer
     training and a Beta policy do not change this, and REINFORCE does not do better. Exact,
     noise-free gradient play finds the equilibrium with a table of actions (4 of 4) but not with a
-    shared network (0 of 20), so function approximation, not noise, is what stops it.*
+    shared network (0 of 20), so function approximation, not noise, is what stops it. The same
+    holds in a second game, grid soccer with a pure equilibrium: a table reaches it, while five
+    networks leave a largest duality gap of at least 0.73.*
 
 ## Where each question is answered in this repository
 

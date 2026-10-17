@@ -631,6 +631,14 @@ Section 5.20 gives a feedback equilibrium that differs from the one-shot actions
 | setup 5 x, w0 = 0.9 | network, 64 units | 5 | 0 of 5 | 1 of 5 | 0.1042 (0.1042 to 0.1042) |
 
   Exact gradient play reaches Proposition 2's equilibrium with a table in every case, and with a shared network in none of 20 runs: the networks end at holding or learn only one player's off-path easing. A plausible mechanism, not tested: a shared network carries "push to the edge" from the many positions where it is right to the few where easing is right, saturating them before their own gradient arrives, which a table cannot do.
+- **A second game: soccer.** The same exact gradient play on the 7 x 5 soccer game (`doggame/soccer_exact_play.py`), a zero-sum Markov game with 2,380 states whose equilibrium is pure in every state, scored by the exact duality gap (0 only at a Markov-perfect equilibrium): a table of move logits per state against one 64 x 64 network per player, 2000 Adam steps.
+
+| Policy | Runs | Mean gap over states | Largest gap | Largest gap at the start states |
+|---|---|---|---|---|
+| table, 2000 steps | 1 | 0.000 | 0.001 | 0.000 |
+| network, 2000 steps | 5 | 0.255 (0.003 to 0.356) | 1.378 (0.727 to 1.378) | 0.755 (0.003 to 0.873) |
+
+  The table reaches the equilibrium (largest gap 0.001); no network does (largest gap at least 0.73 in every run). One network run gets close on most states (mean gap 0.003) but leaves some far off; the other four stall at mean gaps of 0.25 to 0.36. So the table-against-network split is not specific to the dog game.
 - **Consequence.** Low exploitability on the equilibrium path, which the earlier sections measure, does not show that a learned policy is a feedback equilibrium of the dynamic game.
 
 ### 5.23 Continuous time and a noisy dog
