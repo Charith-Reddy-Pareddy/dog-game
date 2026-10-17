@@ -216,7 +216,7 @@
       <li><b>PPO is fast because it reuses each episode.</b> With one epoch it is no faster than REINFORCE. <a href="#experiments">More experiments</a></li>
       <li><b>The walking game reverses the ranking.</b> A2C is the most reliable there, and PPO is fast but swings away from the corners again; a gentler PPO settles with more training. <a href="#trajectories">Walking game</a> &middot; <a href="#walking-report">Report</a></li>
       <li><b>With dog inertia, a closed form says when the one-shot actions stay a feedback equilibrium, and an explicit piecewise-affine policy is one when they do not; the game is not a Markov potential game.</b> <a href="#experiments">More experiments</a></li>
-      <li><b>21 of 37 research questions are answered, 9 partly, 7 open.</b> <a href="#questions">Research questions</a></li>
+      <li><b>22 of 38 research questions are answered, 9 partly, 7 open.</b> <a href="#questions">Research questions</a></li>
       <li><b>Polar actions did not improve the primary policy-gradient comparison.</b> In the first setup, their expected one-shot gain was higher than Cartesian Beta in all 30 paired seeds; the four-house REINFORCE follow-up was mixed. <a href="#polar-actions">See the study</a></li>
     </ul>
   </section>
@@ -499,6 +499,17 @@
       <li>When a one-shot action is interior, the policy fails in 53 of 123 games; that case is open, and uniqueness is not shown.</li>
     </ul>
 
+    <h3>Does self-play learn the feedback equilibrium?</h3>
+    <p class="hint" style="margin:0 0 6px">Every episode starts from a random dog position (setup 3, w&#8320; = 0.6, 3000 episodes, five seeds). Score: the most a player gains by changing one round&#x27;s action and then following the learned policy again; every feedback equilibrium scores 0.</p>
+    <p class="hint scroll-hint">Swipe the table sideways to see every column.</p>
+    <div class="table-scroll">
+    <table><thead><tr><th>Policy</th><th>Runs</th><th>Largest one-round gain: median (range)</th><th>Mean one-round gain: median</th></tr></thead><tbody><tr><td>Proposition 2</td><td>1</td><td>0.0000</td><td>0.0000</td></tr><tr><td>hold the one-shot actions</td><td>1</td><td>0.0756</td><td>0.0114</td></tr><tr><td>REINFORCE</td><td>5</td><td>0.1537 (0.1156 to 0.6714)</td><td>0.0275</td></tr><tr><td>A2C</td><td>5</td><td>0.0756 (0.0755 to 0.0759)</td><td>0.0115</td></tr><tr><td>PPO</td><td>5</td><td>0.0756 (0.0756 to 0.4599)</td><td>0.0115</td></tr></tbody></table>
+    </div>
+    <ul>
+      <li>A2C and PPO learn to hold the one-shot actions at every dog position: unexploitable on the equilibrium path, exploitable off it. REINFORCE ends further away.</li>
+      <li>The learned actions sit deep in the sigmoid&#x27;s flat tails (pre-sigmoid outputs of 6 to 12), where the gradient needed to learn the off-path behaviour has nearly vanished.</li>
+    </ul>
+
     <h3>Many houses</h3>
     <p class="hint" style="margin:0 0 6px">N houses drawn from a skewed distribution (Beta(2, 5)), equal weights, 200 draws per N, one coordinate. The one-shot dog is the generalized median of the average voting rule (Renault and Trannoy, 2005); Proposition 1 holds for any number of players.</p>
     <p class="hint scroll-hint">Swipe the table sideways to see every column.</p>
@@ -729,6 +740,7 @@
     <details class="q"><summary><span class="q-num">Q34</span>Does an explicit piecewise-affine solution of the box-constrained game reproduce the dynamic-programming feedback equilibrium exactly?<span class="chip partly">Partly</span></summary><p>When the houses lie on either side of the dog, each player aiming the next dog position at d* + k (h &minus; d*) is a feedback equilibrium (proved, not yet refereed; 77 of 77 random games; within one grid step of the dynamic program). When a one-shot action is interior it fails in 53 of 123 random games.</p><p><b>Status:</b> Partly answered.</p></details>
     <details class="q"><summary><span class="q-num">Q35</span>What happens in a noisy, continuous-time dog game, and does continuous-time q-learning recover the box-constrained equilibrium?<span class="chip open">Open</span></summary><p>A Riccati benchmark needs a quadratic action cost: without one, each player&#x27;s Hamiltonian is linear in its own action and the unconstrained game has no equilibrium.</p><p><b>Status:</b> Open.</p></details>
     <details class="q"><summary><span class="q-num">Q36</span>Does the many-house game have a mean-field limit, and what do learners find there?<span class="chip partly">Partly</span></summary><p>With equal weights the one-shot dog converges to the generalized median d = 1 &minus; F(d), the known outcome of the average voting rule. With inertia, holding the one-shot actions is Markov-perfect only without a pivot player inside the box (about one draw in three) and below an inertia of about 0.35/N.</p><p><b>Status:</b> Partly answered; the many-house feedback equilibrium and what learners find are open.</p></details>
+    <details class="q"><summary><span class="q-num">Q37</span>Does policy-gradient self-play learn a feedback equilibrium of the game with inertia?<span class="chip answered">Answered</span></summary><p>From random dog positions, A2C (5 of 5 seeds) and PPO (4 of 5) learn to hold the one-shot actions everywhere, which a player can exploit off the equilibrium path (one-round gain 0.0756); REINFORCE ends further away. The policies&#x27; sigmoids are saturated at the box&#x27;s edges.</p><p><b>Status:</b> Answered for setup 3 at w&#8320; = 0.6: no.</p></details>
   </section>
 
   <section class="card notes" id="assumptions">

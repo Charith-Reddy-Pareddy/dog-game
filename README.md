@@ -111,6 +111,8 @@ from the saved runs in `results/`:
 - **With many houses the static equilibrium is almost never a feedback equilibrium.** The one-shot dog is the
   generalized median of the average voting rule; with inertia, holding it is Markov-perfect only without a pivot
   player inside the box and below an inertia of about 0.35/N (Q36).
+- **Self-play does not learn the feedback equilibrium.** Even starting every episode off the equilibrium path,
+  A2C and PPO learn to hold the one-shot actions everywhere, which is exploitable off the path (Q37).
 - **The hard walking setup at 900 episodes remains seed-sensitive.** A2C has 4/5 final seeds under the corner
   threshold, REINFORCE 2/5, and PPO 1/5. These exploratory results use five seeds per algorithm.
 - **The walking-game ranking holds on other house setups.** A2C is again the most reliable wherever
