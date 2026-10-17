@@ -429,6 +429,19 @@ def exact_play_many_table(rows):
     return table
 
 
+def soccer_exact_play_table(rows):
+    """Exact gradient play on the soccer game: the duality gap (0 at a Markov-perfect equilibrium) after training."""
+    runs = study(rows, "soccer_exact_play")
+    table = [["Policy", "Runs", "Mean gap over states", "Largest gap", "Largest gap at the start states"]]
+    for policy in ("table", "network"):
+        mine = [r for r in runs if r["key"]["policy"] == policy]
+        if mine:
+            final = [r["curve"][-1] for r in mine]
+            col = lambda k: f"{np.median([f[k] for f in final]):.3f}" + (f" ({min(f[k] for f in final):.3f} to {max(f[k] for f in final):.3f})" if len(mine) > 1 else "")
+            table.append([f"{policy}, {int(final[0][0])} steps", str(len(mine)), col(1), col(2), col(3)])
+    return table
+
+
 def feedback_learning_table(rows):
     """Feedback exploitability (largest and mean one-round gain over dog positions) of policies learned from random
     starts, next to Proposition 2's policy and holding the one-shot actions."""
@@ -665,7 +678,7 @@ if __name__ == "__main__":
                         ("walking hard long", walking_hard_long_table(studies)), ("inertia equilibrium", inertia_equilibrium_table(studies)),
                         ("selection noise", selection_noise_table(studies)), ("inertia dp", inertia_dp_table(studies)),
                         ("markov potential", markov_potential_table(studies)), ("selection clip", selection_clip_table(studies)),
-                        ("inertia explicit", inertia_explicit_table(studies)), ("inertia random", inertia_random_table(studies)), ("many houses", many_houses_table(studies)), ("feedback learning", feedback_learning_table(studies)), ("exact play", exact_play_table(studies)), ("noisy inertia", noisy_inertia_table(studies)), ("pretraining mechanism", pretraining_mechanism_table(studies)), ("walking entropy", walking_entropy_table(studies)), ("walking clip", walking_clip_table(studies)), ("vertex selection", vertex_selection_table(studies)), ("cross play", cross_play_table(studies)), ("target random", target_random_table(studies)), ("many targets", many_targets_table(studies)), ("exact play many", exact_play_many_table(studies))):
+                        ("inertia explicit", inertia_explicit_table(studies)), ("inertia random", inertia_random_table(studies)), ("many houses", many_houses_table(studies)), ("feedback learning", feedback_learning_table(studies)), ("exact play", exact_play_table(studies)), ("noisy inertia", noisy_inertia_table(studies)), ("pretraining mechanism", pretraining_mechanism_table(studies)), ("walking entropy", walking_entropy_table(studies)), ("walking clip", walking_clip_table(studies)), ("vertex selection", vertex_selection_table(studies)), ("cross play", cross_play_table(studies)), ("target random", target_random_table(studies)), ("many targets", many_targets_table(studies)), ("exact play many", exact_play_many_table(studies)), ("soccer exact play", soccer_exact_play_table(studies))):
         print(f"\n### {name}\n\n{markdown(table)}")
     print("\nconvergence counts:", convergence_counts(runs))
     print("inertia median distance:", inertia_distances(studies))
