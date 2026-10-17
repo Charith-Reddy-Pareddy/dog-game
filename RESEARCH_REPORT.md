@@ -534,6 +534,16 @@ On 200 random one-coordinate games (houses, weight, inertia and discount drawn u
 
 - **Proposition 2 holds in every straddling game** (77 of 77), and holding alone is Markov-perfect in 30 of them, matching Proposition 1.
 - **It does not extend to interior one-shot actions**: there the policy is an equilibrium in 70 of 123 games and fails in the rest (largest gain 0.023). A player whose one-shot action is interior holds only at `d*` and pushes at an edge elsewhere, so the dog returns faster than under holding and the other player's best target moves: in one such game the dynamic program's red aims at about 0.785 where the policy aims at 0.771. The feedback equilibrium in that case is open.
+
+**Beyond Proposition 2: equilibria in target form.** Under any stationary profile, a player's one-round objective `-(z - h)^2 + g V(z)` depends only on the next dog position `z`, not on the current one. So whenever it is single-peaked, the player's best reply at every dog position is to aim at the same target, as far as its weight allows. Proposition 2 is the case where the targets have a closed form; in general they solve a two-dimensional fixed point, target = peak of the objective under the current targets, which `target_equilibrium` in `doggame/inertia_theory.py` finds by damped iteration from Proposition 2's targets. On the same 200 random games:
+
+| One-shot equilibrium | Games | Proposition 2's policy | Target fixed point | Fixed point: largest gain | Fixed point: iterations (max) |
+|---|---|---|---|---|---|
+| straddle | 77 | 77 of 77 | 77 of 77 | 0.0e+00 | 33 |
+| interior | 123 | 70 of 123 | 122 of 123 | 1.4e-05 | 32 |
+
+- **The target fixed point is a feedback equilibrium in 199 of 200 games**, including 122 of the 123 with an interior one-shot action, where Proposition 2's policy works in only 70. In the example above it moves red's target from 0.771 to the dynamic program's 0.785.
+- **The exception** (game 165) keeps a gain of 1.4e-5 after refining the targets beyond the grid; its objective has two local peaks there, which breaks the "clip toward the peak" reply. This is numerical evidence, not a proof; existence and uniqueness of the fixed point are open.
 - **Scope.** The propositions are for this game (one dimension per coordinate, quadratic rewards on the next dog position, a box of actions). Uniqueness of the feedback equilibrium is not shown.
 
 ### 5.21 Many houses
@@ -698,7 +708,7 @@ The statuses are the same as in [RESEARCH_QUESTIONS.md](RESEARCH_QUESTIONS.md).
 
 **Q33. Is the dog game a Markov potential game?** *Answered: no.* 4-cycles with reacting policies do not sum to zero, while open-loop cycles do (Section 5.19).
 
-**Q34. Is there an explicit piecewise-affine feedback equilibrium?** *Partly answered.* Yes whenever the houses straddle the dog (Proposition 2, with a proof; 77 of 77 random games and all straddling setups); open when a one-shot action is interior (Section 5.20).
+**Q34. Is there an explicit piecewise-affine feedback equilibrium?** *Partly answered.* Yes whenever the houses straddle the dog (Proposition 2, with a proof; 77 of 77 random games). In general, equilibria in target form, with targets from a two-dimensional fixed point, work in 199 of 200 random games, including 122 of 123 with an interior one-shot action; this is numerical, and one game keeps a gain of 1.4e-5 (Section 5.20).
 
 **Q35. What happens in a noisy, continuous-time dog game?** *Partly answered.* In the continuous-time limit Proposition 2's equilibrium becomes bang-bang with explicit switching points, and holding needs slack at least (1 + r)/(2 + r); a noisy dog keeps the equilibrium bang-bang but moves the switching points, unlike a linear-quadratic benchmark (Section 5.23). Continuous-time q-learning is open.
 
