@@ -550,6 +550,14 @@
       <li>About two draws in three have a pivot player inside the box, and then holding the one-shot actions is never Markov-perfect with inertia.</li>
       <li>Otherwise the largest inertia that keeps it Markov-perfect shrinks like 1/N (about 0.35/N): with many houses the static equilibrium is almost never a feedback equilibrium.</li>
     </ul>
+    <p class="hint" style="margin:10px 0 6px">The feedback equilibrium with many houses: every player aims at a target, so each round is the one-shot game with the targets as houses (random games with 3, 5 and 8 players).</p>
+    <p class="hint scroll-hint">Swipe the table sideways to see every column.</p>
+    <div class="table-scroll">
+    <table><thead><tr><th>Players</th><th>Games</th><th>Target form is an equilibrium</th><th>with single-peaked objectives</th><th>with several peaks</th><th>Largest gain</th><th>Holding is Markov-perfect</th></tr></thead><tbody><tr><td>3</td><td>20</td><td>20 of 20</td><td>19 of 19</td><td>1 of 1</td><td>4.8e-07</td><td>4 of 20</td></tr><tr><td>5</td><td>20</td><td>18 of 20</td><td>14 of 14</td><td>4 of 6</td><td>2.6e-04</td><td>0 of 20</td></tr><tr><td>8</td><td>20</td><td>17 of 20</td><td>9 of 9</td><td>8 of 11</td><td>5.7e-04</td><td>1 of 20</td></tr></tbody></table>
+    </div>
+    <ul>
+      <li>Aiming at fixed-point targets is an equilibrium in 55 of 60 games and in every game whose players&#x27; one-round objectives are single-peaked; the failures all have a player with several peaks.</li>
+    </ul>
 
     <h3>Potential structure and what selects the equilibrium</h3>
     <p class="hint" style="margin:0 0 6px">The one-shot game is an exact potential game (as proved for the Battling Influencers Game), and its potential is exactly flat along the shared-y continuum, so it cannot choose. Fifty REINFORCE runs per initial exploration noise, separate layout; the last column tests that the two mirror images are equally likely, as the setup&#x27;s symmetry says.</p>

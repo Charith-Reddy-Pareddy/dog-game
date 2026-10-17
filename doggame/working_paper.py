@@ -127,7 +127,11 @@ weights (200 draws per N, discount 0.9):
 {md(S.many_houses_table(studies))}
 
 A pivot inside the box (about two draws in three) rules holding out at any inertia; otherwise the largest admissible
-inertia scales like 0.35/N. With many houses the static equilibrium is almost never a feedback equilibrium.
+inertia scales like 0.35/N. With many houses the static equilibrium is almost never a feedback equilibrium. The
+target form carries over: if every player aims at a target, each round is the one-shot game with the targets as houses,
+and fixed-point targets give a feedback equilibrium whenever every player's one-round objective is single-peaked:
+
+{md(S.many_targets_table(studies))}
 
 ## 5. The dynamic game is not a Markov potential game
 
