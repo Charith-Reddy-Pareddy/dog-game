@@ -143,3 +143,8 @@ def test_the_feedback_learning_study_has_two_baselines_and_three_algorithms():
 def test_the_exact_play_study_compares_tables_with_networks_in_two_settings():
     keys = [k for k, _ in studies.study_exact_play(range(5))]
     assert len(keys) == 2 * (2 + 10) and {k["kind"] for k in keys} == {"table", "network"}
+
+
+def test_the_noisy_inertia_study_varies_the_noise_the_time_step_and_the_clipping():
+    keys = [k for k, _ in studies.study_noisy_inertia(range(5))]
+    assert len(keys) == 9 and {k["clipped"] for k in keys} == {True, False} and {k["dt"] for k in keys} == {0.05, 0.025}
