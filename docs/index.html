@@ -525,6 +525,14 @@
     <ul>
       <li>A table reaches the feedback equilibrium every time; a shared network never does (0 of 20). Function approximation, not sampling noise, stops the learners.</li>
     </ul>
+    <p class="hint" style="margin:10px 0 6px">The same test on a second game, 7 &times; 5 grid soccer (zero-sum, pure equilibrium), scored by the exact duality gap.</p>
+    <p class="hint scroll-hint">Swipe the table sideways to see every column.</p>
+    <div class="table-scroll">
+    <table><thead><tr><th>Policy</th><th>Runs</th><th>Mean gap over states</th><th>Largest gap</th><th>Largest gap at the start states</th></tr></thead><tbody><tr><td>table, 2000 steps</td><td>1</td><td>0.000</td><td>0.001</td><td>0.000</td></tr><tr><td>network, 2000 steps</td><td>5</td><td>0.255 (0.003 to 0.356)</td><td>1.378 (0.727 to 1.378)</td><td>0.755 (0.003 to 0.873)</td></tr></tbody></table>
+    </div>
+    <ul>
+      <li>The table reaches the equilibrium; no network does (largest gap at least 0.73), though one of five gets close on most states.</li>
+    </ul>
 
     <h3>Continuous time and a noisy dog</h3>
     <p class="hint" style="margin:0 0 6px">As the time step shrinks (w&#8320; = 1 &minus; dt, discount e<sup>&minus;r dt</sup>), holding the one-shot actions needs slack at least (1 + r)/(2 + r), and Proposition 2&#x27;s equilibrium becomes bang-bang: push the edge toward d* + (r + 2)/(r + 1) (h &minus; d*) and switch there. With a Gaussian shock &sigma;&radic;dt on the dog, setup 3&#x27;s x coordinate, r = 0.5:</p>
