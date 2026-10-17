@@ -18,6 +18,7 @@ to do only the second of four shards.
 - walking_hard_long: the three algorithms on the hardest walking setup for 900 episodes
 - inertia_equilibrium: is the one-shot Nash profile an equilibrium of the main game with dog inertia?
 - selection_clip: the selection study with actions and the dog left unclipped
+- selection_linear: the same with an unbounded linear policy mean in y
 - inertia_explicit: the closed-form hold condition and explicit feedback equilibrium against the dynamic program
 - inertia_random: the explicit feedback equilibrium on random one-coordinate games
 - walking_equilibrium: is walking to the one-shot corners an equilibrium of the walking game?
@@ -303,6 +304,26 @@ def study_markov_potential(seeds):
                    lambda w0=w0, red_alt=red_alt, blue_alt=blue_alt: dict(cycle=cycle_sum(red, red_alt, blue, blue_alt, houses, w, w0, start)))
 
 
+class LinearY(TwoPlayerPolicy):
+    """Sigmoid means in x as usual, but an unbounded linear mean in y (0.5 plus the network's output)."""
+
+    def means(self, state):
+        (red, blue), (raw_red, raw_blue) = super().means(state), self.network(state)
+        return torch.cat([red[..., :1], 0.5 + raw_red[..., 1:]], -1), torch.cat([blue[..., :1], 0.5 + raw_blue[..., 1:]], -1)
+
+
+def study_selection_linear(seeds):
+    """The no-clipping ablation with a linear mean in y: if self-play still ends on the boundary, the sigmoid is not why."""
+    for seed in range(50):
+        def run(seed=seed):
+            env = DogGameEnv(**DEFAULT_CONFIGS[DEGENERATE], domain=Unclipped(), discount=0.9, transition_fn=make_inertial_transition(0.0))
+            policy = LinearY(env.domain, architecture="separate", seed=seed)
+            train_self_play(env, policy, episodes=EPISODES, seed=seed)
+            red, blue = learned_actions(policy, env)
+            return dict(red=red.tolist(), blue=blue.tolist())
+        yield dict(seed=seed), run
+
+
 def study_inertia_explicit(seeds):
     """The closed-form hold share and the explicit feedback equilibrium (doggame.inertia_theory) against the dynamic
     program, per coordinate, with the explicit policy's largest one-round deviation gain over 101 dog positions."""
@@ -439,7 +460,7 @@ def study_noise(seeds, resolution=9):
     yield dict(iterations="exact", seed=0), lambda: dict(spread=float(spread), gap=float(gap), support=int((exact_red > 1e-3).sum()), top=float(exact_red.max()))
 
 
-STUDIES = dict(selection_clip=study_selection_clip, inertia_explicit=study_inertia_explicit, inertia_random=study_inertia_random, selection_noise=study_selection_noise, inertia_dp=study_inertia_dp, markov_potential=study_markov_potential, algorithms=study_algorithms, walking=study_walking, ppo_variants=study_ppo_variants, ppo_long=study_ppo_long,
+STUDIES = dict(selection_linear=study_selection_linear, selection_clip=study_selection_clip, inertia_explicit=study_inertia_explicit, inertia_random=study_inertia_random, selection_noise=study_selection_noise, inertia_dp=study_inertia_dp, markov_potential=study_markov_potential, algorithms=study_algorithms, walking=study_walking, ppo_variants=study_ppo_variants, ppo_long=study_ppo_long,
                walking_settings=study_walking_settings, walking_houses=study_walking_houses, walking_inertia=study_walking_inertia,
                walking_equilibrium=study_walking_equilibrium, walking_capacity=study_walking_capacity, walking_ppo_inertia=study_walking_ppo_inertia,
                walking_hard_long=study_walking_hard_long, inertia_equilibrium=study_inertia_equilibrium, selection=study_selection, inertia=study_inertia, pretraining=study_pretraining,
