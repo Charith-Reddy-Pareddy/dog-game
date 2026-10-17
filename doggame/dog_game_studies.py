@@ -315,7 +315,7 @@ def study_noisy_inertia(seeds):
     from doggame.inertia_dp import solve_1d
 
     variants = [(0.05, sigma, True) for sigma in (0.0, 0.1, 0.2, 0.4)] + [(0.025, sigma, True) for sigma in (0.0, 0.2)]
-    variants += [(0.05, sigma, False) for sigma in (0.0, 0.2, 0.4)]
+    variants += [(0.05, sigma, False) for sigma in (0.0, 0.02, 0.05, 0.1, 0.2, 0.4)]
     for dt, sigma, clipped in variants:
         def run(dt=dt, sigma=sigma, clipped=clipped):
             bounds = dict() if clipped else dict(low=-0.5, high=1.5)
