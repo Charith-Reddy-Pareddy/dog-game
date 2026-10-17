@@ -104,9 +104,11 @@ with the numbers and the caveats, are in [RESEARCH_REPORT.md](RESEARCH_REPORT.md
 
 12. Should the dog have momentum (`w0 * dog + w1 * red + w2 * blue`), and does
     inertia change anything besides how long it takes?
-    *Status: partly answered. Inertia leaves the steady state unchanged but
-    slows policy-gradient training sharply on the harder setup; whether it
-    changes the equilibrium of the dynamic game is untested.*
+    *Status: answered. Inertia leaves the steady state on the equilibrium path unchanged
+    and slows policy-gradient training sharply on the harder setup, and it changes the
+    feedback equilibrium off the path: holding the one-shot actions is Markov-perfect only
+    when every player's slack is at least w0 (1 - g w0)/(1 - g w0^2) (Q19), Proposition 2
+    gives what the players do instead (Q34), and self-play does not learn it (Q37).*
 13. Can a "vertex Nash" choice (the equilibrium with the largest sum of values)
     give a more useful equilibrium selection for multi-state games?
     *Status: answered for the dog game with inertia, which has a state (the dog's
@@ -310,6 +312,6 @@ with the numbers and the caveats, are in [RESEARCH_REPORT.md](RESEARCH_REPORT.md
 | walking game | `results/dog_game_runs.jsonl`, `results/dog_game_trajectories.json` |
 | 32 | `docs/POLAR_ACTION_PROTOCOL.md`, `docs/POLAR_ACTION_ROBUSTNESS_PROTOCOL.md`, `doggame/polar_action_study.py`, `doggame/polar_action_robustness.py`, `results/polar_action_pg.jsonl`, `results/polar_action_pg_robustness.jsonl` |
 
-Questions 11 and 14 are open, and 12, 15, 25, 30, 32, 34, 35 and 36 are partly answered. The studies are in
+Questions 11 and 14 are open, and 15, 25, 30, 32, 34, 35 and 36 are partly answered. The studies are in
 [`doggame/dog_game_studies.py`](doggame/dog_game_studies.py) and the tables are
 produced by [`doggame/dog_game_summary.py`](doggame/dog_game_summary.py).
