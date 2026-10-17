@@ -303,13 +303,18 @@ def feedback_learning_table(rows):
     """Feedback exploitability (largest and mean one-round gain over dog positions) of policies learned from random
     starts, next to Proposition 2's policy and holding the one-shot actions."""
     runs = study(rows, "feedback_learning")
-    table = [["Policy", "Runs", "Largest one-round gain: median (range)", "Mean one-round gain: median"]]
-    labels = dict(explicit="Proposition 2", holding="hold the one-shot actions", reinforce="REINFORCE", a2c="A2C", ppo="PPO")
-    for name, label in labels.items():
-        mine = [r for r in runs if r["key"]["algorithm"] == name]
+    table = [["Setting", "Policy", "Runs", "Largest one-round gain: median (range)", "Mean one-round gain: median"]]
+    names = dict(explicit="Proposition 2", holding="hold the one-shot actions", reinforce="REINFORCE", a2c="A2C", ppo="PPO")
+    kind = lambda k: (k.get("setup", 2), k.get("w0", 0.6), k["algorithm"], k.get("family", "gaussian"), k.get("episodes", 3000))
+    groups = [(2, 0.6, a, "gaussian", 3000) for a in names] + [(2, 0.6, a, "beta", 3000) for a in ("reinforce", "a2c", "ppo")]
+    groups += [(2, 0.6, "a2c", f, 15000) for f in ("gaussian", "beta")] + [(4, 0.9, a, "gaussian", 3000) for a in names]
+    for group in groups:
+        setup, w0, algorithm, family, episodes = group
+        label = names[algorithm] + (", Beta policy" if family == "beta" else "") + (f", {episodes} episodes" if episodes != 3000 else "")
+        mine = [r for r in runs if kind(r["key"]) == group]
         if mine:
             big, mean = [r["max_gain"] for r in mine], [r["mean_gain"] for r in mine]
-            table.append([label, str(len(mine)), f"{np.median(big):.4f}" + (f" ({min(big):.4f} to {max(big):.4f})" if len(mine) > 1 else ""), f"{np.median(mean):.4f}"])
+            table.append([f"setup {setup + 1}, w0 = {w0}", label, str(len(mine)), f"{np.median(big):.4f}" + (f" ({min(big):.4f} to {max(big):.4f})" if len(mine) > 1 else ""), f"{np.median(mean):.4f}"])
     return table
 
 
