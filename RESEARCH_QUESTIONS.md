@@ -144,9 +144,12 @@ with the numbers and the caveats, are in [RESEARCH_REPORT.md](RESEARCH_REPORT.md
     five setups that holds only in setup 1 up to `w0 = 0.6`, matching the
     dynamic program.*
 20. **Why does pre-training from a different setup hurt?**
-    *Status: open on the mechanism. The measured pattern (same corners help,
-    flipped corners hurt) suggests the network has to un-learn a boundary
-    direction, but that is a hypothesis.*
+    *Status: answered for one source and target (10 seeds). Pre-training collapses the
+    policy's exploration noise (to a standard deviation of about 0.06). Resetting the noise
+    after pre-training removes most of the harm (median exploitability 0.0078 against 0.22),
+    de-saturating the sigmoid alone does not (0.19), and both together match training from
+    scratch. The earlier hypothesis, that the network must un-learn a direction, is not the
+    main reason.*
 21. **Does re-solving the stage game less often change the Nash-Q fixed
     point?**
     *Status: answered for the dog game. No: with a state-independent
@@ -287,6 +290,6 @@ with the numbers and the caveats, are in [RESEARCH_REPORT.md](RESEARCH_REPORT.md
 | walking game | `results/dog_game_runs.jsonl`, `results/dog_game_trajectories.json` |
 | 32 | `docs/POLAR_ACTION_PROTOCOL.md`, `docs/POLAR_ACTION_ROBUSTNESS_PROTOCOL.md`, `doggame/polar_action_study.py`, `doggame/polar_action_robustness.py`, `results/polar_action_pg.jsonl`, `results/polar_action_pg_robustness.jsonl` |
 
-Questions 5b, 11, 13, 14, 20 and 27 are open, and 7, 12, 15, 25, 30, 31, 32, 34, 35 and 36 are partly answered. The studies are in
+Questions 5b, 11, 13, 14 and 27 are open, and 7, 12, 15, 25, 30, 31, 32, 34, 35 and 36 are partly answered. The studies are in
 [`doggame/dog_game_studies.py`](doggame/dog_game_studies.py) and the tables are
 produced by [`doggame/dog_game_summary.py`](doggame/dog_game_summary.py).
