@@ -19,7 +19,7 @@ player would lean against the dog's momentum.
 
 Where holding fails, `explicit_policy` is a feedback equilibrium when the houses straddle the dog (each player at the
 edge of the box nearest its house): each player aims the next dog position at its target d* + k (h - d*), as far as its
-own weight allows. Proof sketch: on the joint hold interval H the dog stays in H, so a player's one-round objective
+own weight allows. Proof outline (in full in docs/INERTIA_PROOFS.md): on the joint hold interval H the dog stays in H, so a player's one-round objective
 g(z) = -(z - h)^2 + g_cont(z) is the concave quadratic above, peaked at the target, which lies in H. Outside H it
 satisfies g(z) = -(z - h)^2 + g(next(z)) with next(z) nondecreasing and closer to the target, so the monotone shape on
 each side of the target is preserved by a contraction and g is single-peaked. The best one-round reply over any

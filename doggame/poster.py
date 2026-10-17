@@ -202,7 +202,7 @@ def build(out=OUTPUT):
            P("9. Known and new", head),
            B("<b>Known:</b> the one-shot potential structure (Wu et al., 2025); a game of potential stage games need not be a Markov potential game (Leonardos et al., 2022)."),
            B("<b>New for this game</b>, as far as the literature checked goes: Propositions 1 and 2, the Markov-potential counterexample, and the selection mechanism with ablations."),
-           B("<b>Limits:</b> proof sketches, not refereed proofs; the interior case is open; one learning algorithm on one game."),
+           B("<b>Limits:</b> the proofs (in the repository) are not yet refereed; the interior case is open; one learning algorithm on one game."),
            P("Wu, Zhu, Cai, Zhu (2025), Battling Influencers Game, arXiv 2502.01127 · Leonardos et al. (ICLR 2022), Markov potential games · Monderer and Shapley (1996), Potential games · Fudenberg and Tirole (1991), Game Theory.", cap)]
 
     two = [P("5. When does the one-shot equilibrium survive inertia?", head),
@@ -214,7 +214,7 @@ def build(out=OUTPUT):
            P("6. What players do instead", head),
            P("<b>Proposition 2.</b> When the houses lie on either side of the dog, the policy in which each player aims the next dog position at its own target, as far as its weight allows,", claim),
            P("a<sub>i</sub>(x) = clip( a<sub>i</sub>* + (T<sub>i</sub> − w0·x − (1 − w0)·d*) / ((1 − w0)·w<sub>i</sub>), 0, 1 )", math),
-           P("is a feedback equilibrium. It is piecewise affine, and equals the one-shot profile wherever holding is optimal. <i>Proof sketch:</i> each player's one-round objective is single-peaked at its target.", body),
+           P("is a feedback equilibrium. It is piecewise affine, and equals the one-shot profile wherever holding is optimal. <i>Proof idea:</i> each player's one-round objective is single-peaked at its target.", body),
            img(figs["policy"], col),
            P("Setup 3, x coordinate, w0 = 0.6: the explicit policy (lines) and the dynamic program (circles).", cap),
            B(f"Within one action-grid step (0.01) of the dynamic program in every such coordinate; one-round deviation gains below 1e-31."),
