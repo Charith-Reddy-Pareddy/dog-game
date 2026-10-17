@@ -1097,3 +1097,41 @@
 {"study": "feedback_learning", "key": {"algorithm": "ppo", "seed": 3}, "max_gain": 0.07563471426718715, "mean_gain": 0.011449577849101535}
 {"study": "feedback_learning", "key": {"algorithm": "ppo", "seed": 2}, "max_gain": 0.07561050658671942, "mean_gain": 0.011459030878625376}
 {"study": "feedback_learning", "key": {"algorithm": "ppo", "seed": 4}, "max_gain": 0.0756766775084099, "mean_gain": 0.011469203159546852}
+{"study": "feedback_learning", "key": {"algorithm": "reinforce", "seed": 0, "family": "beta"}, "max_gain": 0.08879405414176667, "mean_gain": 0.024323849818092363}
+{"study": "feedback_learning", "key": {"algorithm": "reinforce", "seed": 1, "family": "beta"}, "max_gain": 0.12866069422196347, "mean_gain": 0.04361757019053214}
+{"study": "feedback_learning", "key": {"algorithm": "reinforce", "seed": 2, "family": "beta"}, "max_gain": 0.09356054566397543, "mean_gain": 0.026091542629643843}
+{"study": "feedback_learning", "key": {"algorithm": "reinforce", "seed": 3, "family": "beta"}, "max_gain": 0.08551061427935469, "mean_gain": 0.023780348909126038}
+{"study": "feedback_learning", "key": {"algorithm": "reinforce", "seed": 4, "family": "beta"}, "max_gain": 0.08997347329473282, "mean_gain": 0.024721749262907735}
+{"study": "feedback_learning", "key": {"algorithm": "a2c", "seed": 0, "family": "beta"}, "max_gain": 0.08130258267788637, "mean_gain": 0.023361448043757817}
+{"study": "feedback_learning", "key": {"algorithm": "a2c", "seed": 1, "family": "beta"}, "max_gain": 0.08736149741670118, "mean_gain": 0.021720125200948747}
+{"study": "feedback_learning", "key": {"algorithm": "a2c", "seed": 4, "family": "beta"}, "max_gain": 0.08909808700766941, "mean_gain": 0.02233387862301511}
+{"study": "feedback_learning", "key": {"algorithm": "a2c", "seed": 2, "family": "beta"}, "max_gain": 0.08543157993573569, "mean_gain": 0.02224691220015171}
+{"study": "feedback_learning", "key": {"algorithm": "a2c", "seed": 3, "family": "beta"}, "max_gain": 0.08475055159789235, "mean_gain": 0.02193211383427454}
+{"study": "feedback_learning", "key": {"algorithm": "ppo", "seed": 0, "family": "beta"}, "max_gain": 0.09905862956890843, "mean_gain": 0.031977902424860594}
+{"study": "feedback_learning", "key": {"algorithm": "ppo", "seed": 1, "family": "beta"}, "max_gain": 0.14747366135535067, "mean_gain": 0.04329056774272335}
+{"study": "feedback_learning", "key": {"algorithm": "ppo", "seed": 2, "family": "beta"}, "max_gain": 0.07003201501221135, "mean_gain": 0.032297515095813134}
+{"study": "feedback_learning", "key": {"algorithm": "ppo", "seed": 3, "family": "beta"}, "max_gain": 0.07761751048058585, "mean_gain": 0.01686380413362085}
+{"study": "feedback_learning", "key": {"algorithm": "ppo", "seed": 4, "family": "beta"}, "max_gain": 0.407717383088972, "mean_gain": 0.16340035139232048}
+{"study": "feedback_learning", "key": {"algorithm": "a2c", "seed": 0, "family": "gaussian", "episodes": 15000}, "max_gain": 0.07563657323378781, "mean_gain": 0.011448852329281261}
+{"study": "feedback_learning", "key": {"algorithm": "a2c", "seed": 1, "family": "gaussian", "episodes": 15000}, "max_gain": 0.07563665181374857, "mean_gain": 0.011448865557045619}
+{"study": "feedback_learning", "key": {"algorithm": "a2c", "seed": 2, "family": "gaussian", "episodes": 15000}, "max_gain": 0.07563670872563799, "mean_gain": 0.011448828471208995}
+{"study": "feedback_learning", "key": {"algorithm": "a2c", "seed": 1, "family": "beta", "episodes": 15000}, "max_gain": 0.07978994553185981, "mean_gain": 0.014753239970758584}
+{"study": "feedback_learning", "key": {"algorithm": "a2c", "seed": 0, "family": "beta", "episodes": 15000}, "max_gain": 0.07908385052600231, "mean_gain": 0.015038115225532438}
+{"study": "feedback_learning", "key": {"algorithm": "a2c", "seed": 2, "family": "beta", "episodes": 15000}, "max_gain": 0.07764587547471269, "mean_gain": 0.014975781131621888}
+{"study": "feedback_learning", "key": {"algorithm": "holding", "seed": 0, "setup": 4, "w0": 0.9}, "max_gain": 0.20838997863772657, "mean_gain": 0.039655758400063544}
+{"study": "feedback_learning", "key": {"algorithm": "explicit", "seed": 0, "setup": 4, "w0": 0.9}, "max_gain": 0.0, "mean_gain": 0.0}
+{"study": "feedback_learning", "key": {"algorithm": "reinforce", "seed": 3, "setup": 4, "w0": 0.9}, "max_gain": 0.20515083668461176, "mean_gain": 0.030851401947153346}
+{"study": "feedback_learning", "key": {"algorithm": "reinforce", "seed": 0, "setup": 4, "w0": 0.9}, "max_gain": 0.15061621524623814, "mean_gain": 0.033735244996400994}
+{"study": "feedback_learning", "key": {"algorithm": "reinforce", "seed": 2, "setup": 4, "w0": 0.9}, "max_gain": 0.3832424640533598, "mean_gain": 0.09139498220734865}
+{"study": "feedback_learning", "key": {"algorithm": "reinforce", "seed": 1, "setup": 4, "w0": 0.9}, "max_gain": 0.20141916296798046, "mean_gain": 0.03869681219247643}
+{"study": "feedback_learning", "key": {"algorithm": "reinforce", "seed": 4, "setup": 4, "w0": 0.9}, "max_gain": 0.1714896648735107, "mean_gain": 0.016123819211579345}
+{"study": "feedback_learning", "key": {"algorithm": "a2c", "seed": 1, "setup": 4, "w0": 0.9}, "max_gain": 0.20837947236333498, "mean_gain": 0.03966753188445472}
+{"study": "feedback_learning", "key": {"algorithm": "a2c", "seed": 0, "setup": 4, "w0": 0.9}, "max_gain": 0.20836057796604002, "mean_gain": 0.03967394553334522}
+{"study": "feedback_learning", "key": {"algorithm": "a2c", "seed": 4, "setup": 4, "w0": 0.9}, "max_gain": 0.20838096679256057, "mean_gain": 0.039668678721976526}
+{"study": "feedback_learning", "key": {"algorithm": "a2c", "seed": 3, "setup": 4, "w0": 0.9}, "max_gain": 0.20837446366074697, "mean_gain": 0.03967880505732595}
+{"study": "feedback_learning", "key": {"algorithm": "a2c", "seed": 2, "setup": 4, "w0": 0.9}, "max_gain": 0.20838581696540803, "mean_gain": 0.03967101173463292}
+{"study": "feedback_learning", "key": {"algorithm": "ppo", "seed": 0, "setup": 4, "w0": 0.9}, "max_gain": 0.20839001403738477, "mean_gain": 0.0396557772328748}
+{"study": "feedback_learning", "key": {"algorithm": "ppo", "seed": 1, "setup": 4, "w0": 0.9}, "max_gain": 0.20839007457210013, "mean_gain": 0.039655805098349046}
+{"study": "feedback_learning", "key": {"algorithm": "ppo", "seed": 3, "setup": 4, "w0": 0.9}, "max_gain": 0.20839038239051866, "mean_gain": 0.03965584962235173}
+{"study": "feedback_learning", "key": {"algorithm": "ppo", "seed": 2, "setup": 4, "w0": 0.9}, "max_gain": 0.2083899837836949, "mean_gain": 0.03965576214053937}
+{"study": "feedback_learning", "key": {"algorithm": "ppo", "seed": 4, "setup": 4, "w0": 0.9}, "max_gain": 0.2083901008227692, "mean_gain": 0.03965578814249175}
