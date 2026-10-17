@@ -562,3 +562,26 @@
 {"study": "selection_noise", "key": {"log_std": 0.0, "seed": 3}, "exploitability": 4.2786163855806914e-05, "distance": 0.9969230546889809, "red": [0.9999033212661743, 0.9986660480499268], "blue": [8.098316175164655e-05, 0.001743009313941002]}
 {"study": "selection_noise", "key": {"log_std": 0.0, "seed": 4}, "exploitability": 9.107138465230813e-05, "distance": 0.995266260599895, "red": [0.9997938275337219, 0.9979637861251831], "blue": [6.767235026927665e-05, 0.002697572810575366]}
 {"study": "selection_noise", "key": {"log_std": 0.0, "seed": 5}, "exploitability": 4.4431088437546506e-05, "distance": 0.9954251335581343, "red": [0.9999005794525146, 0.9970908164978027], "blue": [7.152670150389895e-05, 0.0016656980151310563]}
+{"study": "inertia_dp", "key": {"setup": 0, "w0": 0.6}, "path_gap": 0.0, "differs": [0.0, 0.0], "unresolved": [0, 0], "sweeps": [203, 197]}
+{"study": "inertia_dp", "key": {"setup": 0, "w0": 0.9}, "path_gap": 0.0, "differs": [0.0, 0.04987531172069826], "unresolved": [0, 0], "sweeps": [203, 197]}
+{"study": "inertia_dp", "key": {"setup": 0, "w0": 0.3}, "path_gap": 0.0, "differs": [0.0, 0.0], "unresolved": [0, 0], "sweeps": [203, 197]}
+{"study": "inertia_dp", "key": {"setup": 2, "w0": 0.6}, "path_gap": 0.010000000000000009, "differs": [0.7556109725685786, 0.0], "unresolved": [0, 0], "sweeps": [176, 210]}
+{"study": "inertia_dp", "key": {"setup": 2, "w0": 0.3}, "path_gap": 0.0, "differs": [0.5685785536159601, 0.0], "unresolved": [0, 0], "sweeps": [176, 210]}
+{"study": "inertia_dp", "key": {"setup": 1, "w0": 0.3}, "path_gap": 0.0, "differs": [0.0, 0.29177057356608477], "unresolved": [0, 0], "sweeps": [207, 207]}
+{"study": "inertia_dp", "key": {"setup": 1, "w0": 0.6}, "path_gap": 0.0, "differs": [0.05486284289276808, 0.29925187032418954], "unresolved": [0, 56], "sweeps": [207, 207]}
+{"study": "inertia_dp", "key": {"setup": 1, "w0": 0.9}, "path_gap": 0.0, "differs": [0.14214463840399003, 0.29925187032418954], "unresolved": [0, 0], "sweeps": [207, 207]}
+{"study": "inertia_dp", "key": {"setup": 3, "w0": 0.9}, "path_gap": 0.5, "differs": [0.0, 1.0], "unresolved": [0, 0], "sweeps": [205, 10]}
+{"study": "inertia_dp", "key": {"setup": 3, "w0": 0.6}, "path_gap": 0.5, "differs": [0.0, 1.0], "unresolved": [0, 0], "sweeps": [205, 7]}
+{"study": "inertia_dp", "key": {"setup": 4, "w0": 0.3}, "path_gap": 0.0, "differs": [0.14962593516209477, 0.14962593516209477], "unresolved": [0, 0], "sweeps": [176, 176]}
+{"study": "inertia_dp", "key": {"setup": 2, "w0": 0.9}, "path_gap": 0.0, "differs": [0.8403990024937655, 0.0], "unresolved": [0, 0], "sweeps": [176, 210]}
+{"study": "inertia_dp", "key": {"setup": 3, "w0": 0.3}, "path_gap": 0.5, "differs": [0.0, 1.0], "unresolved": [0, 0], "sweeps": [205, 9]}
+{"study": "inertia_dp", "key": {"setup": 4, "w0": 0.6}, "path_gap": 0.0, "differs": [0.5087281795511222, 0.5087281795511222], "unresolved": [0, 0], "sweeps": [176, 176]}
+{"study": "inertia_dp", "key": {"setup": 4, "w0": 0.9}, "path_gap": 0.0, "differs": [0.683291770573566, 0.683291770573566], "unresolved": [0, 0], "sweeps": [176, 176]}
+{"study": "markov_potential", "key": {"w0": 0.0, "policies": "fixed"}, "cycle": 6.661338147750939e-15}
+{"study": "markov_potential", "key": {"w0": 0.0, "policies": "reacting"}, "cycle": 7.899686520376186}
+{"study": "markov_potential", "key": {"w0": 0.3, "policies": "fixed"}, "cycle": 3.1086244689504383e-15}
+{"study": "markov_potential", "key": {"w0": 0.3, "policies": "reacting"}, "cycle": 7.1182337003516505}
+{"study": "markov_potential", "key": {"w0": 0.6, "policies": "fixed"}, "cycle": 1.7763568394002505e-15}
+{"study": "markov_potential", "key": {"w0": 0.6, "policies": "reacting"}, "cycle": 5.625000000000012}
+{"study": "markov_potential", "key": {"w0": 0.9, "policies": "fixed"}, "cycle": 5.551115123125783e-15}
+{"study": "markov_potential", "key": {"w0": 0.9, "policies": "reacting"}, "cycle": 1.8488628026412353}

@@ -1,4 +1,4 @@
-from doggame.dog_game_summary import (algorithms_table, convergence_counts, markdown, noise_table, resolution_table,
+from doggame.dog_game_summary import (inertia_dp_table, markov_potential_table, selection_noise_table, algorithms_table, convergence_counts, markdown, noise_table, resolution_table,
                                       selection_outcome, selection_table, walking_algorithms_table, walking_share_series, walking_table,
                                       ppo_epochs_table, ppo_long_table, ppo_walking_table, walking_equilibrium_table, walking_houses_table, walking_inertia_table,
                                       walking_settings_table)
@@ -164,3 +164,23 @@ def test_walking_equilibrium_table_shows_each_players_gain_and_the_largest_share
 
     assert table[1][1:] == ["on their houses", "0.00000", "0.02000", "1.00%"]
     assert table[2][0].startswith("(0.7, 0.1)") and table[2][1:] == ["on the corners", "0.00000", "0.00000", "0.00%"]
+
+
+def test_the_selection_noise_table_puts_the_default_next_to_the_other_noise_levels():
+    row = lambda study_name, key, red, blue: run(study_name, key, red=red, blue=blue, exploitability=0.0001)
+    rows = [row("selection", dict(architecture="separate", seed=0), [1, 1], [0, 0]),
+            row("selection_noise", dict(log_std=-2.0, seed=0), [1, 0], [0, 1])]
+
+    table = selection_noise_table(rows)
+
+    assert [r[0] for r in table[1:]] == ["0.14", "0.61 (default)"]
+    assert table[1][1:3] == ["0 of 1", "1 of 1"] and table[2][1:3] == ["1 of 1", "0 of 1"]
+
+
+def test_the_dp_and_cycle_tables_show_their_measurements():
+    rows = [run("inertia_dp", dict(setup=0, w0=0.6), path_gap=0.0, differs=[0.0, 0.25], unresolved=[0, 0], sweeps=[10, 10]),
+            run("markov_potential", dict(w0=0.6, policies="fixed"), cycle=1e-15),
+            run("markov_potential", dict(w0=0.6, policies="reacting"), cycle=5.625)]
+
+    assert inertia_dp_table(rows)[1][1] == "0.00 / 0%, 25%"
+    assert markov_potential_table(rows)[1] == ["0.6", "+1.0e-15", "+5.62"]

@@ -235,6 +235,44 @@ def inertia_equilibrium_table(rows):
     return table
 
 
+def selection_noise_table(rows):
+    """Where self-play ends in the shared-y setup for each initial exploration noise (separate layout, 10 seeds)."""
+    outcomes = ("red top, blue bottom", "red bottom, blue top", "both at y = 0.5", "other")
+    groups = [(-0.5, [r for r in study(rows, "selection") if r["key"]["architecture"] == "separate"])]
+    groups += [(s, [r for r in study(rows, "selection_noise") if r["key"]["log_std"] == s]) for s in (-2.0, -1.0, 0.0)]
+    table = [["Initial noise (std)"] + list(outcomes)]
+    for log_std, runs in sorted(groups):
+        if runs:
+            found = [selection_outcome(r["red"], r["blue"]) for r in runs]
+            table.append([f"{np.exp(log_std):.2f}" + (" (default)" if log_std == -0.5 else "")] + [f"{found.count(o)} of {len(runs)}" for o in outcomes])
+    return table
+
+
+def inertia_dp_table(rows):
+    """The exact feedback equilibrium against holding the one-shot Nash actions: the largest action gap on the path from
+    the starting dog position, and the share of dog positions (per coordinate) where the two differ."""
+    runs = study(rows, "inertia_dp")
+    w0s = sorted({r["key"]["w0"] for r in runs})
+    table = [["House setup"] + [f"w0 = {w}: path gap / states differing (x, y)" for w in w0s]]
+    for setup in sorted({r["key"]["setup"] for r in runs}):
+        row = [houses(setup)]
+        for w0 in w0s:
+            r = next(x for x in runs if x["key"]["setup"] == setup and x["key"]["w0"] == w0)
+            row.append(f"{r['path_gap']:.2f} / {100 * r['differs'][0]:.0f}%, {100 * r['differs'][1]:.0f}%")
+        table.append(row)
+    return table
+
+
+def markov_potential_table(rows):
+    """4-cycle sums of value changes, which are zero in every Markov potential game."""
+    runs = study(rows, "markov_potential")
+    table = [["Inertia w0", "Policies that ignore the dog", "Policies that react to the dog"]]
+    for w0 in sorted({r["key"]["w0"] for r in runs}):
+        cycle = {r["key"]["policies"]: r["cycle"] for r in runs if r["key"]["w0"] == w0}
+        table.append([str(w0), f"{cycle.get('fixed', float('nan')):+.1e}", f"{cycle.get('reacting', float('nan')):+.2f}"])
+    return table
+
+
 def ppo_epochs_table(rows):
     """Main game: share of runs under the threshold after each number of episodes, with the gradient steps each
     algorithm takes per episode, so PPO's speed can be compared with REINFORCE and A2C on equal steps."""
@@ -390,7 +428,9 @@ if __name__ == "__main__":
                         ("walking houses", walking_houses_table(studies)), ("walking inertia", walking_inertia_table(studies)),
                         ("walking equilibrium", walking_equilibrium_table(studies)),
                         ("walking capacity", walking_capacity_table(studies)), ("walking ppo inertia", walking_ppo_inertia_table(studies)),
-                        ("walking hard long", walking_hard_long_table(studies)), ("inertia equilibrium", inertia_equilibrium_table(studies))):
+                        ("walking hard long", walking_hard_long_table(studies)), ("inertia equilibrium", inertia_equilibrium_table(studies)),
+                        ("selection noise", selection_noise_table(studies)), ("inertia dp", inertia_dp_table(studies)),
+                        ("markov potential", markov_potential_table(studies))):
         print(f"\n### {name}\n\n{markdown(table)}")
     print("\nconvergence counts:", convergence_counts(runs))
     print("inertia median distance:", inertia_distances(studies))

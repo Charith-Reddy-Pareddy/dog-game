@@ -110,3 +110,11 @@ def test_the_selection_noise_study_varies_only_the_initial_noise():
     keys = [k for k, _ in studies.study_selection_noise(range(5))]
 
     assert len(keys) == 30 and sorted({k["log_std"] for k in keys}) == [-2.0, -1.0, 0.0]
+
+
+def test_the_dp_and_markov_potential_studies_define_their_checks():
+    dp = [k for k, _ in studies.study_inertia_dp(range(5))]
+    cycles = [k for k, _ in studies.study_markov_potential(range(5))]
+
+    assert len(dp) == 15 and {k["w0"] for k in dp} == {0.3, 0.6, 0.9}
+    assert len(cycles) == 8 and {k["policies"] for k in cycles} == {"fixed", "reacting"}

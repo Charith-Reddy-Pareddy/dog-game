@@ -44,6 +44,7 @@ from doggame.experiments import DEFAULT_CONFIGS
 from doggame.fictitious_play import expected_value, fictitious_play
 from doggame.nash import solve_stage_nash
 from doggame.polar import PolarDogGameEnv
+from doggame.inertia_dp import policy as dp_policy, solve as solve_dp
 from doggame.inertia_equilibrium import check_profile as check_inertia_profile
 from doggame.walking_equilibrium import check_profile
 from doggame.polar_agent import PolarPolicy, final_positions, train_polar, train_polar_actor_critic
@@ -243,6 +244,43 @@ def study_selection_noise(seeds):
             yield dict(log_std=log_std, seed=seed), run
 
 
+def study_inertia_dp(seeds):
+    """The exact feedback equilibrium of the inertia game (doggame.inertia_dp), compared with holding the one-shot Nash
+    actions: on the path from the starting dog position, and over all dog positions. Deterministic, so `seeds` is unused."""
+    for setup, config in enumerate(DEFAULT_CONFIGS):
+        for w0 in (0.3, 0.6, 0.9):
+            def run(config=config, w0=w0):
+                houses = (np.asarray(config["house_red"]), np.asarray(config["house_blue"]))
+                nash_red, nash_blue, _ = solve_stage_nash(houses[0], houses[1], config["w"], Square(0.0, 1.0))
+                solution = solve_dp(houses, config["w"], w0)
+                dog, path_gap = config["w"] * houses[0] + (1 - config["w"]) * houses[1], 0.0
+                for _ in range(30):  # the equilibrium path from the starting dog position
+                    red, blue = dp_policy(solution, dog)
+                    path_gap = max(path_gap, float(np.abs(red - nash_red).max()), float(np.abs(blue - nash_blue).max()))
+                    dog = w0 * dog + (1 - w0) * (config["w"] * red + (1 - config["w"]) * blue)
+                differs = [float(np.mean((np.abs(p["red"] - nash_red[c]) > 1e-9) | (np.abs(p["blue"] - nash_blue[c]) > 1e-9))) for c, p in enumerate(solution)]
+                return dict(path_gap=path_gap, differs=differs, unresolved=[p["unresolved"] for p in solution], sweeps=[p["sweeps"] for p in solution])
+            yield dict(setup=setup, w0=w0), run
+
+
+def study_markov_potential(seeds):
+    """4-cycle sums of value changes (zero in every Markov potential game), with policies that ignore the dog and with
+    policies that react to it, at four inertias. Deterministic, so `seeds` is unused."""
+    from doggame.markov_potential import cycle_sum
+
+    c = DEFAULT_CONFIGS[0]
+    houses, w = (c["house_red"], c["house_blue"]), c["w"]
+    start = w * np.asarray(houses[0]) + (1 - w) * np.asarray(houses[1])
+    const = lambda a: (lambda x: np.asarray(a, dtype=float))
+    red, blue = const((1.0, 0.0)), const((0.0, 1.0))
+    alternatives = dict(fixed=(const((0.6, 0.4)), const((0.3, 0.7))),
+                        reacting=(lambda x: np.clip(1.0 - x, 0, 1), lambda x: np.clip(x, 0, 1)))
+    for w0 in (0.0, 0.3, 0.6, 0.9):
+        for kind, (red_alt, blue_alt) in alternatives.items():
+            yield (dict(w0=w0, policies=kind),
+                   lambda w0=w0, red_alt=red_alt, blue_alt=blue_alt: dict(cycle=cycle_sum(red, red_alt, blue, blue_alt, houses, w, w0, start)))
+
+
 def study_selection(seeds):
     for architecture in ("separate", "shared", "partial"):
         for seed in range(10):  # equilibrium selection is a question about frequencies, so use more seeds
@@ -337,7 +375,7 @@ def study_noise(seeds, resolution=9):
     yield dict(iterations="exact", seed=0), lambda: dict(spread=float(spread), gap=float(gap), support=int((exact_red > 1e-3).sum()), top=float(exact_red.max()))
 
 
-STUDIES = dict(selection_noise=study_selection_noise, algorithms=study_algorithms, walking=study_walking, ppo_variants=study_ppo_variants, ppo_long=study_ppo_long,
+STUDIES = dict(selection_noise=study_selection_noise, inertia_dp=study_inertia_dp, markov_potential=study_markov_potential, algorithms=study_algorithms, walking=study_walking, ppo_variants=study_ppo_variants, ppo_long=study_ppo_long,
                walking_settings=study_walking_settings, walking_houses=study_walking_houses, walking_inertia=study_walking_inertia,
                walking_equilibrium=study_walking_equilibrium, walking_capacity=study_walking_capacity, walking_ppo_inertia=study_walking_ppo_inertia,
                walking_hard_long=study_walking_hard_long, inertia_equilibrium=study_inertia_equilibrium, selection=study_selection, inertia=study_inertia, pretraining=study_pretraining,
