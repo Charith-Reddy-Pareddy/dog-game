@@ -1532,3 +1532,43 @@
 {"study": "many_targets", "key": {"n": 8, "game": 16}, "gain": 2.326013197239899e-07, "iterations": 27, "holds": false, "peaks": 1}
 {"study": "many_targets", "key": {"n": 8, "game": 19}, "gain": 3.252213171069494e-08, "iterations": 27, "holds": false, "peaks": 2}
 {"study": "many_targets", "key": {"n": 8, "game": 17}, "gain": 9.381393138073153e-08, "iterations": 27, "holds": false, "peaks": 2}
+{"study": "exact_play_many", "key": {"n": 3, "game": 1, "kind": "holding"}, "gain": 0.03503887107015477}
+{"study": "exact_play_many", "key": {"n": 3, "game": 0, "kind": "holding"}, "gain": 0.06203476394145305}
+{"study": "exact_play_many", "key": {"n": 3, "game": 1, "kind": "target"}, "gain": 1.2421142231433535e-07}
+{"study": "exact_play_many", "key": {"n": 3, "game": 0, "kind": "target"}, "gain": 1.6301960237274926e-07}
+{"study": "exact_play_many", "key": {"n": 3, "game": 3, "kind": "holding"}, "gain": 0.06460243806417106}
+{"study": "exact_play_many", "key": {"n": 3, "game": 2, "kind": "holding"}, "gain": 0.10215149005057493}
+{"study": "exact_play_many", "key": {"n": 3, "game": 2, "kind": "network"}, "gain": 0.016905542326171828}
+{"study": "exact_play_many", "key": {"n": 3, "game": 0, "kind": "network"}, "gain": 0.0149769263585256}
+{"study": "exact_play_many", "key": {"n": 3, "game": 1, "kind": "network"}, "gain": 0.035033478794694844}
+{"study": "exact_play_many", "key": {"n": 3, "game": 3, "kind": "network"}, "gain": 0.06460357704818054}
+{"study": "exact_play_many", "key": {"n": 3, "game": 4, "kind": "network"}, "gain": 0.08873933022786627}
+{"study": "exact_play_many", "key": {"n": 3, "game": 1, "kind": "table"}, "gain": 0.00028140163580986366}
+{"study": "exact_play_many", "key": {"n": 3, "game": 3, "kind": "target"}, "gain": 5.789814530102189e-06}
+{"study": "exact_play_many", "key": {"n": 5, "game": 0, "kind": "holding"}, "gain": 0.07660899004902497}
+{"study": "exact_play_many", "key": {"n": 3, "game": 0, "kind": "table"}, "gain": 0.0010404849648084635}
+{"study": "exact_play_many", "key": {"n": 3, "game": 2, "kind": "target"}, "gain": 2.638559410683694e-07}
+{"study": "exact_play_many", "key": {"n": 3, "game": 4, "kind": "holding"}, "gain": 0.08874430671424212}
+{"study": "exact_play_many", "key": {"n": 3, "game": 4, "kind": "table"}, "gain": 0.0008418861933930932}
+{"study": "exact_play_many", "key": {"n": 5, "game": 1, "kind": "target"}, "gain": 5.860426598869838e-06}
+{"study": "exact_play_many", "key": {"n": 5, "game": 3, "kind": "holding"}, "gain": 0.017838408750798174}
+{"study": "exact_play_many", "key": {"n": 3, "game": 2, "kind": "table"}, "gain": 0.0005931062329418701}
+{"study": "exact_play_many", "key": {"n": 3, "game": 4, "kind": "target"}, "gain": 4.483234775851108e-07}
+{"study": "exact_play_many", "key": {"n": 5, "game": 1, "kind": "holding"}, "gain": 0.07227146433577411}
+{"study": "exact_play_many", "key": {"n": 3, "game": 3, "kind": "table"}, "gain": 0.0002878147082150395}
+{"study": "exact_play_many", "key": {"n": 5, "game": 0, "kind": "target"}, "gain": 3.1129992072304047e-07}
+{"study": "exact_play_many", "key": {"n": 5, "game": 2, "kind": "holding"}, "gain": 0.009701002192820385}
+{"study": "exact_play_many", "key": {"n": 5, "game": 1, "kind": "network"}, "gain": 0.002674985400683198}
+{"study": "exact_play_many", "key": {"n": 5, "game": 0, "kind": "network"}, "gain": 0.017677504839491903}
+{"study": "exact_play_many", "key": {"n": 5, "game": 0, "kind": "table"}, "gain": 7.138189698963071e-05}
+{"study": "exact_play_many", "key": {"n": 5, "game": 2, "kind": "target"}, "gain": 3.4868963663670094e-07}
+{"study": "exact_play_many", "key": {"n": 5, "game": 4, "kind": "holding"}, "gain": 0.06955640025944455}
+{"study": "exact_play_many", "key": {"n": 5, "game": 1, "kind": "table"}, "gain": 0.0003031679013059275}
+{"study": "exact_play_many", "key": {"n": 5, "game": 3, "kind": "target"}, "gain": 3.351678502794275e-07}
+{"study": "exact_play_many", "key": {"n": 5, "game": 4, "kind": "network"}, "gain": 0.06956789370118581}
+{"study": "exact_play_many", "key": {"n": 5, "game": 2, "kind": "network"}, "gain": 0.009701922335566937}
+{"study": "exact_play_many", "key": {"n": 5, "game": 3, "kind": "network"}, "gain": 0.017838730364474864}
+{"study": "exact_play_many", "key": {"n": 5, "game": 3, "kind": "table"}, "gain": 0.00034568175882554453}
+{"study": "exact_play_many", "key": {"n": 5, "game": 2, "kind": "table"}, "gain": 0.0007527854203686069}
+{"study": "exact_play_many", "key": {"n": 5, "game": 4, "kind": "target"}, "gain": 5.172451787854859e-07}
+{"study": "exact_play_many", "key": {"n": 5, "game": 4, "kind": "table"}, "gain": 4.8611929227650175e-05}
