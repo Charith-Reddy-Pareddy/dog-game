@@ -10,7 +10,8 @@ of the Battling Influencers Game, an exact potential game (Wu et al., 2025). We 
 part of its position each round. We prove that holding the one-shot equilibrium actions is a Markov-perfect
 equilibrium if and only if each player's slack beyond the dog is at least w0(1 - g w0)/(1 - g w0^2), where w0 is the
 inertia and g the discount, and we give an explicit piecewise-affine feedback equilibrium whenever the houses lie on
-either side of the dog. The condition extends to many houses, where the admissible inertia shrinks like 1/N. We show
+either side of the dog; numerically, a fixed point for the players' targets gives a feedback equilibrium in 199 of 200
+random games. The condition extends to many houses, where the admissible inertia shrinks like 1/N. We show
 that the dynamic game is not a Markov potential game once policies react to the dog. For learning, we find that
 policy-gradient self-play from random starts learns to hold the one-shot actions, which is exploitable off the
 equilibrium path, and that on the potential's flat direction learning is a random walk stopped by the action box,
@@ -32,6 +33,8 @@ policy-gradient learners find. Our contributions, each verified computationally 
 - The extension of the condition to many houses, where the static outcome is the generalized median of the average
   voting rule (Renault and Trannoy, 2005), and the finding that the admissible inertia shrinks like 1/N.
 - A concrete check that the dynamic game is not a Markov potential game, although every state game is a potential game.
+- Equilibria in target form beyond Proposition 2, found by a two-dimensional fixed point, and the continuous-time
+  limit, where the equilibrium is bang-bang and a noisy dog moves its switching points.
 - Two learning findings: self-play misses the feedback equilibrium, and selection along a flat potential is a random
   walk stopped by the action box. The second corrects an earlier small-sample result of ours.
 
@@ -79,7 +82,8 @@ argument shows the one-round objective under the policy is single-peaked at T_i 
 target is a best reply. Full proofs are in docs/INERTIA_PROOFS.md.
 
 **Checks.** An exact dynamic program (Nash value iteration, 401 positions by 101 actions per coordinate) agrees with
-both propositions to one action-grid step in every coordinate of five house setups at w0 = 0.3, 0.6 and 0.9. On 200
+both propositions to one action-grid step in every coordinate where the houses differ, in five house setups at w0 =
+0.3, 0.6 and 0.9 (where the houses coincide, the game has a continuum of equilibria and the program picks another). On 200
 random one-coordinate games, with the deviation gain computed by simulating the dog rather than on a grid:
 
 | One-shot equilibrium | Games | Explicit policy is an equilibrium (gain < 1e-9) | Largest one-round gain | Holding is Markov-perfect |
@@ -233,12 +237,16 @@ linear-quadratic benchmark with an action cost would not show (its policies are 
 | unclipped | 0.05 | 0.2 | 0.765 | 0.545 | 559 sweeps |
 | unclipped | 0.05 | 0.4 | 0.775 | 0.585 | 605 sweeps |
 
+The shift grows smoothly from zero noise and is the same with half the time step and with an unclipped dog; why noise
+moves the switching points this way is open, and one clipped run at sigma = 0.4 did not converge.
+
 ## 8. Discussion and limits
 
-The static potential structure does not carry over to feedback play, but the static equilibrium does survive on the
-equilibrium path, and exactly characterizes where it fails off the path. The feedback equilibrium is explicit when the
-houses straddle the dog; learners nevertheless converge to the static profile. Limits: the proofs are ours and not
-refereed; Proposition 2 excludes interior one-shot actions; learning results use one game, a few settings and five
+The static potential structure does not carry over to feedback play, but the static equilibrium survives on the
+equilibrium path, and Proposition 1 says exactly where it fails off the path. The feedback equilibrium is explicit when
+the houses straddle the dog and has the same target form numerically when they do not; learners nevertheless converge
+to the static profile. Limits: the proofs are ours and not refereed; Proposition 2 excludes interior one-shot actions,
+where the target fixed point is only numerical; learning results use one game, a few settings and five
 seeds per setting; the continuous-time statements are limits of discrete-time equilibria, and continuous-time
 q-learning is not studied.
 
