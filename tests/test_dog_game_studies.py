@@ -176,3 +176,7 @@ def test_the_cross_play_study_trains_every_layout_on_setup_1():
 
 def test_the_target_study_uses_the_same_200_games():
     assert [k["game"] for k, _ in studies.study_target_random(range(5))] == list(range(200))
+
+
+def test_the_many_targets_study_covers_three_five_and_eight_players():
+    assert sorted({k["n"] for k, _ in studies.study_many_targets(range(5))}) == [3, 5, 8]
