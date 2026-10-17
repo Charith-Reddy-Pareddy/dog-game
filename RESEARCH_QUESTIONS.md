@@ -283,8 +283,10 @@ with the numbers and the caveats, are in [RESEARCH_REPORT.md](RESEARCH_REPORT.md
     inside the box (about one draw in three) and the inertia is below roughly 0.35/N. The feedback
     equilibrium has target form: each round is the one-shot game with the players' targets as
     houses, and targets from a fixed point give an equilibrium in 55 of 60 random games with 3 to 8
-    players, including every game whose players' objectives are single-peaked. A proof, a
-    mean-field formulation and what learners find are open.*
+    players, including every game whose players' objectives are single-peaked. Exact gradient
+    play finds it with a table of actions (10 of 10 games with 3 or 5 players) but not with a
+    network per player (stuck at holding in 6 of 10). A proof, a mean-field formulation and
+    sampled learners are open.*
 37. **Does policy-gradient self-play learn a feedback equilibrium of the game with inertia?**
     *Status: answered for setup 3 at w0 = 0.6 and setup 5 at w0 = 0.9: no. Starting every
     episode from a random dog position, A2C and PPO learn to hold the one-shot actions at every

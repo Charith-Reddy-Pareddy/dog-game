@@ -577,7 +577,21 @@ The study draws N houses from a skewed distribution (Beta(2, 5)) with equal weig
 | 8 | 20 | 17 of 20 | 9 of 9 | 8 of 11 | 5.7e-04 | 1 of 20 |
 
   Aiming at the targets is a feedback equilibrium in 55 of 60 games and in every game where all players' one-round objectives are single-peaked (42 of 42), as the argument behind Proposition 2 suggests; all 5 failures have a player whose objective has several peaks, which become more common with more players. Holding the one-shot actions is Markov-perfect in only 5 of the 60.
-- **Open:** a proof for many houses, a mean-field formulation of the feedback equilibrium, and what learners find there.
+- **What exact gradient play finds with many houses.** Noise-free gradient play (`play_many` in `doggame/exact_play.py`) with 3 and 5 players, five random games each, inertia 0.6:
+
+| Players | Policy | Games | Largest one-round gain: median (range) | Below holding's gain in |
+|---|---|---|---|---|
+| 3 | target-form equilibrium | 5 | 0.0000 (0.0000 to 0.0000) | 5 of 5 (by half or more) |
+| 3 | hold the one-shot actions | 5 | 0.0646 (0.0350 to 0.1022) | - |
+| 3 | exact play, table | 5 | 0.0006 (0.0003 to 0.0010) | 5 of 5 (by half or more) |
+| 3 | exact play, network | 5 | 0.0350 (0.0150 to 0.0887) | 2 of 5 (by half or more) |
+| 5 | target-form equilibrium | 5 | 0.0000 (0.0000 to 0.0000) | 5 of 5 (by half or more) |
+| 5 | hold the one-shot actions | 5 | 0.0696 (0.0097 to 0.0766) | - |
+| 5 | exact play, table | 5 | 0.0003 (0.0000 to 0.0008) | 5 of 5 (by half or more) |
+| 5 | exact play, network | 5 | 0.0177 (0.0027 to 0.0696) | 2 of 5 (by half or more) |
+
+  A table of actions comes within about 0.001 of the equilibrium in all 10 games. One small network per player ends exactly at holding's gain in 6 of 10 games and improves on it by half or more in the other 4, but never reaches the equilibrium, as with two players (Section 5.22).
+- **Open:** a proof for many houses, a mean-field formulation of the feedback equilibrium, and sampled policy-gradient learners there.
 
 ### 5.22 Does self-play learn the feedback equilibrium?
 
