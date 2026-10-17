@@ -70,3 +70,11 @@ def test_the_many_house_target_fixed_point_is_a_feedback_equilibrium():
     houses, weights = np.array([0.8, 0.45, 0.1]), np.array([0.3, 0.3, 0.4])
     targets, _ = target_equilibrium(houses, weights, 0.6)
     assert deviation_gain(targets, houses, weights, 0.6, states=11, grid=101) < 1e-5
+
+
+def test_objective_peaks_counts_one_peak_in_a_simple_game():
+    from doggame.many_houses import objective_peaks, target_equilibrium
+
+    houses, weights = np.array([0.8, 0.45, 0.1]), np.array([0.3, 0.3, 0.4])
+    targets, _ = target_equilibrium(houses, weights, 0.6)
+    assert max(objective_peaks(targets, houses, weights, 0.6, grid=801)) <= 1

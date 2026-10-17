@@ -113,3 +113,11 @@ def deviation_gain(targets, houses, weights, w0, discount=0.9, states=21, grid=2
             total = -(z - houses[i]) ** 2 + discount * _values(z, targets, houses, weights, w0, discount, rounds)[i]
             best = max(best, float(total[:-1].max() - total[-1]))
     return best
+
+
+def objective_peaks(targets, houses, weights, w0, discount=0.9, grid=4001, rounds=200):
+    """For each player, the number of local maxima of its one-round objective under the targets; aiming at a target
+    is a best reply wherever that objective is single-peaked."""
+    zs, houses = np.linspace(0, 1, grid), np.asarray(houses, dtype=float)
+    objective = -(zs[None, :] - houses[:, None]) ** 2 + discount * _values(zs, targets, houses, weights, w0, discount, rounds)
+    return [int(np.sum(np.diff(np.sign(np.diff(row))) < 0)) for row in objective]
