@@ -473,6 +473,10 @@ At round 800, per seed:
   uses setup 3 at inertia 0.6 (Gaussian and Beta policies, 3000 episodes, five seeds; A2C for
   15000 episodes, three seeds) and setup 5 at inertia 0.9 (Gaussian, five seeds). The Beta
   policy is the repository's bounded Cartesian policy.
+- Exact gradient play uses one coordinate, 41 starting positions weighted equally, 60
+  simulated rounds, Adam (0.05 for tables, 0.01 for networks), 3000 steps and a one-hidden-layer
+  tanh network. "Within 0.05" compares actions on the 41-position grid; the clamp variant uses a
+  straight-through gradient.
 
 ## Settled points
 

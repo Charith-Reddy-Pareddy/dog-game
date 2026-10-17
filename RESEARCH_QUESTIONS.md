@@ -251,7 +251,9 @@ with the numbers and the caveats, are in [RESEARCH_REPORT.md](RESEARCH_REPORT.md
     *Status: answered for setup 3 at w0 = 0.6 and setup 5 at w0 = 0.9: no. Starting every
     episode from a random dog position, A2C and PPO learn to hold the one-shot actions at every
     position (19 of 20 Gaussian runs), which is exploitable off the path. Five times longer
-    training and a Beta policy do not change this, and REINFORCE does not do better. Why is open.*
+    training and a Beta policy do not change this, and REINFORCE does not do better. Exact,
+    noise-free gradient play finds the equilibrium with a table of actions (4 of 4) but not with a
+    shared network (0 of 20), so function approximation, not noise, is what stops it.*
 
 ## Where each question is answered in this repository
 
@@ -269,7 +271,7 @@ with the numbers and the caveats, are in [RESEARCH_REPORT.md](RESEARCH_REPORT.md
 | 19, 34 | studies `inertia_dp` (15 solves), `inertia_explicit` (15) and `inertia_random` (200 games), `doggame/inertia_dp.py`, `doggame/inertia_mpe.py`, `doggame/inertia_theory.py` |
 | 33 | study `markov_potential` (8 cycles), `doggame/markov_potential.py` |
 | 36 | study `many_houses` (2,000 draws), `doggame/many_houses.py` |
-| 37 | study `feedback_learning` (17 rows), `doggame/feedback_learning.py` |
+| 37 | studies `feedback_learning` (55 rows) and `exact_play` (24 runs), `doggame/feedback_learning.py`, `doggame/exact_play.py` |
 | 26 | study `walking` (15 runs) |
 | walking game, all questions | [WALKING_GAME_REPORT.md](WALKING_GAME_REPORT.md) ([PDF](docs/walking_game_report.pdf)) |
 | 24, 27, 28 | study `ppo_variants` (65 runs) |
