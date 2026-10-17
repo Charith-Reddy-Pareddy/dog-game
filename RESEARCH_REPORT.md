@@ -580,10 +580,14 @@ Shrink the time step: with step `dt`, inertia `w0 = 1 - dt` (the dog moves a fra
 | clipped to [0, 1] | 0.025 | 0.0 | 0.710 | 0.530 | 1107 sweeps |
 | clipped to [0, 1] | 0.025 | 0.2 | 0.765 | 0.550 | 1117 sweeps |
 | unclipped | 0.05 | 0.0 | 0.725 | 0.520 | 554 sweeps |
+| unclipped | 0.05 | 0.02 | 0.730 | 0.525 | 551 sweeps |
+| unclipped | 0.05 | 0.05 | 0.740 | 0.525 | 548 sweeps |
+| unclipped | 0.05 | 0.1 | 0.760 | 0.530 | 550 sweeps |
 | unclipped | 0.05 | 0.2 | 0.765 | 0.545 | 559 sweeps |
 | unclipped | 0.05 | 0.4 | 0.775 | 0.585 | 605 sweeps |
 
 - **The equilibrium stays bang-bang, but noise moves the switching points.** Red, whose house is at the one-shot dog, waits longer before easing off (0.725 without noise to 0.765 at `sigma = 0.2`), and blue pushes up over a wider range (0.520 to 0.545), unlike the linear-quadratic benchmark, whose policies ignore the noise.
+- **The shift grows smoothly with the noise**, roughly in proportion for small noise (red 0.725, 0.730, 0.740 and 0.760 at `sigma` = 0, 0.02, 0.05 and 0.1 on the unclipped dog), then levels off; it is not a jump at zero noise.
 - **It is not the clipping.** With the dog living on [-0.5, 1.5], so that it is never clipped inside [0, 1], the switching points are the same. The shift is also the same with half the time step, and finer state and action grids give the same values (checked separately).
 - **Limits.** One setup; the clipped run at `sigma = 0.4` did not converge in 8000 sweeps; why noise moves the switching points this way is not tested. Continuous-time q-learning on this game (the direction of Jia and Zhou, 2023) is open.
 
