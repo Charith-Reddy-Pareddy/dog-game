@@ -392,6 +392,17 @@ On the hardest walking setup, the 900-episode study is now complete (five seeds 
 
 The standard deviations of the final distances are 0.628, 0.205 and 0.775, respectively. This reinforces the difficulty of the setup but does not settle the algorithm ranking: there are five seeds, and one PPO seed ended exactly at the corners while the other four remained far away.
 
+**An entropy bonus.** Default PPO (four epochs) on the walking game for 900 episodes, with each player's loss rewarding its policy's entropy (angle and radius; `entropy` in `doggame/train_ac.py`), five seeds per coefficient; coefficient 0 reproduces the default row of Section 5.12 exactly:
+
+| Entropy coefficient | Before training | At 300 | At 600 | At 900 | Late checkpoints at the corners (from 450) | Seeds at the corners at the end |
+|---|---|---|---|---|---|---|
+| 0.0 | 1.49 | 0.371 | 0.499 | 0.669 | 50 of 95 | 3 of 5 |
+| 0.01 | 1.49 | 0.078 | 0.277 | 0.316 | 55 of 95 | 2 of 5 |
+| 0.03 | 1.49 | 0.135 | 0.072 | 0.063 | 66 of 95 | 3 of 5 |
+| 0.1 | 1.49 | 0.307 | 0.220 | 0.271 | 12 of 95 | 0 of 5 |
+
+- **A moderate bonus helps on average but does not make PPO reliable.** At 0.03 the mean distance after 900 episodes falls from 0.67 to 0.06 and the late checkpoints at the corners rise from 50 to 66 of 95, but still only 3 of 5 seeds end at the corners, as without the bonus; a large bonus (0.1) is worse. One-epoch PPO (77 of 95, 5 of 5) and A2C (95 of 95, 5 of 5) remain more reliable, which again points at the reuse of each episode.
+
 ### 5.17 Relation to prior work and claims boundary
 
 The static, no-inertia dog game is a bounded, two-player instance of the affine-receiver squared-loss structure in the Battling Influencers Game (BIG). BIG already proves the potential-game structure and characterizes pure equilibria; this repository does not claim that basic equilibrium structure as new. The repo's contribution is an executable empirical and verification study of policy-gradient and Nash-Q methods on this tractable game, with explicitly modeled inertia and movement-constrained variants. These are exploratory extensions, not evidence of a new general algorithm or a top-conference contribution. The dynamic results (the feedback equilibrium with inertia and the Markov-potential counterexample) are, as far as the literature checked here goes, not reported for this game, but they are instances of known phenomena rather than new theory. See the references in Section 9.
@@ -653,7 +664,7 @@ The statuses are the same as in [RESEARCH_QUESTIONS.md](RESEARCH_QUESTIONS.md).
 
 **Q28-Q29.** *Answered for the settings tried.* One-epoch PPO reaches the corners in 4/5 seeds after 300 and 5/5 after 900 episodes, but stays slower than A2C; a smaller learning rate does not help; default PPO does not settle with more training (Sections 5.11 and 5.12). The smaller-learning-rate settings were not run longer.
 
-**Q31. Does an entropy bonus or a larger network change PPO's instability?** *Partly answered.* A 64-unit network was tested with one and four epochs (Section 5.16); results vary sharply by epoch count and are based on five seeds. An entropy bonus was not tested.
+**Q31. Does an entropy bonus or a larger network change PPO's instability?** *Answered for these settings: neither makes it reliable.* A 64-unit network helps with one epoch but not with four (Section 5.16), and an entropy bonus of 0.03 lowers the mean distance after 900 episodes (0.67 to 0.06) without raising the number of seeds at the corners (3 of 5); five seeds per setting.
 
 **Q32. Does a polar absolute-action policy improve policy-gradient learning on the original dog game?** *Partly answered for the tested setups.* On the primary house setup, polar had higher one-shot expected gain than Cartesian Beta in all 30 algorithm-by-seed pairs. The REINFORCE follow-up across four additional setups is mixed: Cartesian Beta is better in two and the intervals include zero in two. The comparison changes distribution family as well as coordinates and is scored only at the reset state (Section 5.18); it does not establish a general polar-policy effect.
 
