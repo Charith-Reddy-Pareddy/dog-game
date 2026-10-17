@@ -198,14 +198,37 @@ The expected gradient along the flat direction is zero but noisy, so the policy 
 mean the walk leaves the box, and the default sigmoid policy stops it at the edges. Clipped exploration noise also
 makes the averaged potential dip at the interior, pushing either way equally.
 
-## 7. Discussion and limits
+## 7. Continuous time and noise
+
+As the time step dt shrinks (w0 = 1 - dt, discount exp(-r dt)), k tends to (r + 2)/(r + 1) and rho to (r + 1)/(r + 2):
+holding the one-shot actions needs slack at least (1 + r)/(2 + r), and Proposition 2's equilibrium becomes bang-bang,
+each player pushing its edge toward its target and switching there. With a Gaussian shock on the dog the
+equilibrium stays bang-bang, but its switching points move with the noise, also without clipping, which a
+linear-quadratic benchmark with an action cost would not show (its policies are certainty-equivalent):
+
+| Dog | Time step | Noise sigma | Red switches at | Blue switches at | Value iteration |
+|---|---|---|---|---|---|
+| closed form (Proposition 2) | 0.05 | 0 | 0.718 | 0.520 | - |
+| closed form (Proposition 2) | 0.025 | 0 | 0.709 | 0.527 | - |
+| continuous-time limit | 0 | 0 | 0.700 | 0.533 | - |
+| clipped to [0, 1] | 0.05 | 0.0 | 0.725 | 0.520 | 554 sweeps |
+| clipped to [0, 1] | 0.05 | 0.1 | 0.760 | 0.530 | 550 sweeps |
+| clipped to [0, 1] | 0.05 | 0.2 | 0.765 | 0.545 | 559 sweeps |
+| clipped to [0, 1] | 0.05 | 0.4 | 0.790 | 0.585 | did not converge |
+| clipped to [0, 1] | 0.025 | 0.0 | 0.710 | 0.530 | 1107 sweeps |
+| clipped to [0, 1] | 0.025 | 0.2 | 0.765 | 0.550 | 1117 sweeps |
+| unclipped | 0.05 | 0.0 | 0.725 | 0.520 | 554 sweeps |
+| unclipped | 0.05 | 0.2 | 0.765 | 0.545 | 559 sweeps |
+| unclipped | 0.05 | 0.4 | 0.775 | 0.585 | 605 sweeps |
+
+## 8. Discussion and limits
 
 The static potential structure does not carry over to feedback play, but the static equilibrium does survive on the
 equilibrium path, and exactly characterizes where it fails off the path. The feedback equilibrium is explicit when the
 houses straddle the dog; learners nevertheless converge to the static profile. Limits: the proofs are ours and not
 refereed; Proposition 2 excludes interior one-shot actions; learning results use one game, a few settings and five
-seeds per setting; and the noisy continuous-time version of the game, which needs an action cost for a Riccati
-benchmark, is not studied.
+seeds per setting; the continuous-time statements are limits of discrete-time equilibria, and continuous-time
+q-learning is not studied.
 
 ## References
 
