@@ -1,4 +1,4 @@
-from doggame.dog_game_summary import (pretraining_mechanism_table, noisy_inertia_table, exact_play_table, feedback_learning_table, many_houses_table, inertia_dp_table, inertia_explicit_table, inertia_random_table, mirror_p, selection_clip_table, markov_potential_table, selection_noise_table, algorithms_table, convergence_counts, markdown, noise_table, resolution_table,
+from doggame.dog_game_summary import (walking_entropy_table, pretraining_mechanism_table, noisy_inertia_table, exact_play_table, feedback_learning_table, many_houses_table, inertia_dp_table, inertia_explicit_table, inertia_random_table, mirror_p, selection_clip_table, markov_potential_table, selection_noise_table, algorithms_table, convergence_counts, markdown, noise_table, resolution_table,
                                       selection_outcome, selection_table, walking_algorithms_table, walking_share_series, walking_table,
                                       ppo_epochs_table, ppo_long_table, ppo_walking_table, walking_equilibrium_table, walking_houses_table, walking_inertia_table,
                                       walking_settings_table)
@@ -244,3 +244,10 @@ def test_the_pretraining_mechanism_table_counts_runs_under_the_threshold():
             run("pretraining_mechanism", dict(variant="pretrained", seed=0), curve={"100": 0.3, "300": 0.2}, saturation=dict(raw=8.5, log_std=-2.8))]
     table = pretraining_mechanism_table(rows)
     assert table[1] == ["scratch", "0 of 1", "1 of 1", "0.0030", "-"] and table[2][-1] == "8.5, -2.80"
+
+
+def test_the_walking_entropy_table_has_a_row_per_coefficient():
+    curve = {"300": 0.05, "450": 0.04, "600": 0.03, "900": 0.02}
+    rows = [run("walking_entropy", dict(entropy=c, seed=0), start=1.0, curve=curve) for c in (0.0, 0.1)]
+    table = walking_entropy_table(rows)
+    assert [r[0] for r in table[1:]] == ["0.0", "0.1"] and table[1][-1] == "1 of 1"
