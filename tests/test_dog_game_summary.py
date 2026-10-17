@@ -1,4 +1,4 @@
-from doggame.dog_game_summary import (vertex_selection_table, walking_clip_table, walking_entropy_table, pretraining_mechanism_table, noisy_inertia_table, exact_play_table, feedback_learning_table, many_houses_table, inertia_dp_table, inertia_explicit_table, inertia_random_table, mirror_p, selection_clip_table, markov_potential_table, selection_noise_table, algorithms_table, convergence_counts, markdown, noise_table, resolution_table,
+from doggame.dog_game_summary import (cross_play_table, vertex_selection_table, walking_clip_table, walking_entropy_table, pretraining_mechanism_table, noisy_inertia_table, exact_play_table, feedback_learning_table, many_houses_table, inertia_dp_table, inertia_explicit_table, inertia_random_table, mirror_p, selection_clip_table, markov_potential_table, selection_noise_table, algorithms_table, convergence_counts, markdown, noise_table, resolution_table,
                                       selection_outcome, selection_table, walking_algorithms_table, walking_share_series, walking_table,
                                       ppo_epochs_table, ppo_long_table, ppo_walking_table, walking_equilibrium_table, walking_houses_table, walking_inertia_table,
                                       walking_settings_table)
@@ -263,3 +263,11 @@ def test_the_walking_clip_table_orders_default_tight_clips_and_one_epoch():
 def test_the_vertex_selection_table_reports_values_and_differences():
     rows = [run("vertex_selection", dict(coordinate="setup 4 y", w0=0.6), first=-0.0023, vertex=-0.0023, differ=0.66, value_gap=1e-12)]
     assert vertex_selection_table(rows)[1] == ["setup 4 y", "0.6", "-0.0023 / -0.0023", "66%", "1.0e-12"]
+
+
+def test_cross_play_pairs_mismatched_mirror_images_and_finds_them_exploitable():
+    top = dict(red=[1.0, 1.0], blue=[0.0, 0.0], exploitability=0.0001)
+    bottom = dict(red=[1.0, 0.0], blue=[0.0, 1.0], exploitability=0.0001)
+    rows = [run("selection", dict(architecture="separate", seed=0), **top), run("selection", dict(architecture="shared", seed=0), **bottom)]
+    table = cross_play_table(rows)
+    assert table[1][0].startswith("shared y") and table[1][4] == "2 of 2" and float(table[1][5]) > 0.1

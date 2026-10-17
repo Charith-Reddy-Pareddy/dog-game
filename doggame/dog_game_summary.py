@@ -497,6 +497,24 @@ def selection_table(rows):
     return table
 
 
+def cross_play_table(rows):
+    """Exploitability when red from one run plays blue from another run with a different layout, against the runs'
+    own pairs: setup 1 (unique equilibrium, `cross_play`) and the shared-y setup (`selection`)."""
+    from doggame.env import Square
+    from doggame.verify import exploitability
+
+    table = [["Setup", "Runs", "Own pairs: median exploitability", "Cross pairs: median", "Cross pairs above 0.004", "Cross pairs: largest"]]
+    for label, config, runs in (("setup 1 (unique equilibrium)", DEFAULT_CONFIGS[0], study(rows, "cross_play")),
+                                ("shared y (mirror equilibria)", DEFAULT_CONFIGS[3], study(rows, "selection"))):
+        if not runs:
+            continue
+        gap = lambda red, blue: max(exploitability(np.array(red), np.array(blue), np.array(config["house_red"]), np.array(config["house_blue"]), config["w"], Square(0.0, 1.0)))
+        own = [r["exploitability"] for r in runs]
+        cross = [gap(a["red"], b["blue"]) for a in runs for b in runs if a["key"]["architecture"] != b["key"]["architecture"]]
+        table.append([label, str(len(runs)), f"{np.median(own):.5f}", f"{np.median(cross):.5f}", f"{sum(c > 0.004 for c in cross)} of {len(cross)}", f"{max(cross):.3f}"])
+    return table
+
+
 def inertia_table(rows):
     runs = study(rows, "inertia")
     w0s = sorted({r["key"]["w0"] for r in runs})
@@ -602,7 +620,7 @@ if __name__ == "__main__":
                         ("walking hard long", walking_hard_long_table(studies)), ("inertia equilibrium", inertia_equilibrium_table(studies)),
                         ("selection noise", selection_noise_table(studies)), ("inertia dp", inertia_dp_table(studies)),
                         ("markov potential", markov_potential_table(studies)), ("selection clip", selection_clip_table(studies)),
-                        ("inertia explicit", inertia_explicit_table(studies)), ("inertia random", inertia_random_table(studies)), ("many houses", many_houses_table(studies)), ("feedback learning", feedback_learning_table(studies)), ("exact play", exact_play_table(studies)), ("noisy inertia", noisy_inertia_table(studies)), ("pretraining mechanism", pretraining_mechanism_table(studies)), ("walking entropy", walking_entropy_table(studies)), ("walking clip", walking_clip_table(studies)), ("vertex selection", vertex_selection_table(studies))):
+                        ("inertia explicit", inertia_explicit_table(studies)), ("inertia random", inertia_random_table(studies)), ("many houses", many_houses_table(studies)), ("feedback learning", feedback_learning_table(studies)), ("exact play", exact_play_table(studies)), ("noisy inertia", noisy_inertia_table(studies)), ("pretraining mechanism", pretraining_mechanism_table(studies)), ("walking entropy", walking_entropy_table(studies)), ("walking clip", walking_clip_table(studies)), ("vertex selection", vertex_selection_table(studies)), ("cross play", cross_play_table(studies))):
         print(f"\n### {name}\n\n{markdown(table)}")
     print("\nconvergence counts:", convergence_counts(runs))
     print("inertia median distance:", inertia_distances(studies))
