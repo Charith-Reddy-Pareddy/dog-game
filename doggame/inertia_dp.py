@@ -26,17 +26,22 @@ def _pure_nash(q_red, q_blue, red, blue, rounds=200):
     return red, blue, stable
 
 
-def solve_1d(h_red, h_blue, w, w0, discount=0.9, states=401, actions=101, tol=1e-10, max_iter=2000):
+def solve_1d(h_red, h_blue, w, w0, discount=0.9, states=401, actions=101, tol=1e-10, max_iter=2000, noise=0.0, nodes=7):
     """Feedback equilibrium of one coordinate. Returns the state grid, each player's action and value per state,
-    the number of value-iteration sweeps, and how many states had no pure grid equilibrium."""
+    the number of value-iteration sweeps, and how many states had no pure grid equilibrium. With `noise`, the dog's
+    next position gets a Gaussian shock of that standard deviation (clipped to [0, 1], like the environment), and
+    expectations use Gauss-Hermite quadrature with `nodes` points."""
     z, a = np.linspace(0.0, 1.0, states), np.linspace(0.0, 1.0, actions)
-    nxt = w0 * z[:, None, None] + (1 - w0) * (w * a[None, :, None] + (1 - w) * a[None, None, :])
-    r_red, r_blue = -(nxt - h_red) ** 2, -(nxt - h_blue) ** 2
+    shock, weight = np.polynomial.hermite_e.hermegauss(nodes) if noise else (np.zeros(1), np.ones(1))
+    weight = weight / weight.sum()
+    mean = w0 * z[:, None, None] + (1 - w0) * (w * a[None, :, None] + (1 - w) * a[None, None, :])
+    nxt = np.clip(mean[..., None] + noise * shock, 0.0, 1.0)
+    r_red, r_blue = -((nxt - h_red) ** 2) @ weight, -((nxt - h_blue) ** 2) @ weight
     v_red, v_blue = np.zeros(states), np.zeros(states)
     red, blue = np.full(states, actions - 1), np.zeros(states, dtype=int)
     for sweep in range(1, max_iter + 1):
-        q_red = r_red + discount * np.interp(nxt, z, v_red)
-        q_blue = r_blue + discount * np.interp(nxt, z, v_blue)
+        q_red = r_red + discount * (np.interp(nxt, z, v_red) @ weight)
+        q_blue = r_blue + discount * (np.interp(nxt, z, v_blue) @ weight)
         red, blue, stable = _pure_nash(q_red, q_blue, red, blue)
         idx = np.arange(states)
         new_red, new_blue = q_red[idx, red, blue], q_blue[idx, red, blue]
