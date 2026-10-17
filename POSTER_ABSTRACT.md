@@ -12,12 +12,12 @@ First, holding the one-shot equilibrium actions at every dog position is a Marko
 each player's slack beyond the dog is at least ρ = w0(1 − γw0)/(1 − γw0²), where w0 is the inertia and γ the
 discount, so more patient players tolerate more inertia. Second, when the houses lie on either side of the dog, an
 explicit piecewise-affine policy, in which each player aims the next dog position at a closed-form target, is a
-feedback equilibrium. Both match an exact dynamic program to one grid step; the second holds in all 77 such games
-among 200 random ones, and fails in 53 of the 123 games where a one-shot action is interior. We also show that the
+feedback equilibrium. Both match an exact dynamic program to one grid step. Yet A2C and PPO self-play, even from
+random starts, learn to hold the one-shot actions everywhere, which is exploitable off the equilibrium path, and the
 dynamic game is not a Markov potential game once policies react to the dog. Finally, with 250 self-play runs and two
 ablations, we find that along the potential's flat direction learning is a random walk that the action box stops:
 no run reaches the interior equilibrium, and which of two mirror equilibria wins is a fair coin, correcting an
 earlier small-sample result.
 
 Poster: [docs/poster.pdf](docs/poster.pdf) (48 x 36 inches), built by `python3 -m doggame.poster`.
-Full results: [RESEARCH_REPORT.md](RESEARCH_REPORT.md), Sections 5.15, 5.19 and 5.20.
+Full results: [RESEARCH_REPORT.md](RESEARCH_REPORT.md), Sections 5.15 and 5.19 to 5.22.

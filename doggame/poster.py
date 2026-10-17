@@ -198,10 +198,10 @@ def build(out=OUTPUT):
            P("4. Methods", head),
            B("<b>Exact:</b> the game splits by coordinate; each is solved by Nash value iteration (401 dog positions × 101 actions) and checked with the one-shot deviation principle using closed-form values."),
            B("<b>Learning:</b> REINFORCE self-play with a Gaussian policy (sigmoid mean, clipped actions), 1500 episodes, 50 seeds per setting, plus two ablations."),
-           B("Open source and reproducible: 234 automated tests; every number on this poster is generated from the saved results."),
+           B("Open source and reproducible with an automated test suite; every number on this poster is generated from the saved results."),
            P("9. Known and new", head),
            B("<b>Known:</b> the one-shot potential structure (Wu et al., 2025); a game of potential stage games need not be a Markov potential game (Leonardos et al., 2022)."),
-           B("<b>New for this game</b>, as far as the literature checked goes: Propositions 1 and 2, the Markov-potential counterexample, and the selection mechanism with ablations."),
+           B("<b>New for this game</b>, as far as the literature checked goes: Propositions 1 and 2, the Markov-potential counterexample, the selection mechanism with ablations, and that self-play misses the feedback equilibrium."),
            B("<b>Limits:</b> the proofs (in the repository) are not yet refereed; the interior case is open; one learning algorithm on one game."),
            P("Wu, Zhu, Cai, Zhu (2025), Battling Influencers Game, arXiv 2502.01127 · Leonardos et al. (ICLR 2022), Markov potential games · Monderer and Shapley (1996), Potential games · Fudenberg and Tirole (1991), Game Theory.", cap)]
 
@@ -218,7 +218,8 @@ def build(out=OUTPUT):
            img(figs["policy"], col),
            P("Setup 3, x coordinate, w0 = 0.6: the explicit policy (lines) and the dynamic program (circles).", cap),
            B(f"Within one action-grid step (0.01) of the dynamic program in every such coordinate; one-round deviation gains below 1e-31."),
-           B(f"200 random games: an equilibrium in {straddle[2]} straddling games; it fails in {int(interior[1]) - int(interior[2].split()[0])} of {interior[1]} games with an interior one-shot action, which stays open.")]
+           B(f"200 random games: an equilibrium in {straddle[2]} straddling games; it fails in {int(interior[1]) - int(interior[2].split()[0])} of {interior[1]} games with an interior one-shot action, which stays open."),
+           B("<b>Learners miss it.</b> Even starting every episode off the path, A2C and PPO self-play learn to hold the one-shot actions everywhere (one-round gain 0.076 off the path); their sigmoids are saturated at the edges.")]
 
     three = [P("7. Not a Markov potential game", head),
              P("In a Markov potential game every 4-cycle of unilateral policy changes sums to zero. Exact values, setup 1:"),
