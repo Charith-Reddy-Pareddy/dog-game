@@ -261,9 +261,11 @@ with the numbers and the caveats, are in [RESEARCH_REPORT.md](RESEARCH_REPORT.md
     games have feedback solutions that are piecewise affine over polyhedral regions.
     *Status: partly answered. When the houses lie on either side of the dog, the policy in
     which each player aims the next dog position at `d* + k (h - d*)` is a feedback
-    equilibrium (proved in docs/INERTIA_PROOFS.md; 77 of 77 random games, all such setups, within one grid step
-    of the dynamic program). When a one-shot action is interior it fails in 53 of 123
-    random games, and that case is open.*
+    equilibrium (proved in docs/INERTIA_PROOFS.md; 77 of 77 random games, all such setups,
+    within one grid step of the dynamic program). In general, each player aiming at a
+    constant target, with the targets from a two-dimensional fixed point, is a feedback
+    equilibrium in 199 of 200 random games (122 of 123 with an interior one-shot action);
+    this is numerical, and one game keeps a gain of 1.4e-5.*
 35. **What happens in a noisy, continuous-time dog game?** With
     `dX = (w a_red + (1 - w) a_blue - X) dt + sigma dW`, a Riccati benchmark needs a
     quadratic action cost: without one, each player's Hamiltonian is linear in its own
@@ -301,7 +303,7 @@ with the numbers and the caveats, are in [RESEARCH_REPORT.md](RESEARCH_REPORT.md
 | 9 | `doggame/verify.py` |
 | 10 | study `noise` (31 runs) |
 | 12, 18 | study `inertia` (40 runs) |
-| 19, 34 | studies `inertia_dp` (15 solves), `inertia_explicit` (15) and `inertia_random` (200 games), `doggame/inertia_dp.py`, `doggame/inertia_mpe.py`, `doggame/inertia_theory.py` |
+| 19, 34 | studies `inertia_dp` (15 solves), `inertia_explicit` (15), `inertia_random` (200 games) and `target_random` (200 games), `doggame/inertia_dp.py`, `doggame/inertia_mpe.py`, `doggame/inertia_theory.py` |
 | 33 | study `markov_potential` (8 cycles), `doggame/markov_potential.py` |
 | 7 | studies `cross_play` (15 runs) and `selection` (30 runs) |
 | 13 | study `vertex_selection` (6 solves), `selection` in `doggame/inertia_dp.py` |
