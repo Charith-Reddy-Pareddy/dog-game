@@ -17,6 +17,9 @@ to do only the second of four shards.
 - walking_ppo_inertia: PPO on the walking game with dog inertia
 - walking_hard_long: the three algorithms on the hardest walking setup for 900 episodes
 - inertia_equilibrium: is the one-shot Nash profile an equilibrium of the main game with dog inertia?
+- selection_clip: the selection study with actions and the dog left unclipped
+- inertia_explicit: the closed-form hold condition and explicit feedback equilibrium against the dynamic program
+- inertia_random: the explicit feedback equilibrium on random one-coordinate games
 - walking_equilibrium: is walking to the one-shot corners an equilibrium of the walking game?
 - selection:    which equilibrium self-play finds when the houses share a coordinate
 - inertia:      does giving the dog momentum (w0) change where training ends up
@@ -233,15 +236,34 @@ def study_inertia_equilibrium(seeds):
 
 def study_selection_noise(seeds):
     """Does the initial exploration noise decide which equilibrium self-play finds when the houses share a y-coordinate?
-    The default (log-std -0.5) is in the `selection` study."""
-    for log_std in (-2.0, -1.0, 0.0):
-        for seed in range(10):
+    50 seeds per noise level; the default (log-std -0.5) seeds 0-9 repeat the `selection` study's separate layout."""
+    for log_std in (-2.0, -1.0, -0.5, 0.0):
+        for seed in range(50):
             def run(log_std=log_std, seed=seed):
                 env = make_env(DEFAULT_CONFIGS[DEGENERATE])
                 policy = TwoPlayerPolicy(env.domain, architecture="separate", seed=seed, init_log_std=log_std)
                 train_self_play(env, policy, episodes=EPISODES, seed=seed)
                 return score(policy, env)
             yield dict(log_std=log_std, seed=seed), run
+
+
+class Unclipped(Square):
+    """The unit square for the policy's means, but sampled actions and the dog are left unclipped."""
+
+    def clip(self, point):
+        return np.asarray(point, dtype=float)
+
+
+def study_selection_clip(seeds):
+    """The selection study without clipping: if self-play still ends on the boundary, clipping is not why."""
+    for seed in range(50):
+        def run(seed=seed):
+            env = DogGameEnv(**DEFAULT_CONFIGS[DEGENERATE], domain=Unclipped(), discount=0.9, transition_fn=make_inertial_transition(0.0))
+            policy = TwoPlayerPolicy(env.domain, architecture="separate", seed=seed)
+            train_self_play(env, policy, episodes=EPISODES, seed=seed)
+            red, blue = learned_actions(policy, env)
+            return dict(red=red.tolist(), blue=blue.tolist(), log_std=[policy.log_std_red.detach().tolist(), policy.log_std_blue.detach().tolist()])
+        yield dict(seed=seed), run
 
 
 def study_inertia_dp(seeds):
@@ -279,6 +301,48 @@ def study_markov_potential(seeds):
         for kind, (red_alt, blue_alt) in alternatives.items():
             yield (dict(w0=w0, policies=kind),
                    lambda w0=w0, red_alt=red_alt, blue_alt=blue_alt: dict(cycle=cycle_sum(red, red_alt, blue, blue_alt, houses, w, w0, start)))
+
+
+def study_inertia_explicit(seeds):
+    """The closed-form hold share and the explicit feedback equilibrium (doggame.inertia_theory) against the dynamic
+    program, per coordinate, with the explicit policy's largest one-round deviation gain over 101 dog positions."""
+    from doggame.inertia_dp import solve_1d
+    from doggame.inertia_theory import deviation_gain, explicit_policy, hold_share, nash_1d
+
+    for setup, config in enumerate(DEFAULT_CONFIGS):
+        for w0 in (0.3, 0.6, 0.9):
+            def run(config=config, w0=w0):
+                w, out = config["w"], dict(kind=[], theory=[], dp=[], gap=[], gain=[])
+                for c in range(2):
+                    h_red, h_blue = config["house_red"][c], config["house_blue"][c]
+                    a_red, a_blue, kind = nash_1d(h_red, h_blue, w)
+                    act, sol = explicit_policy(h_red, h_blue, w, a_red, a_blue, w0), solve_1d(h_red, h_blue, w, w0)
+                    red, blue = act(sol["z"])
+                    out["kind"].append(kind)
+                    out["theory"].append(hold_share(([h_red], [h_blue]), w, w0, ([a_red], [a_blue]))[0])
+                    out["dp"].append(float(np.mean((np.abs(sol["red"] - a_red) > 1e-9) | (np.abs(sol["blue"] - a_blue) > 1e-9))))
+                    out["gap"].append(float(max(np.abs(red - sol["red"]).max(), np.abs(blue - sol["blue"]).max())))
+                    out["gain"].append(max(max(deviation_gain(act, h_red, w, w0, x, True), deviation_gain(act, h_blue, w, w0, x, False))
+                                           for x in np.linspace(0, 1, 101)))
+                return out
+            yield dict(setup=setup, w0=w0), run
+
+
+def study_inertia_random(seeds):
+    """The explicit feedback equilibrium on 200 random one-coordinate games (houses, weight, inertia and discount drawn
+    uniformly): its largest one-round deviation gain over 41 dog positions, by the kind of one-shot equilibrium."""
+    from doggame.inertia_theory import deviation_gain, explicit_policy, holds_everywhere, nash_1d
+
+    for game in range(200):
+        def run(game=game):
+            rng = np.random.default_rng(game)
+            h_red, h_blue, w, w0, g = *rng.random(2), rng.uniform(0.05, 0.95), rng.uniform(0.01, 0.97), rng.uniform(0.05, 0.99)
+            a_red, a_blue, kind = nash_1d(h_red, h_blue, w)
+            act = explicit_policy(h_red, h_blue, w, a_red, a_blue, w0, g)
+            gain = max(max(deviation_gain(act, h_red, w, w0, x, True, g, rounds=400, grid=1001), deviation_gain(act, h_blue, w, w0, x, False, g, rounds=400, grid=1001))
+                       for x in np.linspace(0, 1, 41))
+            return dict(kind=kind, gain=gain, holds=holds_everywhere(([h_red], [h_blue]), w, w0, ([a_red], [a_blue]), g))
+        yield dict(game=game), run
 
 
 def study_selection(seeds):
@@ -375,7 +439,7 @@ def study_noise(seeds, resolution=9):
     yield dict(iterations="exact", seed=0), lambda: dict(spread=float(spread), gap=float(gap), support=int((exact_red > 1e-3).sum()), top=float(exact_red.max()))
 
 
-STUDIES = dict(selection_noise=study_selection_noise, inertia_dp=study_inertia_dp, markov_potential=study_markov_potential, algorithms=study_algorithms, walking=study_walking, ppo_variants=study_ppo_variants, ppo_long=study_ppo_long,
+STUDIES = dict(selection_clip=study_selection_clip, inertia_explicit=study_inertia_explicit, inertia_random=study_inertia_random, selection_noise=study_selection_noise, inertia_dp=study_inertia_dp, markov_potential=study_markov_potential, algorithms=study_algorithms, walking=study_walking, ppo_variants=study_ppo_variants, ppo_long=study_ppo_long,
                walking_settings=study_walking_settings, walking_houses=study_walking_houses, walking_inertia=study_walking_inertia,
                walking_equilibrium=study_walking_equilibrium, walking_capacity=study_walking_capacity, walking_ppo_inertia=study_walking_ppo_inertia,
                walking_hard_long=study_walking_hard_long, inertia_equilibrium=study_inertia_equilibrium, selection=study_selection, inertia=study_inertia, pretraining=study_pretraining,

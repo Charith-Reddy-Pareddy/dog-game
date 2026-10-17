@@ -109,7 +109,17 @@ def test_the_walking_equilibrium_study_checks_four_setups_resting_and_walking():
 def test_the_selection_noise_study_varies_only_the_initial_noise():
     keys = [k for k, _ in studies.study_selection_noise(range(5))]
 
-    assert len(keys) == 30 and sorted({k["log_std"] for k in keys}) == [-2.0, -1.0, 0.0]
+    assert len(keys) == 200 and sorted({k["log_std"] for k in keys}) == [-2.0, -1.0, -0.5, 0.0]
+
+
+def test_the_clip_ablation_leaves_actions_and_the_dog_unclipped():
+    assert len([k for k, _ in studies.study_selection_clip(range(5))]) == 50
+    assert np.allclose(studies.Unclipped().clip([1.4, -0.2]), [1.4, -0.2])
+
+
+def test_the_explicit_equilibrium_studies_cover_every_setup_and_200_random_games():
+    assert len([k for k, _ in studies.study_inertia_explicit(range(5))]) == 15
+    assert len([k for k, _ in studies.study_inertia_random(range(5))]) == 200
 
 
 def test_the_dp_and_markov_potential_studies_define_their_checks():
