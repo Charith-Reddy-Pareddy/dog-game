@@ -258,15 +258,16 @@ def selection_noise_table(rows):
 
 
 def selection_clip_table(rows):
-    """The default selection runs with and without clipping of actions and the dog: outcomes and red's final y."""
+    """The default selection runs, without clipping of actions and the dog, and also with an unbounded mean in y."""
     outcomes = ("red top, blue bottom", "red bottom, blue top", "both at y = 0.5", "other")
-    table = [["Actions and dog"] + list(outcomes) + ["Red's final y: quartiles"]]
+    table = [["Policy mean in y, actions and dog"] + list(outcomes) + ["Red's final y: quartiles", "Red's y outside [0, 1]"]]
     clipped = [r for r in study(rows, "selection_noise") if r["key"]["log_std"] == -0.5]
-    for label, runs in (("clipped to the square", clipped), ("not clipped", study(rows, "selection_clip"))):
+    for label, runs in (("sigmoid, clipped (default)", clipped), ("sigmoid, not clipped", study(rows, "selection_clip")),
+                        ("linear, not clipped", study(rows, "selection_linear"))):
         if runs:
-            found = [selection_outcome(r["red"], r["blue"]) for r in runs]
-            q = np.percentile([r["red"][1] for r in runs], [25, 50, 75])
-            table.append([label] + [f"{found.count(o)} of {len(runs)}" for o in outcomes] + [" / ".join(f"{v:.2f}" for v in q)])
+            found, y = [selection_outcome(r["red"], r["blue"]) for r in runs], np.array([r["red"][1] for r in runs])
+            table.append([label] + [f"{found.count(o)} of {len(runs)}" for o in outcomes] + [" / ".join(f"{v:.2f}" for v in np.percentile(y, [25, 50, 75])),
+                                                                                           f"{int(((y < 0) | (y > 1)).sum())} of {len(runs)}"])
     return table
 
 

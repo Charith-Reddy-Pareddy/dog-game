@@ -192,10 +192,11 @@ def test_the_mirror_test_is_even_for_a_balanced_split_and_small_for_a_lopsided_o
 
 def test_the_clip_table_compares_clipped_and_unclipped_runs():
     rows = [run("selection_noise", dict(log_std=-0.5, seed=0), red=[1, 1], blue=[0, 0]),
-            run("selection_clip", dict(seed=0), red=[1, 0.5], blue=[0, 0.5]), run("selection_clip", dict(seed=1), red=[1, 0.4], blue=[0, 0.6])]
+            run("selection_clip", dict(seed=0), red=[1, 0.5], blue=[0, 0.5]), run("selection_clip", dict(seed=1), red=[1, 0.4], blue=[0, 0.6]),
+            run("selection_linear", dict(seed=0), red=[1, 3.0], blue=[0, -2.0])]
     table = selection_clip_table(rows)
-    assert [r[0] for r in table[1:]] == ["clipped to the square", "not clipped"]
-    assert table[2][3] == "2 of 2" and table[2][-1] == "0.43 / 0.45 / 0.47"
+    assert [r[0] for r in table[1:]] == ["sigmoid, clipped (default)", "sigmoid, not clipped", "linear, not clipped"]
+    assert table[2][3] == "2 of 2" and table[2][-2:] == ["0.43 / 0.45 / 0.47", "0 of 2"] and table[3][-1] == "1 of 1"
 
 
 def test_the_explicit_equilibrium_tables_report_shares_gaps_and_gains():
