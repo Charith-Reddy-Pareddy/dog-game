@@ -219,7 +219,7 @@ def build(out=OUTPUT):
            P("Setup 3, x coordinate, w0 = 0.6: the explicit policy (lines) and the dynamic program (circles).", cap),
            B(f"Within one action-grid step (0.01) of the dynamic program in every such coordinate; one-round deviation gains below 1e-31."),
            B(f"200 random games: an equilibrium in {straddle[2]} straddling games; it fails in {int(interior[1]) - int(interior[2].split()[0])} of {interior[1]} games with an interior one-shot action, which stays open."),
-           B("<b>Learners miss it.</b> Even starting every episode off the path, A2C and PPO self-play learn to hold the one-shot actions everywhere, exploitable off the path, even with 5x longer training or a Beta policy.")]
+           B("<b>Learners miss it.</b> Even starting every episode off the path, A2C and PPO self-play learn to hold the one-shot actions everywhere, exploitable off the path. Noise-free gradient play finds the equilibrium with a table of actions (4 of 4) but not with a shared network (0 of 20).")]
 
     three = [P("7. Not a Markov potential game", head),
              P("In a Markov potential game every 4-cycle of unilateral policy changes sums to zero. Exact values, setup 1:"),

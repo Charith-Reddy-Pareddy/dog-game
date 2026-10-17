@@ -35,7 +35,8 @@ either side of the dog. The condition extends to many houses, where the admissib
 that the dynamic game is not a Markov potential game once policies react to the dog. For learning, we find that
 policy-gradient self-play from random starts learns to hold the one-shot actions, which is exploitable off the
 equilibrium path, and that on the potential's flat direction learning is a random walk stopped by the action box,
-so which of two mirror equilibria wins is a fair coin.
+so which of two mirror equilibria wins is a fair coin. Exact gradient play finds the feedback equilibrium with a
+table of actions but not with a shared network.
 
 ## 1. Introduction
 
@@ -140,9 +141,16 @@ one-round deviation followed by the learned policy, with the dog simulated exact
 
 A2C and PPO learn to hold the one-shot actions at every position, which is unexploitable on the equilibrium path and
 exploitable off it, and this survives five times longer training, a non-saturating Beta policy and a setting with 3.5
-times the off-path incentive. REINFORCE does not do better. Low on-path exploitability therefore does not certify a
-feedback equilibrium. Why learners miss it is open; small off-path gains relative to gradient noise is one untested
-explanation.
+times the off-path incentive. REINFORCE does not do better. To separate the learning dynamics from estimation noise,
+we also run exact gradient play on one coordinate: deterministic policies, each player ascending the exact gradient of
+its own payoff averaged over starting positions.
+
+{md(S.exact_play_table(studies))}
+
+A table of actions reaches the feedback equilibrium every time and a shared network never does, so function
+approximation, not sampling noise, is what stops the learners; a plausible but untested mechanism is that the network
+carries "push to the edge" from the many positions where it is right to the few where easing off is right. Low
+on-path exploitability therefore does not certify a feedback equilibrium.
 
 **Selection on a flat potential.** When the houses share a coordinate, the potential is flat along a continuum of
 equilibria. REINFORCE self-play, 50 seeds per initial exploration noise:
