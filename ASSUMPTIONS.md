@@ -470,7 +470,9 @@ At round 800, per seed:
 - The feedback-learning study scores the learned policy's mean actions, not its noisy
   samples, on an 11 x 11 grid of dog positions with one-round deviations on a 21 x 21 grid
   and 120 simulated rounds; a deviation between grid points could gain slightly more. It
-  uses one setup (3), one inertia (0.6), 3000 episodes and five seeds per algorithm.
+  uses setup 3 at inertia 0.6 (Gaussian and Beta policies, 3000 episodes, five seeds; A2C for
+  15000 episodes, three seeds) and setup 5 at inertia 0.9 (Gaussian, five seeds). The Beta
+  policy is the repository's bounded Cartesian policy.
 
 ## Settled points
 

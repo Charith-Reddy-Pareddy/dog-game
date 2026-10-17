@@ -248,10 +248,10 @@ with the numbers and the caveats, are in [RESEARCH_REPORT.md](RESEARCH_REPORT.md
     inside the box (about one draw in three) and the inertia is below roughly 0.35/N. The
     many-house feedback equilibrium and what learners find are open.*
 37. **Does policy-gradient self-play learn a feedback equilibrium of the game with inertia?**
-    *Status: answered for setup 3 at w0 = 0.6: no. Starting every episode from a random dog
-    position, A2C (5 of 5 seeds) and PPO (4 of 5) learn to hold the one-shot actions at every
-    position, whose one-round deviation gain off the path is 0.0756, and REINFORCE ends further
-    away. The policies' sigmoid outputs are saturated at the box's edges.*
+    *Status: answered for setup 3 at w0 = 0.6 and setup 5 at w0 = 0.9: no. Starting every
+    episode from a random dog position, A2C and PPO learn to hold the one-shot actions at every
+    position (19 of 20 Gaussian runs), which is exploitable off the path. Five times longer
+    training and a Beta policy do not change this, and REINFORCE does not do better. Why is open.*
 
 ## Where each question is answered in this repository
 
