@@ -53,3 +53,13 @@ def test_a_noisy_dog_keeps_the_equilibrium_bang_bang_and_lowers_both_values():
     for sol in (calm, noisy):
         assert np.mean((sol["red"] > 0) & (sol["red"] < 1)) < 0.1 and np.mean((sol["blue"] > 0) & (sol["blue"] < 1)) < 0.1
     assert noisy["v_red"].mean() < calm["v_red"].mean() and noisy["v_blue"].mean() < calm["v_blue"].mean()
+
+
+def test_vertex_selection_changes_actions_but_not_values_where_the_houses_coincide():
+    from doggame.inertia_dp import solve_1d
+
+    first, vertex = (solve_1d(0.5, 0.5, 0.5, 0.6, states=41, actions=21, selection=s) for s in ("first", "vertex"))
+    assert np.allclose(first["v_red"], vertex["v_red"], atol=1e-8) and np.allclose(first["v_blue"], vertex["v_blue"], atol=1e-8)
+    assert np.any(first["red"] != vertex["red"])
+    straddle = [solve_1d(0.7, 0.6, 0.7, 0.6, states=41, actions=21, selection=s) for s in ("first", "vertex")]
+    assert np.array_equal(straddle[0]["red"], straddle[1]["red"]) and np.array_equal(straddle[0]["blue"], straddle[1]["blue"])

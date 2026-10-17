@@ -26,11 +26,23 @@ def _pure_nash(q_red, q_blue, red, blue, rounds=200):
     return red, blue, stable
 
 
-def solve_1d(h_red, h_blue, w, w0, discount=0.9, states=401, actions=101, tol=1e-10, max_iter=2000, noise=0.0, nodes=7, low=0.0, high=1.0):
+def _vertex_nash(q_red, q_blue, red, blue):
+    """In every state, the pure grid equilibrium with the largest sum of the two players' values ("vertex Nash");
+    states without one keep the given actions."""
+    stable = (q_red >= q_red.max(1, keepdims=True) - 1e-12) & (q_blue >= q_blue.max(2, keepdims=True) - 1e-12)
+    total = np.where(stable, q_red + q_blue, -np.inf).reshape(len(red), -1)
+    best, found = total.argmax(1), stable.reshape(len(red), -1).any(1)
+    n = q_red.shape[1]
+    return np.where(found, best // n, red), np.where(found, best % n, blue), found
+
+
+def solve_1d(h_red, h_blue, w, w0, discount=0.9, states=401, actions=101, tol=1e-10, max_iter=2000, noise=0.0, nodes=7, low=0.0, high=1.0,
+             selection="first"):
     """Feedback equilibrium of one coordinate. Returns the state grid, each player's action and value per state,
     the number of value-iteration sweeps, and how many states had no pure grid equilibrium. With `noise`, the dog's
     next position gets a Gaussian shock of that standard deviation (clipped to [low, high], [0, 1] like the environment
-    by default), and expectations use Gauss-Hermite quadrature with `nodes` points."""
+    by default), and expectations use Gauss-Hermite quadrature with `nodes` points. `selection` picks among a state's
+    pure equilibria: "first", the one iterated best response reaches, or "vertex", the one with the largest total value."""
     z, a = np.linspace(low, high, states), np.linspace(0.0, 1.0, actions)
     shock, weight = np.polynomial.hermite_e.hermegauss(nodes) if noise else (np.zeros(1), np.ones(1))
     weight = weight / weight.sum()
@@ -42,7 +54,7 @@ def solve_1d(h_red, h_blue, w, w0, discount=0.9, states=401, actions=101, tol=1e
     for sweep in range(1, max_iter + 1):
         q_red = r_red + discount * (np.interp(nxt, z, v_red) @ weight)
         q_blue = r_blue + discount * (np.interp(nxt, z, v_blue) @ weight)
-        red, blue, stable = _pure_nash(q_red, q_blue, red, blue)
+        red, blue, stable = (_vertex_nash if selection == "vertex" else _pure_nash)(q_red, q_blue, red, blue)
         idx = np.arange(states)
         new_red, new_blue = q_red[idx, red, blue], q_blue[idx, red, blue]
         change = max(np.abs(new_red - v_red).max(), np.abs(new_blue - v_blue).max())
