@@ -45,9 +45,10 @@ with the numbers and the caveats, are in [RESEARCH_REPORT.md](RESEARCH_REPORT.md
    setup has the same equilibrium corners and hurts when it does not.*
 4. When the game has more than one equilibrium, which one does self-play
    find, and is it consistent across seeds and architectures?
-   *Status: answered for the shared-coordinate setup (30 runs). Never the
-   solver's interior point; always a boundary equilibrium, one of two
-   mirror images, about 3 to 1.*
+   *Status: answered for the shared-coordinate setup. Never the solver's
+   interior point; always a boundary equilibrium, one of two mirror images.
+   Which one is consistent with a fair coin (31 to 19 over 50 seeds at the
+   default noise, p = 0.12); the earlier 23 to 7 was a small-sample effect.*
 
 ## Nash-Q on a discretized grid
 
@@ -121,27 +122,27 @@ with the numbers and the caveats, are in [RESEARCH_REPORT.md](RESEARCH_REPORT.md
     On the walking game the order changes (Q26).*
 17. **What decides which of the two mirror equilibria self-play finds, and
     why does it never find the interior solution?**
-    *Status: partly answered. The one-shot game is an exact potential game whose
-    potential is exactly flat along the continuum of equilibria, so the game's own
-    structure cannot select among them. The initial exploration noise does: at a
-    standard deviation of 0.14, 7 of 10 runs end "red bottom, blue top", while at
-    0.37 to 1.0 the other mirror image wins in 8 or 9 of 10 (Fisher's exact test
-    p = 0.0014 against the larger noises pooled). Every run still ends on the
-    boundary, even with small noise, and why is untested.*
+    *Status: answered for the shared-y setup. The one-shot potential is exactly
+    flat along the continuum of equilibria, so the expected policy gradient is
+    zero there and the players' means random-walk; nothing pulls them back to the
+    interior, and the box stops the walk at an edge. Without clipping, 41 of 50
+    runs still end on a mirror boundary; with an unbounded mean in y as well, the
+    walk does not stop (red's mean ends outside the box in 38 of 50 runs). Which
+    mirror image wins is consistent with a fair coin at every noise level over 50
+    seeds; an earlier 10-seed result that the noise flips it did not hold up.*
 18. **How strongly does dog inertia slow policy-gradient training?**
     *Status: answered for two setups. On the easy setup every run converges
     up to `w0 = 0.9`; on the hard one 4 of 5 converge at `w0 = 0`, 5 of 5 at
     0.3, 1 of 5 at 0.6 and 0 of 5 at 0.9 within 1500 episodes.*
 19. **Does the one-shot equilibrium remain an equilibrium of the game with
-    inertia?** *Status: answered for the five setups at `w0` of 0.3, 0.6 and 0.9.
-    The exact feedback (Markov-perfect) equilibrium, computed by dynamic
-    programming, plays the one-shot Nash actions along the whole equilibrium path
-    from the starting dog position (within one action-grid step; in the shared-y
-    setup it picks another member of the continuum). Off the path it differs in up
-    to 84% of dog positions per coordinate, so holding the one-shot actions at
-    every state is not Markov-perfect, except in setup 1 at `w0` up to 0.6. An
-    earlier certificate already showed that holding them is a best response to
-    any fixed opponent sequence from the starting position.*
+    inertia?** *Status: answered.* The exact feedback (Markov-perfect)
+    equilibrium plays the one-shot Nash actions along the equilibrium path but
+    not off it. In closed form, holding the one-shot actions at every dog
+    position is Markov-perfect if and only if each player's slack,
+    `(h - d*) / (1 - d*)` for a player at the top of the box, is at least
+    `w0 (1 - g w0) / (1 - g w0^2)`, and no one-shot action is interior. In the
+    five setups that holds only in setup 1 up to `w0 = 0.6`, matching the
+    dynamic program.*
 20. **Why does pre-training from a different setup hurt?**
     *Status: open on the mechanism. The measured pattern (same corners help,
     flipped corners hurt) suggests the network has to un-learn a boundary
@@ -229,7 +230,11 @@ with the numbers and the caveats, are in [RESEARCH_REPORT.md](RESEARCH_REPORT.md
 34. **Does an explicit piecewise-affine solution of the box-constrained game reproduce the
     dynamic-programming feedback equilibrium exactly?** Constrained linear-quadratic
     games have feedback solutions that are piecewise affine over polyhedral regions.
-    *Status: open.*
+    *Status: partly answered. When the houses lie on either side of the dog, the policy in
+    which each player aims the next dog position at `d* + k (h - d*)` is a feedback
+    equilibrium (proof sketch; 77 of 77 random games, all such setups, within one grid step
+    of the dynamic program). When a one-shot action is interior it fails in 53 of 123
+    random games, and that case is open.*
 35. **What happens in a noisy, continuous-time dog game?** With
     `dX = (w a_red + (1 - w) a_blue - X) dt + sigma dW`, a Riccati benchmark needs a
     quadratic action cost: without one, each player's Hamiltonian is linear in its own
@@ -246,13 +251,13 @@ with the numbers and the caveats, are in [RESEARCH_REPORT.md](RESEARCH_REPORT.md
 | 1, 2, 7, 8 | `results/dog_game_runs.jsonl` (75 REINFORCE runs), `doggame/experiments.py` |
 | 1, 2, 16 | `results/dog_game_studies.jsonl`, study `algorithms` (75 runs), `doggame/train_ac.py` |
 | 3, 20 | study `pretraining` (15 runs) |
-| 4, 17 | studies `selection` (30 runs) and `selection_noise` (30 runs), `doggame/potential.py` |
+| 4, 17 | studies `selection` (30 runs), `selection_noise` (200), `selection_clip` (50) and `selection_linear` (50), `doggame/potential.py` |
 | 5, 21 | study `stage_solver` (90 runs) |
 | 6, 22 | study `resolution` (25 games) |
 | 9 | `doggame/verify.py` |
 | 10 | study `noise` (31 runs) |
 | 12, 18 | study `inertia` (40 runs) |
-| 19 | study `inertia_dp` (15 solves), `doggame/inertia_dp.py`, `doggame/inertia_mpe.py` |
+| 19, 34 | studies `inertia_dp` (15 solves), `inertia_explicit` (15) and `inertia_random` (200 games), `doggame/inertia_dp.py`, `doggame/inertia_mpe.py`, `doggame/inertia_theory.py` |
 | 33 | study `markov_potential` (8 cycles), `doggame/markov_potential.py` |
 | 26 | study `walking` (15 runs) |
 | walking game, all questions | [WALKING_GAME_REPORT.md](WALKING_GAME_REPORT.md) ([PDF](docs/walking_game_report.pdf)) |
@@ -264,6 +269,6 @@ with the numbers and the caveats, are in [RESEARCH_REPORT.md](RESEARCH_REPORT.md
 | walking game | `results/dog_game_runs.jsonl`, `results/dog_game_trajectories.json` |
 | 32 | `docs/POLAR_ACTION_PROTOCOL.md`, `docs/POLAR_ACTION_ROBUSTNESS_PROTOCOL.md`, `doggame/polar_action_study.py`, `doggame/polar_action_robustness.py`, `results/polar_action_pg.jsonl`, `results/polar_action_pg_robustness.jsonl` |
 
-Questions 5b, 11, 13, 14, 20, 27, 34, 35 and 36 are open, and 7, 12, 15, 17, 25, 30, 31 and 32 are partly answered. The studies are in
+Questions 5b, 11, 13, 14, 20, 27, 35 and 36 are open, and 7, 12, 15, 25, 30, 31, 32 and 34 are partly answered. The studies are in
 [`doggame/dog_game_studies.py`](doggame/dog_game_studies.py) and the tables are
 produced by [`doggame/dog_game_summary.py`](doggame/dog_game_summary.py).
