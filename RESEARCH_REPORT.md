@@ -9,13 +9,13 @@ This report studies the dog game, a two-player, general-sum game with continuous
 ## Summary
 
 - **Policy-gradient self-play converges on the dog game.** 74 of 75 REINFORCE runs and 25 of 25 PPO runs reached exploitability below 0.004 within 1500 episodes. PPO needs far fewer episodes: 19 of 25 runs had converged after 100, against none for REINFORCE and A2C (Section 5.2), an advantage that comes from reusing each episode (with one epoch PPO is no faster than REINFORCE), and on the walking game PPO is the least stable of the three (Sections 5.10 and 5.11).
-- **Self-play never finds the solver's interior equilibrium when the houses share a coordinate.** All 30 runs ended on a boundary equilibrium, one of two mirror images, split 23 to 7 and the same for every network layout (Section 5.3).
+- **Self-play never finds the solver's interior equilibrium when the houses share a coordinate.** All 30 runs of the first study ended on a boundary equilibrium, one of two mirror images (23 to 7). With 50 seeds per noise level, which mirror image wins is consistent with a fair coin (31 to 19 at the default noise, p = 0.12), so the earlier 3-to-1 split was a small-sample effect (Sections 5.3 and 5.19).
 - **Dog inertia slows training sharply.** On the harder setup 4, 5, 1 and 0 of 5 runs converged at dog weights 0, 0.3, 0.6 and 0.9 (Section 5.4).
 - **Pre-training helps or hurts depending on the source.** From a setup with the same equilibrium corners, every run was under the threshold after 100 episodes; from one with flipped corners, every run was worse than starting from scratch (Section 5.5).
 - **Nash-Q on a grid.** The stage-game error falls about as 1 over the fictitious-play iterations, and re-solving less often changes nothing in this game. The grid is exact from 5 x 5, the exact equilibrium is always a single action pair, and all of fictitious play's apparent mixing is noise (Sections 5.6 to 5.8).
 - **Walking game.** REINFORCE and the 10-direction Nash-Q network both end near the one-shot Nash corners in all 5 seeds (Section 5.9). With A2C and PPO added, the ranking changes: A2C is the most reliable (5 of 5 seeds at the corners), while PPO is the fastest to get there but swings away again in 3 of 5 seeds. A smaller learning rate does not fix it. One epoch does, but only given three times more training, and default PPO still has two seeds stuck far from the corners after 900 episodes (Sections 5.10 to 5.12). A lower discount makes the walking game easier to learn and a higher one harder (Section 5.12).
-- **Exact dynamic results.** With dog inertia, the exact feedback equilibrium plays the one-shot Nash actions on the equilibrium path but not at every dog position (Section 5.15). The one-shot game is an exact potential game, flat along its continuum of equilibria, where the initial exploration noise decides which mirror image wins; the dynamic game is not a Markov potential game once policies react to the dog (Section 5.19).
-- **Open:** why self-play always reaches the boundary, why mismatched pre-training hurts, the equilibrium of the walking game, and a PPO comparison matched on gradient steps (Section 6).
+- **Exact dynamic results.** With dog inertia, a closed form says exactly when holding the one-shot Nash actions is a feedback (Markov-perfect) equilibrium, and an explicit piecewise-affine policy is a feedback equilibrium whenever the houses lie on either side of the dog; both match the dynamic program to one grid step (Sections 5.15 and 5.20). The one-shot game is an exact potential game, flat along its continuum of equilibria; there, learning drifts along the flat direction until the box stops it, and the dynamic game is not a Markov potential game once policies react to the dog (Section 5.19).
+- **Open:** the feedback equilibrium when a one-shot action is interior, why mismatched pre-training hurts, the equilibrium of the walking game, and a PPO comparison matched on gradient steps (Section 6).
 
 ## 1. Background
 
@@ -121,9 +121,9 @@ In the setup whose houses share a y-coordinate, the equilibrium set has a contin
 | partial | 8 of 10 | 2 of 10 | 0 of 10 | 0 of 10 | 0.00018 |
 
 - **Never the interior point.** All 30 runs ended with one player at the top edge and the other at the bottom edge. Both are exact equilibria (exploitability below 0.0002), as is the interior point.
-- **Two mirror equilibria, split about 3 to 1.** 23 runs ended with red at the top and 7 with red at the bottom. The layouts do not differ (8, 7 and 8 of 10).
+- **Two mirror equilibria, 23 to 7 here.** 23 runs ended with red at the top and 7 with red at the bottom, with the layouts alike (8, 7 and 8 of 10). The layouts share seeds 0-9, so these are not 30 independent draws; with 50 seeds the split is 31 to 19, consistent with a fair coin (Section 5.19).
 - **The exact solver agrees with the learners.** Lemke-Howson on the discretized game also returns a boundary equilibrium for this setup, at every grid size (Section 5.7).
-- **Why is not tested.** One hypothesis is that the policy's initial standard deviation (about 0.61, large for a unit square) pushes early samples onto the boundary, where clipping removes any gradient along the degenerate axis. Nothing here tests that.
+- **Why.** Section 5.19 tests this with 50 seeds per noise level and two ablations: learning random-walks along the flat direction until the box stops it.
 
 ### 5.4 Does dog inertia change the outcome?
 
@@ -365,6 +365,7 @@ The certificate covers all five house setups and both players (10 profile checks
 
 - **On the path, the feedback equilibrium is the one-shot Nash profile** in every setup and inertia (the 0.01 gap is one action-grid step). In the shared-y setup the gap of 0.5 is not a disagreement: the dynamic program picks another member of that setup's continuum of equilibria.
 - **Off the path it is not.** When the dog already sits past a player's house in its own direction, holding the extreme action overshoots, and the player eases off. Holding the one-shot actions at every state is Markov-perfect only in setup 1 at `w0` up to 0.6.
+- **Section 5.20 explains these numbers in closed form**, including exactly where holding fails and what the players do there.
 - **Limits.** The answer is on a grid with linear interpolation, starting best-response iteration from the corners; one setting (setup 2, `w0 = 0.6`, the y coordinate) has 56 states with no pure grid equilibrium. Uniqueness of the feedback equilibrium is not established.
 
 ### 5.16 Larger PPO network, dog inertia and longer training on the walking game
@@ -414,17 +415,29 @@ The effect varies with the house setup: two intervals favor Cartesian Beta and t
 
 **The one-shot game is an exact potential game.** With `d = w a_red + (1 - w) a_blue`, the function `Phi = -||d||^2 + 2 w h_red . a_red + 2 (1 - w) h_blue . a_blue` changes by exactly the deviating player's reward change (`doggame/potential.py`, tested on random deviations in all five setups). This is already proved for the Battling Influencers Game (Wu et al., 2025); it is verified here, not claimed as new. It explains two earlier findings. Moving both players so the dog stays put changes `Phi` by `2 w (1 - w) (h_red - h_blue)` per unit, so `Phi` rises toward the edge wherever the houses differ (boundary equilibria), and is exactly flat in a coordinate the houses share (the continuum of equilibria in the shared-y setup, where the interior point and both mirror boundary points have the same potential).
 
-**Equilibrium selection.** Because `Phi` is flat along that continuum, the game's structure cannot pick one equilibrium, as noisy learning in potential games selects among potential maximizers only. The initial exploration noise of the policy decides instead. Ten REINFORCE runs per noise level, separate layout, shared-y setup:
+**Equilibrium selection.** Because `Phi` is flat along that continuum, the game's structure cannot pick one equilibrium. REINFORCE, separate layout, shared-y setup, 50 seeds per initial exploration noise (seeds 0-9 at the default reproduce Section 5.3 exactly); the last column is a two-sided binomial test that the two mirror images are equally likely, as the game's symmetry (swap the players and reflect x) says they should be:
 
-| Initial noise (std) | red top, blue bottom | red bottom, blue top | both at y = 0.5 | other |
-|---|---|---|---|---|
-| 0.14 | 2 of 10 | 7 of 10 | 0 of 10 | 1 of 10 |
-| 0.37 | 9 of 10 | 1 of 10 | 0 of 10 | 0 of 10 |
-| 0.61 (default) | 8 of 10 | 2 of 10 | 0 of 10 | 0 of 10 |
-| 1.00 | 8 of 10 | 2 of 10 | 0 of 10 | 0 of 10 |
+| Initial noise (std) | red top, blue bottom | red bottom, blue top | both at y = 0.5 | other | p (mirror images equally likely) |
+|---|---|---|---|---|---|
+| 0.14 | 19 of 50 | 22 of 50 | 0 of 50 | 9 of 50 | 0.76 |
+| 0.37 | 31 of 50 | 19 of 50 | 0 of 50 | 0 of 50 | 0.12 |
+| 0.61 (default) | 31 of 50 | 19 of 50 | 0 of 50 | 0 of 50 | 0.12 |
+| 1.00 | 30 of 50 | 20 of 50 | 0 of 50 | 0 of 50 | 0.20 |
 
-- **The noise flips which mirror image wins.** At a standard deviation of 0.14, 7 of 10 runs end with red at the bottom; at 0.37 to 1.0 the other image wins in 8 or 9 of 10 (Fisher's exact test p = 0.023 against the default and p = 0.0014 against the three larger noises pooled; 10 runs per setting).
-- **No run ends at the interior point**, even with small noise. Why the runs reach the boundary is untested; a plausible mechanism is a random walk along the flat direction that sticks where the policy's sigmoid saturates.
+- **Which mirror image wins looks like a fair coin** at every noise level (p from 0.12 to 0.76). An earlier version of this section, with 10 seeds per level, reported that the noise flips the split (p = 0.0014); with 50 seeds that does not hold up, and the 3-to-1 split of Section 5.3 was a small-sample effect of reusing seeds 0-9.
+- **No run ends at the interior point**, at any noise level.
+
+**Why the boundary.** Along the flat direction the expected policy gradient is zero but its estimate is noisy, so the players' y-means random-walk with the dog held at 0.5, and nothing pulls them back to the interior. Two ablations (50 seeds each, default noise) test what stops the walk:
+
+| Policy mean in y, actions and dog | red top, blue bottom | red bottom, blue top | both at y = 0.5 | other | Red's final y: quartiles | Red's y outside [0, 1] |
+|---|---|---|---|---|---|---|
+| sigmoid, clipped (default) | 31 of 50 | 19 of 50 | 0 of 50 | 0 of 50 | 0.00 / 0.99 / 1.00 | 0 of 50 |
+| sigmoid, not clipped | 20 of 50 | 21 of 50 | 0 of 50 | 9 of 50 | 0.03 / 0.64 / 0.97 | 0 of 50 |
+| linear, not clipped | 17 of 50 | 20 of 50 | 0 of 50 | 13 of 50 | -2.26 / 0.33 / 1.29 | 38 of 50 |
+
+- **Without clipping**, runs still end on a mirror boundary (41 of 50) and never at the interior, so clipping is not needed; the spread of red's final y is U-shaped.
+- **With an unbounded linear mean in y as well**, the walk does not stop: red's y-mean ends outside the box in 38 of 50 runs (from -17 to 13) while the dog's y stays near 0.5 (median 0.506). The boundary outcomes of the default policy are this walk stopped where the sigmoid saturates and the gradient vanishes.
+- **Clipping adds a push.** Averaged over Gaussian exploration noise with clipped actions, the potential is no longer flat: it is lowest at the interior point and highest at both mirror endpoints, by symmetry equally (`smoothed_potential` in `doggame/potential.py`, checked by Monte Carlo). Clipping makes the boundary more decisive (50 of 50 runs on it, against 41 of 50 without) but does not choose between the mirror images.
 
 **Not a Markov potential game.** In a Markov potential game every 4-cycle of unilateral policy changes, (red, blue) to (red', blue) to (red', blue') to (red, blue') and back, sums to zero. Values are computed exactly by following the deterministic dog (`doggame/markov_potential.py`):
 
@@ -439,6 +452,48 @@ The effect varies with the house setup: two intervals favor Cartesian Beta and t
 - **With policies that ignore the dog, every cycle is zero** (up to rounding), so the game is a potential game in open-loop strategies at any inertia, which is the setting in which potential differential games reduce to one optimal-control problem (Kavuncu et al., 2021).
 - **Consequence.** The convergence theorem for independent policy gradient in Markov potential games does not explain why policy gradient converges in this repository's runs, whose policies react to the dog.
 
+### 5.20 A closed form for the feedback equilibrium with inertia
+
+The game splits by coordinate, so take one: dog position `x` in [0, 1], next dog `x' = w0 x + (1 - w0)(w a_red + (1 - w) a_blue)`, stage reward `-(x' - h)^2` for a player with house `h`, discount `g`. Let `(a_red*, a_blue*)` be the one-shot Nash actions, `d* = w a_red* + (1 - w) a_blue*`, and
+
+    k = (1 - g w0^2) / (1 - g w0)  (at least 1),   target  T = d* + k (h - d*).
+
+**Proposition 1 (when holding is Markov-perfect).** Holding the one-shot actions at every dog position is a feedback equilibrium if and only if, in every coordinate, each player whose one-shot action is at the top of the box has `(h - d*) k >= w0 (1 - d*)`, each player at the bottom has `(d* - h) k >= w0 d*`, and no one-shot action is strictly inside the box (when `w0 > 0`). Writing the player's slack as `s = (h - d*) / (1 - d*)` (or `(d* - h) / d*`), the condition is `s >= rho(w0, g) = w0 (1 - g w0) / (1 - g w0^2)`; `rho` rises from 0 to 1 as `w0` goes from 0 to 1, and falls as `g` rises, so more patient players tolerate more inertia. Where it fails, a player at the top holds only for `x <= d* + (h - d*) k / w0`.
+
+*Proof.* Under holding, the dog moves geometrically to `d*`, so values are quadratic in closed form. By the one-shot deviation principle (discounted, bounded rewards) holding is an equilibrium iff no player gains from a one-round change at any state. That round's payoff is a concave quadratic in the next dog position `z`, whose slope at the held `z` is a positive multiple of `D(x) = (h - d*)/(1 - g w0) - w0 (x - d*)/(1 - g w0^2)`. A player at the top holds optimally iff `D(x) >= 0`, at the bottom iff `D(x) <= 0`, and strictly inside iff `D(x) = 0`, which (with `h = d*` for an interior action) fails at every `x` other than `d*`. `D` is linear in `x`, so checking the endpoints gives the conditions.
+
+**Proposition 2 (an explicit feedback equilibrium).** Call a coordinate *straddling* when the houses lie on either side of the dog position the players' edges give (for red's house above blue's, `h_blue <= w <= h_red`, so the one-shot actions are red at the top and blue at the bottom). Then the policy
+
+    a_i(x) = clip( a_i* + (T_i - w0 x - (1 - w0) d*) / ((1 - w0) w_i), 0, 1 ),   w_red = w, w_blue = 1 - w,
+
+in which each player aims the next dog position at its own target, as far as its weight allows, with the other at its one-shot action, is a feedback equilibrium for every `w0` in [0, 1) and discount in [0, 1). It equals the one-shot profile on the joint hold interval of Proposition 1 and is piecewise affine in `x`, with at most three pieces per player.
+
+*Proof sketch.* Let `g_i(z) = -(z - h_i)^2 + g V_i(z)` be a player's one-round objective as a function of the next dog position under the policy. On the joint hold interval the dog stays in it, so `g_i` is the concave quadratic of Proposition 1, peaked at `T_i`, which lies in the interval. Outside it, for the player that eases off, `g_i(z) = -(z - h_i)^2 + g g_i(next(z))` with `next(z)` nondecreasing and between the target and `z`; the operator on the right is a contraction that preserves "nonincreasing beyond `T_i`" (and "nondecreasing below it" on the other side), so `g_i` is single-peaked at `T_i`. The best reply over any interval of reachable next positions is then the clipped target, which is the policy; the other player keeps its edge because the next position is on the far side of its own target. The two players' easing-off regions do not overlap. This argument is written out in `doggame/inertia_theory.py`; it is a sketch, not a refereed proof.
+
+**Checks.** Per setup and inertia, the share of dog positions where holding fails by Proposition 1 against the share where the dynamic program's equilibrium differs from the one-shot actions, and the largest action gap between Proposition 2's policy and the dynamic program (x, then y):
+
+| House setup | w0 = 0.3: hold fails, theory / DP; gap to DP | w0 = 0.6: hold fails, theory / DP; gap to DP | w0 = 0.9: hold fails, theory / DP; gap to DP |
+|---|---|---|---|
+| (0.9, 0.2) / (0.1, 0.8), w = 0.5 | x 0% / 0%; 0.00, y 0% / 0%; 0.00 | x 0% / 0%; 0.00, y 0% / 0%; 0.00 | x 0% / 0%; 0.00, y 5% / 5%; 0.01 |
+| (0.8, 0.8) / (0.2, 0.3), w = 0.3 | x 0% / 0%; 0.00, y 30% / 29%; 0.01 | x 6% / 5%; 0.00, y 30% / 30%; 0.01 | x 14% / 14%; 0.01, y 30% / 30%; 0.01 |
+| (0.7, 0.1) / (0.6, 0.9), w = 0.7 | x 58% / 57%; 0.01, y 0% / 0%; 0.00 | x 76% / 76%; 0.01, y 0% / 0%; 0.00 | x 84% / 84%; 0.01, y 0% / 0%; 0.00 |
+| (0.95, 0.5) / (0.05, 0.5), w = 0.5 | x 0% / 0%; 0.00, y 100% / 99%; shared | x 0% / 0%; 0.00, y 100% / 100%; shared | x 0% / 0%; 0.00, y 100% / 100%; shared |
+| (0.6, 0.6) / (0.4, 0.4), w = 0.5 | x 16% / 15%; 0.00, y 16% / 15%; 0.00 | x 51% / 51%; 0.00, y 51% / 51%; 0.00 | x 68% / 68%; 0.00, y 68% / 68%; 0.00 |
+
+- **Both propositions match the dynamic program**: the shares agree to about one percentage point, and the explicit policy is within one action-grid step (0.01) everywhere. Its largest one-round deviation gain, with continuation values from simulating the dog rather than from a grid, is below 1e-31 over 101 dog positions in every straddling coordinate.
+- **The shared-y coordinate is not covered.** Its houses coincide, so both one-shot actions are interior; the dynamic program picks another member of its continuum.
+
+On 200 random one-coordinate games (houses, weight, inertia and discount drawn uniformly; deviation gains over 41 dog positions):
+
+| One-shot equilibrium | Games | Explicit policy is an equilibrium (gain < 1e-9) | Largest one-round gain | Holding is Markov-perfect |
+|---|---|---|---|---|
+| straddle | 77 | 77 of 77 | 0.0e+00 | 30 of 77 |
+| interior | 123 | 70 of 123 | 2.3e-02 | 0 of 123 |
+
+- **Proposition 2 holds in every straddling game** (77 of 77), and holding alone is Markov-perfect in 30 of them, matching Proposition 1.
+- **It does not extend to interior one-shot actions**: there the policy is an equilibrium in 70 of 123 games and fails in the rest (largest gain 0.023), because both players can want to ease off at the same dog position. The feedback equilibrium in that case is open.
+- **Scope.** The propositions are for this game (one dimension per coordinate, quadratic rewards on the next dog position, a box of actions). Uniqueness of the feedback equilibrium is not shown.
+
 ## 6. Research questions and answers
 
 The statuses are the same as in [RESEARCH_QUESTIONS.md](RESEARCH_QUESTIONS.md).
@@ -449,7 +504,7 @@ The statuses are the same as in [RESEARCH_QUESTIONS.md](RESEARCH_QUESTIONS.md).
 
 **Q3. Does pre-training help?** *Answered for one target.* Section 5.5: it helps when the source has the same equilibrium corners and hurts when it does not.
 
-**Q4. Which equilibrium does self-play find?** *Answered for the shared-y setup.* Section 5.3: never the interior point, always one of two mirror boundary equilibria, about 3 to 1, regardless of layout.
+**Q4. Which equilibrium does self-play find?** *Answered for the shared-y setup.* Never the interior point, always one of two mirror boundary equilibria, regardless of layout; which one is consistent with a fair coin over 50 seeds (Sections 5.3 and 5.19).
 
 **Q5. How precisely must the stage game be solved?** *Answered for the dog game.* Section 5.6: the error falls about as 1 over the iterations, and re-solving less often does not matter when the transition is state-independent. **Q5b** (the literature) is not surveyed here.
 
@@ -471,7 +526,7 @@ The statuses are the same as in [RESEARCH_QUESTIONS.md](RESEARCH_QUESTIONS.md).
 
 **Q16. Do A2C and PPO beat REINFORCE?** *Answered.* On the main game PPO is much faster per episode and A2C is not faster than REINFORCE (Section 5.2). With one epoch, matching REINFORCE on gradient steps, PPO is no faster than REINFORCE, so its speed comes from reusing each episode (Section 5.11, Q24). On the walking game the order changes: A2C is the most reliable and PPO is fast but unstable (Section 5.10, Q26).
 
-**Q17-Q20.** Q17 (why the outcome is 3 to 1 and never interior) is partly answered: the potential is flat along the continuum, so it cannot select, and the initial exploration noise flips which mirror image wins; why every run reaches the boundary is untested (Section 5.19). Q18 is answered (Section 5.4). Q19 is answered below. Q20 (why mismatched pre-training hurts) has a measured pattern but an untested mechanism.
+**Q17-Q20.** Q17 (which mirror image, and why never interior) is answered for the shared-y setup: the mirror image is a fair coin, and learning random-walks along the flat direction of the potential until the box stops it, as two ablations show (Section 5.19). Q18 is answered (Section 5.4). Q19 is answered below. Q20 (why mismatched pre-training hurts) has a measured pattern but an untested mechanism.
 
 **Q21. Does re-solving less often change the fixed point?** *Answered.* No, in this game (Section 5.6).
 
@@ -495,13 +550,17 @@ The statuses are the same as in [RESEARCH_QUESTIONS.md](RESEARCH_QUESTIONS.md).
 
 **Q32. Does a polar absolute-action policy improve policy-gradient learning on the original dog game?** *Partly answered for the tested setups.* On the primary house setup, polar had higher one-shot expected gain than Cartesian Beta in all 30 algorithm-by-seed pairs. The REINFORCE follow-up across four additional setups is mixed: Cartesian Beta is better in two and the intervals include zero in two. The comparison changes distribution family as well as coordinates and is scored only at the reset state (Section 5.18); it does not establish a general polar-policy effect.
 
-**Q19. Does the one-shot equilibrium remain an equilibrium with inertia?** *Answered for the five setups.* On the equilibrium path the exact feedback equilibrium is the one-shot Nash profile; off the path it differs, so holding the one-shot actions everywhere is not Markov-perfect except in setup 1 at low inertia (Section 5.15).
+**Q19. Does the one-shot equilibrium remain an equilibrium with inertia?** *Answered.* On the equilibrium path the exact feedback equilibrium is the one-shot Nash profile; off the path it differs. Proposition 1 gives the exact condition for holding the one-shot actions to be Markov-perfect, which holds in setup 1 up to `w0 = 0.6` only (Sections 5.15 and 5.20).
 
 **Q33. Is the dog game a Markov potential game?** *Answered: no.* 4-cycles with reacting policies do not sum to zero, while open-loop cycles do (Section 5.19).
 
-**Q34-Q36.** An explicit piecewise-affine solution of the box-constrained game, a noisy continuous-time version (which needs an action cost for a Riccati benchmark), and the many-house mean-field limit are open.
+**Q34. Is there an explicit piecewise-affine feedback equilibrium?** *Partly answered.* Yes whenever the houses straddle the dog (Proposition 2, proof sketch, 77 of 77 random games and all straddling setups); open when a one-shot action is interior (Section 5.20).
+
+**Q35-Q36.** A noisy continuous-time version (which needs an action cost for a Riccati benchmark) and the many-house mean-field limit are open.
 
 ## 7. Limits
+
+- **The propositions of Section 5.20 have proof sketches, not refereed proofs**, and cover straddling coordinates only; they are checked numerically against the dynamic program and an exact one-round deviation test.
 
 - Most results rest on five seeds, and the equilibrium-selection study on ten per layout. Percentages are counts out of those, not estimates with error bars.
 - The convergence threshold (0.004) and the pre-training and inertia setups are my choices. Training settings (learning rate 0.01, one episode per update) were not tuned for each algorithm.
@@ -533,4 +592,4 @@ The code, results and this report are released under the [MIT license](https://g
 
 ## 9. References
 
-**Selected related work:** Wu et al. (2025), [Battling Influencers Game](https://arxiv.org/abs/2502.01127); Hu and Wellman (2003), [Nash-Q](https://www.jmlr.org/papers/v4/hu03a.html); Hambly et al. (2023), [policy gradients for LQ games](https://www.jmlr.org/papers/v24/21-0842.html); Schulman et al. (2017), [PPO](https://arxiv.org/abs/1707.06347); Leonardos et al., [Markov potential games](https://arxiv.org/abs/2106.01969); Kavuncu, Yaraneri and Mehr (RSS 2021), [Potential iLQR](https://arxiv.org/abs/2107.04926); Benenati and Belgioioso (2025), [explicit constrained LQ games](https://arxiv.org/abs/2512.07749); [constrained nonlinear dynamic games](https://arxiv.org/abs/2001.01826) (piecewise-affine feedback Nash); Monderer and Shapley (1996), potential games; Blume (1993), log-linear learning. The LQ guarantees do not cover this deterministic clipped setup.
+**Selected related work:** Wu et al. (2025), [Battling Influencers Game](https://arxiv.org/abs/2502.01127); Hu and Wellman (2003), [Nash-Q](https://www.jmlr.org/papers/v4/hu03a.html); Hambly et al. (2023), [policy gradients for LQ games](https://www.jmlr.org/papers/v24/21-0842.html); Schulman et al. (2017), [PPO](https://arxiv.org/abs/1707.06347); Leonardos et al., [Markov potential games](https://arxiv.org/abs/2106.01969); Kavuncu, Yaraneri and Mehr (RSS 2021), [Potential iLQR](https://arxiv.org/abs/2107.04926); Benenati and Belgioioso (2025), [explicit constrained LQ games](https://arxiv.org/abs/2512.07749); [constrained nonlinear dynamic games](https://arxiv.org/abs/2001.01826) (piecewise-affine feedback Nash); Monderer and Shapley (1996), potential games; Blume (1993), log-linear learning; Fudenberg and Tirole (1991), *Game Theory* (the one-shot deviation principle). The LQ guarantees do not cover this deterministic clipped setup.
