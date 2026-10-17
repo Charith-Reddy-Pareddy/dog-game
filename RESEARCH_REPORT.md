@@ -662,7 +662,7 @@ The statuses are the same as in [RESEARCH_QUESTIONS.md](RESEARCH_QUESTIONS.md).
 
 **Q10. How much non-clean mixing is real?** *Answered for the dog game.* None of it: the exact equilibrium is one action pair, and the mixing fictitious play shows is the leftover of its first random pick (Section 5.8).
 
-**Q11. What transfers to harder games?** *Open.* The state-independent transition (which collapses Nash-Q to one stage game), the unique equilibrium and the one-shot payoffs are dog-game specific. The solver hardening and the verification checks are game-agnostic.
+**Q11. What transfers to harder games?** *Partly answered by the game with inertia.* On-path convergence and the coin-flip selection along a flat potential carry over; the potential structure (Section 5.19) and learning the off-path equilibrium (Section 5.22) do not, and the state-independent transition that collapses Nash-Q to one stage game is lost. Games with more players or no closed-form equilibrium are untested. The solver hardening and the verification checks are game-agnostic.
 
 **Q12. Does inertia change anything besides how long it takes?** *Answered.* The steady state on the equilibrium path is unchanged, training slows sharply on the harder setup (Section 5.4), and the feedback equilibrium changes off the path: Propositions 1 and 2 give exactly when the one-shot actions stay Markov-perfect and what the players do instead (Section 5.20), while self-play learns the one-shot actions everywhere (Section 5.22).
 
