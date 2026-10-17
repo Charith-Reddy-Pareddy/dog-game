@@ -67,3 +67,55 @@ def score(red, blue, h_red, h_blue, w, w0, discount=0.9):
                for x in grid)
     return dict(gap_explicit=float(max(np.abs(red - e_red).max(), np.abs(blue - e_blue).max())),
                 gap_holding=float(max(np.abs(red - a_red).max(), np.abs(blue - a_blue).max())), gain=float(gain))
+
+
+def play_many(houses, weights, w0, kind="table", hidden=16, seed=0, steps=3000, discount=0.9, rounds=60):
+    """Exact gradient play with N players on one coordinate (sigmoid policies): a table of actions per player, or one
+    small network per player. Returns the learned actions on the grid, shape (N, GRID)."""
+    torch.manual_seed(seed)
+    n, grid = len(houses), torch.linspace(0, 1, GRID)
+    if kind == "table":
+        params = [[torch.zeros(GRID, requires_grad=True)] for _ in range(n)]
+
+        def policy(i, x):
+            pos = (x * (GRID - 1)).clamp(0, GRID - 1)
+            j = pos.floor().long().clamp(max=GRID - 2)
+            a = torch.sigmoid(params[i][0])
+            return a[j] * (1 - (pos - j)) + a[j + 1] * (pos - j)
+    else:
+        nets = [torch.nn.Sequential(torch.nn.Linear(1, hidden), torch.nn.Tanh(), torch.nn.Linear(hidden, 1)) for _ in range(n)]
+        params = [list(net.parameters()) for net in nets]
+        policy = lambda i, x: torch.sigmoid(nets[i](x[:, None])[:, 0])
+    opts = [torch.optim.Adam(p, lr=0.05 if kind == "table" else 0.01) for p in params]
+    weights_t = torch.as_tensor(np.asarray(weights), dtype=torch.float32)
+    for _ in range(steps):
+        x, values = grid, [0.0] * n
+        for k in range(rounds):
+            x = w0 * x + (1 - w0) * sum(weights_t[i] * policy(i, x) for i in range(n))
+            values = [v - discount ** k * (x - h) ** 2 for v, h in zip(values, houses)]
+        grads = [torch.autograd.grad(-values[i].mean(), params[i], retain_graph=i < n - 1) for i in range(n)]
+        for i in range(n):
+            for p, g in zip(params[i], grads[i]):
+                p.grad = g
+            opts[i].step()
+    with torch.no_grad():
+        return np.stack([policy(i, grid).numpy().astype(float) for i in range(n)])
+
+
+def deviation_gain_many(actions, houses, weights, w0, discount=0.9, states=21, grid=201, rounds=200):
+    """The most any player gains at any of `states` dog positions by changing its action for one round and then
+    following `actions` (an (N, GRID) table, interpolated) again."""
+    xs, houses, weights = np.linspace(0, 1, GRID), np.asarray(houses, dtype=float), np.asarray(weights, dtype=float)
+    act = lambda z: np.stack([np.interp(z, xs, a) for a in actions])
+    best = 0.0
+    for x in np.linspace(0, 1, states):
+        now = act(np.array([x]))[:, 0]
+        for i in range(len(houses)):
+            own = np.append(np.linspace(0, 1, grid), now[i])
+            z = w0 * x + (1 - w0) * (now @ weights - weights[i] * now[i] + weights[i] * own)
+            total = -(z - houses[i]) ** 2
+            for k in range(1, rounds):
+                z = w0 * z + (1 - w0) * weights @ act(z)
+                total -= discount ** k * (z - houses[i]) ** 2
+            best = max(best, float(total[:-1].max() - total[-1]))
+    return best
