@@ -75,3 +75,17 @@ def test_small_time_steps_approach_the_continuous_time_limits_and_a_bang_bang_po
     assert abs(kappa(w0, g) - k_limit) < 1e-3 and abs(rho(w0, g) - rho_limit) < 1e-3
     red, blue = explicit_policy(0.7, 0.6, 0.7, 1.0, 0.0, w0, g)(np.linspace(0, 1, 10001))
     assert np.mean((red > 0) & (red < 1)) < 1e-3 and np.mean((blue > 0) & (blue < 1)) < 1e-3
+
+
+def test_the_target_fixed_point_reproduces_proposition_2_and_repairs_an_interior_game():
+    from doggame.inertia_theory import target_equilibrium, target_policy
+
+    targets, iterations = target_equilibrium(0.7, 0.6, 0.7, 0.6)
+    x = np.linspace(0, 1, 101)
+    explicit, found = explicit_policy(0.7, 0.6, 0.7, 1.0, 0.0, 0.6)(x), target_policy(*targets, 0.7, 0.6)(x)
+    assert iterations == 1 and np.allclose(explicit, found, atol=1e-9)
+
+    h_red, h_blue, w, w0, g = 0.754, 0.538, 0.347, 0.767, 0.335  # Proposition 2's policy fails here
+    act = target_policy(*target_equilibrium(h_red, h_blue, w, w0, g)[0], w, w0)
+    gains = [deviation_gain(act, h, w, w0, x, red, g, grid=401) for x in np.linspace(0, 1, 21) for h, red in ((h_red, True), (h_blue, False))]
+    assert max(gains) < 1e-8
