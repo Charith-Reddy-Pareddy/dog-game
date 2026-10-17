@@ -449,7 +449,7 @@ At round 800, per seed:
   the stage reward on the next dog position, actions in [0, 1], `w0` in [0, 1)
   and a discount in [0, 1). Proposition 2 covers only coordinates where the
   houses lie on either side of the dog position the players' edges give. Its
-  proof is a sketch I wrote; it has not been checked by anyone else.
+  proof (docs/INERTIA_PROOFS.md) is mine; it has not been checked by anyone else.
 - The numerical checks of Proposition 2 test one-round deviations on a grid of
   2001 actions (1001 for the random games) plus the policy's own action, with
   continuation values from 300 (400) simulated rounds. A deviation between grid

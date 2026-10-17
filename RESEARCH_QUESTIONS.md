@@ -232,7 +232,7 @@ with the numbers and the caveats, are in [RESEARCH_REPORT.md](RESEARCH_REPORT.md
     games have feedback solutions that are piecewise affine over polyhedral regions.
     *Status: partly answered. When the houses lie on either side of the dog, the policy in
     which each player aims the next dog position at `d* + k (h - d*)` is a feedback
-    equilibrium (proof sketch; 77 of 77 random games, all such setups, within one grid step
+    equilibrium (proved in docs/INERTIA_PROOFS.md; 77 of 77 random games, all such setups, within one grid step
     of the dynamic program). When a one-shot action is interior it fails in 53 of 123
     random games, and that case is open.*
 35. **What happens in a noisy, continuous-time dog game?** With

@@ -468,7 +468,7 @@ The game splits by coordinate, so take one: dog position `x` in [0, 1], next dog
 
 in which each player aims the next dog position at its own target, as far as its weight allows, with the other at its one-shot action, is a feedback equilibrium for every `w0` in [0, 1) and discount in [0, 1). It equals the one-shot profile on the joint hold interval of Proposition 1 and is piecewise affine in `x`, with at most three pieces per player.
 
-*Proof sketch.* Let `g_i(z) = -(z - h_i)^2 + g V_i(z)` be a player's one-round objective as a function of the next dog position under the policy. On the joint hold interval the dog stays in it, so `g_i` is the concave quadratic of Proposition 1, peaked at `T_i`, which lies in the interval. Outside it, for the player that eases off, `g_i(z) = -(z - h_i)^2 + g g_i(next(z))` with `next(z)` nondecreasing and between the target and `z`; the operator on the right is a contraction that preserves "nonincreasing beyond `T_i`" (and "nondecreasing below it" on the other side), so `g_i` is single-peaked at `T_i`. The best reply over any interval of reachable next positions is then the clipped target, which is the policy; the other player keeps its edge because the next position is on the far side of its own target. The two players' easing-off regions do not overlap. This argument is written out in `doggame/inertia_theory.py`; it is a sketch, not a refereed proof.
+*Proof outline* (the full proofs of both propositions are in [docs/INERTIA_PROOFS.md](docs/INERTIA_PROOFS.md), [PDF](docs/INERTIA_PROOFS.pdf)). Let `g_i(z) = -(z - h_i)^2 + g V_i(z)` be a player's one-round objective as a function of the next dog position under the policy. On the joint hold interval the dog stays in it, so `g_i` is the concave quadratic of Proposition 1, peaked at `T_i`, which lies in the interval. Outside it, for the player that eases off, `g_i(z) = -(z - h_i)^2 + g g_i(next(z))` with `next(z)` nondecreasing and between the target and `z`; the operator on the right is a contraction that preserves "nonincreasing beyond `T_i`" (and "nondecreasing below it" on the other side), so `g_i` is single-peaked at `T_i`. The best reply over any interval of reachable next positions is then the clipped target, which is the policy; the other player keeps its edge because the next position is on the far side of its own target. The two players' easing-off regions do not overlap. The proofs are mine and have not been refereed.
 
 **Checks.** Per setup and inertia, the share of dog positions where holding fails by Proposition 1 against the share where the dynamic program's equilibrium differs from the one-shot actions, and the largest action gap between Proposition 2's policy and the dynamic program (x, then y):
 
@@ -491,7 +491,7 @@ On 200 random one-coordinate games (houses, weight, inertia and discount drawn u
 | interior | 123 | 70 of 123 | 2.3e-02 | 0 of 123 |
 
 - **Proposition 2 holds in every straddling game** (77 of 77), and holding alone is Markov-perfect in 30 of them, matching Proposition 1.
-- **It does not extend to interior one-shot actions**: there the policy is an equilibrium in 70 of 123 games and fails in the rest (largest gain 0.023), because both players can want to ease off at the same dog position. The feedback equilibrium in that case is open.
+- **It does not extend to interior one-shot actions**: there the policy is an equilibrium in 70 of 123 games and fails in the rest (largest gain 0.023). A player whose one-shot action is interior holds only at `d*` and pushes at an edge elsewhere, so the dog returns faster than under holding and the other player's best target moves: in one such game the dynamic program's red aims at about 0.785 where the policy aims at 0.771. The feedback equilibrium in that case is open.
 - **Scope.** The propositions are for this game (one dimension per coordinate, quadratic rewards on the next dog position, a box of actions). Uniqueness of the feedback equilibrium is not shown.
 
 ## 6. Research questions and answers
@@ -554,13 +554,13 @@ The statuses are the same as in [RESEARCH_QUESTIONS.md](RESEARCH_QUESTIONS.md).
 
 **Q33. Is the dog game a Markov potential game?** *Answered: no.* 4-cycles with reacting policies do not sum to zero, while open-loop cycles do (Section 5.19).
 
-**Q34. Is there an explicit piecewise-affine feedback equilibrium?** *Partly answered.* Yes whenever the houses straddle the dog (Proposition 2, proof sketch, 77 of 77 random games and all straddling setups); open when a one-shot action is interior (Section 5.20).
+**Q34. Is there an explicit piecewise-affine feedback equilibrium?** *Partly answered.* Yes whenever the houses straddle the dog (Proposition 2, with a proof; 77 of 77 random games and all straddling setups); open when a one-shot action is interior (Section 5.20).
 
 **Q35-Q36.** A noisy continuous-time version (which needs an action cost for a Riccati benchmark) and the many-house mean-field limit are open.
 
 ## 7. Limits
 
-- **The propositions of Section 5.20 have proof sketches, not refereed proofs**, and cover straddling coordinates only; they are checked numerically against the dynamic program and an exact one-round deviation test.
+- **The proofs of Section 5.20 have not been refereed** ([docs/INERTIA_PROOFS.md](docs/INERTIA_PROOFS.md)), and Proposition 2 covers straddling coordinates only; they are checked numerically against the dynamic program and an exact one-round deviation test.
 
 - Most results rest on five seeds, and the equilibrium-selection study on ten per layout. Percentages are counts out of those, not estimates with error bars.
 - The convergence threshold (0.004) and the pre-training and inertia setups are my choices. Training settings (learning rate 0.01, one episode per update) were not tuned for each algorithm.
