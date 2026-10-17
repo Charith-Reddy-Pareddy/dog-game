@@ -1,4 +1,4 @@
-from doggame.dog_game_summary import (inertia_dp_table, inertia_explicit_table, inertia_random_table, mirror_p, selection_clip_table, markov_potential_table, selection_noise_table, algorithms_table, convergence_counts, markdown, noise_table, resolution_table,
+from doggame.dog_game_summary import (many_houses_table, inertia_dp_table, inertia_explicit_table, inertia_random_table, mirror_p, selection_clip_table, markov_potential_table, selection_noise_table, algorithms_table, convergence_counts, markdown, noise_table, resolution_table,
                                       selection_outcome, selection_table, walking_algorithms_table, walking_share_series, walking_table,
                                       ppo_epochs_table, ppo_long_table, ppo_walking_table, walking_equilibrium_table, walking_houses_table, walking_inertia_table,
                                       walking_settings_table)
@@ -204,3 +204,9 @@ def test_the_explicit_equilibrium_tables_report_shares_gaps_and_gains():
             run("inertia_random", dict(game=0), kind="straddle", gain=0.0, holds=True), run("inertia_random", dict(game=1), kind="interior", gain=0.003, holds=False)]
     assert inertia_explicit_table(rows)[1][1] == "x 0% / 0%; 0.00, y 100% / 100%; shared"
     assert inertia_random_table(rows)[1:] == [["straddle", "1", "1 of 1", "0.0e+00", "1 of 1"], ["interior", "1", "0 of 1", "3.0e-03", "0 of 1"]]
+
+
+def test_the_many_houses_table_reports_the_dog_pivots_and_critical_inertia():
+    rows = [run("many_houses", dict(n=4), dog=[0.3, 0.4], pivot=[True, False], critical=[0.0, 0.1])]
+    table = many_houses_table(rows)
+    assert table[0][1].endswith("limit 0.339") and table[1] == ["4", "0.350 (0.050)", "0.50", "0.0500", "0.40"]
