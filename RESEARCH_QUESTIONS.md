@@ -97,8 +97,14 @@ with the numbers and the caveats, are in [RESEARCH_REPORT.md](RESEARCH_REPORT.md
 11. Which findings are expected to transfer to a harder game (one with many
     states and no unique equilibrium), and which depend on the dog game's
     simple structure?
-    *Status: open. The state-independent transition, the unique equilibrium
-    and the one-shot payoffs are all dog-game specific.*
+    *Status: partly answered by the game with inertia, which has a continuum of states.
+    What carried over: self-play still reaches the one-shot equilibrium on the equilibrium
+    path, and on a flat direction of the potential which equilibrium it reaches is still a
+    coin flip. What did not: the potential structure (the dynamic game is not a Markov
+    potential game, Q33), and learning the equilibrium off the path (self-play learns to
+    hold the one-shot actions, Q37); Nash-Q's single-stage-game shortcut also no longer
+    applies once the transition depends on the state. A game with more players or
+    no closed-form equilibrium is untested.*
 
 ## From the follow-up planning notes
 
@@ -312,6 +318,6 @@ with the numbers and the caveats, are in [RESEARCH_REPORT.md](RESEARCH_REPORT.md
 | walking game | `results/dog_game_runs.jsonl`, `results/dog_game_trajectories.json` |
 | 32 | `docs/POLAR_ACTION_PROTOCOL.md`, `docs/POLAR_ACTION_ROBUSTNESS_PROTOCOL.md`, `doggame/polar_action_study.py`, `doggame/polar_action_robustness.py`, `results/polar_action_pg.jsonl`, `results/polar_action_pg_robustness.jsonl` |
 
-Questions 11 and 14 are open, and 15, 25, 30, 32, 34, 35 and 36 are partly answered. The studies are in
+Question 14 is open, and 11, 15, 25, 30, 32, 34, 35 and 36 are partly answered. The studies are in
 [`doggame/dog_game_studies.py`](doggame/dog_game_studies.py) and the tables are
 produced by [`doggame/dog_game_summary.py`](doggame/dog_game_summary.py).
