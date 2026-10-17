@@ -1,4 +1,4 @@
-from doggame.dog_game_summary import (many_houses_table, inertia_dp_table, inertia_explicit_table, inertia_random_table, mirror_p, selection_clip_table, markov_potential_table, selection_noise_table, algorithms_table, convergence_counts, markdown, noise_table, resolution_table,
+from doggame.dog_game_summary import (feedback_learning_table, many_houses_table, inertia_dp_table, inertia_explicit_table, inertia_random_table, mirror_p, selection_clip_table, markov_potential_table, selection_noise_table, algorithms_table, convergence_counts, markdown, noise_table, resolution_table,
                                       selection_outcome, selection_table, walking_algorithms_table, walking_share_series, walking_table,
                                       ppo_epochs_table, ppo_long_table, ppo_walking_table, walking_equilibrium_table, walking_houses_table, walking_inertia_table,
                                       walking_settings_table)
@@ -210,3 +210,11 @@ def test_the_many_houses_table_reports_the_dog_pivots_and_critical_inertia():
     rows = [run("many_houses", dict(n=4), dog=[0.3, 0.4], pivot=[True, False], critical=[0.0, 0.1])]
     table = many_houses_table(rows)
     assert table[0][1].endswith("limit 0.339") and table[1] == ["4", "0.350 (0.050)", "0.50", "0.0500", "0.40"]
+
+
+def test_the_feedback_learning_table_puts_baselines_before_learners():
+    rows = [run("feedback_learning", dict(algorithm="holding", seed=0), max_gain=0.0756, mean_gain=0.0114),
+            run("feedback_learning", dict(algorithm="a2c", seed=0), max_gain=0.07, mean_gain=0.01),
+            run("feedback_learning", dict(algorithm="a2c", seed=1), max_gain=0.05, mean_gain=0.02)]
+    table = feedback_learning_table(rows)
+    assert table[1] == ["hold the one-shot actions", "1", "0.0756", "0.0114"] and table[2] == ["A2C", "2", "0.0600 (0.0500 to 0.0700)", "0.0150"]
