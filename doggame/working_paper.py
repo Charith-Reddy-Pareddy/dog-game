@@ -108,7 +108,13 @@ random one-coordinate games, with the deviation gain computed by simulating the 
 Proposition 2 holds in all {c['straddle']} straddling games, and holding alone in {c['holds']} of them, as
 Proposition 1 predicts. With an interior one-shot action the policy is an equilibrium in only {c['interior_ok']} of
 {c['interior']} games: the interior player pushes at an edge off its house, the dog returns faster than under holding,
-and the other player's best target moves. That case, and uniqueness, are open.
+and the other player's best target moves. Because a player's one-round objective depends only on the next dog
+position, each player can still aim at one target everywhere when that objective is single-peaked; with the targets
+from a two-dimensional fixed point:
+
+{md(S.target_random_table(studies))}
+
+The fixed point is a feedback equilibrium in 199 of 200 random games; a proof, and uniqueness, are open.
 
 **Many houses.** With N players the one-shot dog is the generalized median of the average voting rule, at most one
 player (the pivot) is inside the box, and Proposition 1 holds verbatim. Drawing N houses from Beta(2, 5) with equal
