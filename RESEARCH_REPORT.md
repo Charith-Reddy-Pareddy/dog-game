@@ -542,7 +542,20 @@ Section 5.20 gives a feedback equilibrium that differs from the one-shot actions
 
 - **A2C and PPO learn to hold the one-shot actions, not a feedback equilibrium.** Their gains equal holding's in 19 of 20 Gaussian runs across the two settings, so the learned policies are the one-shot profile at every dog position: unexploitable on the equilibrium path, exploitable off it, although every episode started off the path.
 - **It is robust to the obvious fixes.** Five times longer training (15000 episodes) leaves A2C exactly at holding; a Beta policy, whose shape parameters do not saturate, ends slightly worse than holding (its mean cannot reach the box's edges); and setup 5 at `w0 = 0.9`, with 3.5 times the off-path incentive, gives the same result. REINFORCE ends further away in setup 3 and only slightly below holding's mean gain in setup 5 (0.034 against 0.040).
-- **Why is open.** The Gaussian policies' pre-sigmoid outputs sit at 6 to 12 at every dog position, so their gradients toward the off-path actions are tiny, but the Beta result shows that removing that saturation is not enough. A plausible remaining reason is that the off-path gains are small (a mean of 0.011 to 0.040 per round) next to the noise in the policy-gradient estimates; this is not tested.
+- **Not noise, and not saturation alone, but shared parameters.** To separate the learning dynamics from the noise of policy-gradient estimates, `doggame/exact_play.py` runs *exact* gradient play on one coordinate: deterministic policies, each player's payoff averaged over 41 starting dog positions and computed by following the dog, and each player ascending its own gradient at the same time. A table of actions (one parameter per grid position) and a small network shared across positions, with holding's largest gain at 0.0756 (setup 3) and 0.1042 (setup 5):
+
+| Setting | Policy | Runs | Within 0.05 of Proposition 2 | Within 0.05 of holding | Largest one-round gain: median (range) |
+|---|---|---|---|---|---|
+| setup 3 x, w0 = 0.6 | table, clamp | 1 | 1 of 1 | 0 of 1 | 0.0000 |
+| setup 3 x, w0 = 0.6 | table, sigmoid | 1 | 1 of 1 | 0 of 1 | 0.0007 |
+| setup 3 x, w0 = 0.6 | network, 16 units | 5 | 0 of 5 | 1 of 5 | 0.0479 (0.0479 to 0.0756) |
+| setup 3 x, w0 = 0.6 | network, 64 units | 5 | 0 of 5 | 0 of 5 | 0.0479 (0.0479 to 0.0479) |
+| setup 5 x, w0 = 0.9 | table, clamp | 1 | 1 of 1 | 0 of 1 | 0.0000 |
+| setup 5 x, w0 = 0.9 | table, sigmoid | 1 | 1 of 1 | 0 of 1 | 0.0000 |
+| setup 5 x, w0 = 0.9 | network, 16 units | 5 | 0 of 5 | 2 of 5 | 0.1042 (0.1042 to 0.1042) |
+| setup 5 x, w0 = 0.9 | network, 64 units | 5 | 0 of 5 | 1 of 5 | 0.1042 (0.1042 to 0.1042) |
+
+  Exact gradient play reaches Proposition 2's equilibrium with a table in every case, and with a shared network in none of 20 runs: the networks end at holding or learn only one player's off-path easing. A plausible mechanism, not tested: a shared network carries "push to the edge" from the many positions where it is right to the few where easing is right, saturating them before their own gradient arrives, which a table cannot do.
 - **Consequence.** Low exploitability on the equilibrium path, which the earlier sections measure, does not show that a learned policy is a feedback equilibrium of the dynamic game.
 
 ## 6. Research questions and answers
@@ -609,7 +622,7 @@ The statuses are the same as in [RESEARCH_QUESTIONS.md](RESEARCH_QUESTIONS.md).
 
 **Q35.** A noisy continuous-time version (which needs an action cost for a Riccati benchmark) is open.
 
-**Q37. Does self-play learn a feedback equilibrium with inertia?** *Answered for two settings: no.* From random starts, A2C and PPO learn to hold the one-shot actions everywhere, which is exploitable off the equilibrium path; longer training and a Beta policy do not change this, and REINFORCE does not do better (Section 5.22).
+**Q37. Does self-play learn a feedback equilibrium with inertia?** *Answered for two settings: no.* From random starts, A2C and PPO learn to hold the one-shot actions everywhere, which is exploitable off the equilibrium path; longer training and a Beta policy do not change this. Noise-free gradient play finds the equilibrium with a table of actions but not with a shared network, so function approximation, not sampling noise, is what stops it (Section 5.22).
 
 **Q36. What happens with many houses?** *Partly answered.* The one-shot dog converges to the generalized median `d = 1 - F(d)` (known for the average voting rule), and with inertia the static equilibrium stays a feedback equilibrium only without a pivot and below an inertia of order 1/N (Section 5.21). The many-house feedback equilibrium is open.
 
