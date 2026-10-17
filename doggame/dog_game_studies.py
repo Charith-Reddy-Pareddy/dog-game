@@ -20,6 +20,7 @@ to do only the second of four shards.
 - selection_clip: the selection study with actions and the dog left unclipped
 - selection_linear: the same with an unbounded linear policy mean in y
 - many_houses: the one-coordinate game with N houses, its one-shot dog and how much inertia it tolerates
+- feedback_learning: whether self-play from random dog positions learns a feedback equilibrium with inertia
 - inertia_explicit: the closed-form hold condition and explicit feedback equilibrium against the dynamic program
 - inertia_random: the explicit feedback equilibrium on random one-coordinate games
 - walking_equilibrium: is walking to the one-shot corners an equilibrium of the walking game?
@@ -305,6 +306,22 @@ def study_markov_potential(seeds):
                    lambda w0=w0, red_alt=red_alt, blue_alt=blue_alt: dict(cycle=cycle_sum(red, red_alt, blue, blue_alt, houses, w, w0, start)))
 
 
+def study_feedback_learning(seeds):
+    """Self-play from random dog positions on setup 3 with inertia 0.6, 3000 episodes: the learned policy's feedback
+    exploitability (doggame.feedback_learning), next to Proposition 2's policy and holding the one-shot actions."""
+    from doggame.feedback_learning import explicit_2d, feedback_gain, holding_2d, learn, mean_policy
+
+    config, w0 = DEFAULT_CONFIGS[2], 0.6
+    for name, act in (("explicit", lambda: explicit_2d(config, w0)), ("holding", lambda: holding_2d(config))):
+        yield dict(algorithm=name, seed=0), lambda act=act: dict(zip(("max_gain", "mean_gain"), feedback_gain(act(), config, w0)))
+    for algorithm in ("reinforce", "a2c", "ppo"):
+        for seed in seeds:
+            def run(algorithm=algorithm, seed=seed):
+                policy = learn(config, w0, algorithm, seed, 3000)
+                return dict(zip(("max_gain", "mean_gain"), feedback_gain(mean_policy(policy), config, w0)))
+            yield dict(algorithm=algorithm, seed=seed), run
+
+
 def study_many_houses(seeds):
     """The one-coordinate game with N houses drawn from Beta(2, 5) and equal weights, 200 draws per N: where the
     one-shot dog lands, whether a pivot ends inside the box, and the largest inertia (discount 0.9) at which holding
@@ -478,7 +495,7 @@ def study_noise(seeds, resolution=9):
     yield dict(iterations="exact", seed=0), lambda: dict(spread=float(spread), gap=float(gap), support=int((exact_red > 1e-3).sum()), top=float(exact_red.max()))
 
 
-STUDIES = dict(many_houses=study_many_houses, selection_linear=study_selection_linear, selection_clip=study_selection_clip, inertia_explicit=study_inertia_explicit, inertia_random=study_inertia_random, selection_noise=study_selection_noise, inertia_dp=study_inertia_dp, markov_potential=study_markov_potential, algorithms=study_algorithms, walking=study_walking, ppo_variants=study_ppo_variants, ppo_long=study_ppo_long,
+STUDIES = dict(feedback_learning=study_feedback_learning, many_houses=study_many_houses, selection_linear=study_selection_linear, selection_clip=study_selection_clip, inertia_explicit=study_inertia_explicit, inertia_random=study_inertia_random, selection_noise=study_selection_noise, inertia_dp=study_inertia_dp, markov_potential=study_markov_potential, algorithms=study_algorithms, walking=study_walking, ppo_variants=study_ppo_variants, ppo_long=study_ppo_long,
                walking_settings=study_walking_settings, walking_houses=study_walking_houses, walking_inertia=study_walking_inertia,
                walking_equilibrium=study_walking_equilibrium, walking_capacity=study_walking_capacity, walking_ppo_inertia=study_walking_ppo_inertia,
                walking_hard_long=study_walking_hard_long, inertia_equilibrium=study_inertia_equilibrium, selection=study_selection, inertia=study_inertia, pretraining=study_pretraining,
