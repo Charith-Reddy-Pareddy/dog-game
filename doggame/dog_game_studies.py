@@ -28,6 +28,7 @@ to do only the second of four shards.
 - noisy_inertia: where the equilibrium switches when the dog gets a Gaussian shock, as the time step shrinks
 - inertia_explicit: the closed-form hold condition and explicit feedback equilibrium against the dynamic program
 - inertia_random: the explicit feedback equilibrium on random one-coordinate games
+- target_random: the target fixed point on the same random games
 - walking_equilibrium: is walking to the one-shot corners an equilibrium of the walking game?
 - selection:    which equilibrium self-play finds when the houses share a coordinate
 - cross_play:   setup 1 policies per layout, for pairing players from independently trained runs
@@ -468,6 +469,23 @@ def study_inertia_explicit(seeds):
             yield dict(setup=setup, w0=w0), run
 
 
+def study_target_random(seeds):
+    """The target fixed point (doggame.inertia_theory.target_equilibrium) on the same 200 random one-coordinate games
+    as `inertia_random`: its largest one-round deviation gain over 41 dog positions and the number of iterations."""
+    from doggame.inertia_theory import deviation_gain, nash_1d, target_equilibrium, target_policy
+
+    for game in range(200):
+        def run(game=game):
+            rng = np.random.default_rng(game)
+            h_red, h_blue, w, w0, g = *rng.random(2), rng.uniform(0.05, 0.95), rng.uniform(0.01, 0.97), rng.uniform(0.05, 0.99)
+            targets, iterations = target_equilibrium(h_red, h_blue, w, w0, g)
+            act = target_policy(*targets, w, w0)
+            gain = max(max(deviation_gain(act, h_red, w, w0, x, True, g, rounds=400, grid=1001), deviation_gain(act, h_blue, w, w0, x, False, g, rounds=400, grid=1001))
+                       for x in np.linspace(0, 1, 41))
+            return dict(kind=nash_1d(h_red, h_blue, w)[2], gain=gain, iterations=iterations, targets=[float(t) for t in targets])
+        yield dict(game=game), run
+
+
 def study_inertia_random(seeds):
     """The explicit feedback equilibrium on 200 random one-coordinate games (houses, weight, inertia and discount drawn
     uniformly): its largest one-round deviation gain over 41 dog positions, by the kind of one-shot equilibrium."""
@@ -628,7 +646,7 @@ def study_noise(seeds, resolution=9):
     yield dict(iterations="exact", seed=0), lambda: dict(spread=float(spread), gap=float(gap), support=int((exact_red > 1e-3).sum()), top=float(exact_red.max()))
 
 
-STUDIES = dict(cross_play=study_cross_play, vertex_selection=study_vertex_selection, walking_clip=study_walking_clip, walking_entropy=study_walking_entropy, pretraining_mechanism=study_pretraining_mechanism, noisy_inertia=study_noisy_inertia, exact_play=study_exact_play, feedback_learning=study_feedback_learning, many_houses=study_many_houses, selection_linear=study_selection_linear, selection_clip=study_selection_clip, inertia_explicit=study_inertia_explicit, inertia_random=study_inertia_random, selection_noise=study_selection_noise, inertia_dp=study_inertia_dp, markov_potential=study_markov_potential, algorithms=study_algorithms, walking=study_walking, ppo_variants=study_ppo_variants, ppo_long=study_ppo_long,
+STUDIES = dict(target_random=study_target_random, cross_play=study_cross_play, vertex_selection=study_vertex_selection, walking_clip=study_walking_clip, walking_entropy=study_walking_entropy, pretraining_mechanism=study_pretraining_mechanism, noisy_inertia=study_noisy_inertia, exact_play=study_exact_play, feedback_learning=study_feedback_learning, many_houses=study_many_houses, selection_linear=study_selection_linear, selection_clip=study_selection_clip, inertia_explicit=study_inertia_explicit, inertia_random=study_inertia_random, selection_noise=study_selection_noise, inertia_dp=study_inertia_dp, markov_potential=study_markov_potential, algorithms=study_algorithms, walking=study_walking, ppo_variants=study_ppo_variants, ppo_long=study_ppo_long,
                walking_settings=study_walking_settings, walking_houses=study_walking_houses, walking_inertia=study_walking_inertia,
                walking_equilibrium=study_walking_equilibrium, walking_capacity=study_walking_capacity, walking_ppo_inertia=study_walking_ppo_inertia,
                walking_hard_long=study_walking_hard_long, inertia_equilibrium=study_inertia_equilibrium, selection=study_selection, inertia=study_inertia, pretraining=study_pretraining,
