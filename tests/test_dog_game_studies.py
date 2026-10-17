@@ -138,3 +138,8 @@ def test_the_feedback_learning_study_has_two_baselines_and_three_algorithms():
     keys = [k for k, _ in studies.study_feedback_learning(range(5))]
     assert [k["algorithm"] for k in keys[:2]] == ["explicit", "holding"] and len(keys) == 2 + 15 + 15 + 6 + 2 + 15
     assert {k.get("family", "gaussian") for k in keys[2:]} == {"gaussian", "beta"} and max(k.get("episodes", 3000) for k in keys) == 15000
+
+
+def test_the_exact_play_study_compares_tables_with_networks_in_two_settings():
+    keys = [k for k, _ in studies.study_exact_play(range(5))]
+    assert len(keys) == 2 * (2 + 10) and {k["kind"] for k in keys} == {"table", "network"}
