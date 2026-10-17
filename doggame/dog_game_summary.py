@@ -299,6 +299,20 @@ def inertia_random_table(rows):
     return table
 
 
+def feedback_learning_table(rows):
+    """Feedback exploitability (largest and mean one-round gain over dog positions) of policies learned from random
+    starts, next to Proposition 2's policy and holding the one-shot actions."""
+    runs = study(rows, "feedback_learning")
+    table = [["Policy", "Runs", "Largest one-round gain: median (range)", "Mean one-round gain: median"]]
+    labels = dict(explicit="Proposition 2", holding="hold the one-shot actions", reinforce="REINFORCE", a2c="A2C", ppo="PPO")
+    for name, label in labels.items():
+        mine = [r for r in runs if r["key"]["algorithm"] == name]
+        if mine:
+            big, mean = [r["max_gain"] for r in mine], [r["mean_gain"] for r in mine]
+            table.append([label, str(len(mine)), f"{np.median(big):.4f}" + (f" ({min(big):.4f} to {max(big):.4f})" if len(mine) > 1 else ""), f"{np.median(mean):.4f}"])
+    return table
+
+
 def many_houses_table(rows):
     """Per number of houses: the one-shot dog against its mean-field limit, how often no pivot is inside the box
     (against the limit 1 / (1 + f(d))), and the largest inertia that keeps the one-shot actions Markov-perfect."""
@@ -498,7 +512,7 @@ if __name__ == "__main__":
                         ("walking hard long", walking_hard_long_table(studies)), ("inertia equilibrium", inertia_equilibrium_table(studies)),
                         ("selection noise", selection_noise_table(studies)), ("inertia dp", inertia_dp_table(studies)),
                         ("markov potential", markov_potential_table(studies)), ("selection clip", selection_clip_table(studies)),
-                        ("inertia explicit", inertia_explicit_table(studies)), ("inertia random", inertia_random_table(studies)), ("many houses", many_houses_table(studies))):
+                        ("inertia explicit", inertia_explicit_table(studies)), ("inertia random", inertia_random_table(studies)), ("many houses", many_houses_table(studies)), ("feedback learning", feedback_learning_table(studies))):
         print(f"\n### {name}\n\n{markdown(table)}")
     print("\nconvergence counts:", convergence_counts(runs))
     print("inertia median distance:", inertia_distances(studies))
