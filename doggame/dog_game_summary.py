@@ -299,6 +299,26 @@ def inertia_random_table(rows):
     return table
 
 
+def noisy_inertia_table(rows):
+    """Where the equilibrium actions switch (below 0.5) with a noisy dog, next to the noise-free closed form at the same
+    time step and its continuous-time limit."""
+    from doggame.inertia_theory import continuous_limit, explicit_policy
+
+    x = np.linspace(0, 1, 100001)
+    switch = lambda a: x[np.argmax(a < 0.5)]
+    k = continuous_limit(0.5)[0]
+    table = [["Dog", "Time step", "Noise sigma", "Red switches at", "Blue switches at", "Value iteration"]]
+    for dt in sorted({r["key"]["dt"] for r in study(rows, "noisy_inertia")}, reverse=True):
+        red, blue = explicit_policy(0.7, 0.6, 0.7, 1.0, 0.0, 1 - dt, float(np.exp(-0.5 * dt)))(x)
+        table.append(["closed form (Proposition 2)", str(dt), "0", f"{switch(red):.3f}", f"{switch(blue):.3f}", "-"])
+    table.append(["continuous-time limit", "0", "0", f"{0.7:.3f}", f"{0.7 + k * (0.6 - 0.7):.3f}", "-"])
+    for r in sorted(study(rows, "noisy_inertia"), key=lambda r: (not r["key"]["clipped"], -r["key"]["dt"], r["key"]["sigma"])):
+        converged = "did not converge" if r["sweeps"] >= 8000 else f"{r['sweeps']} sweeps"
+        table.append(["clipped to [0, 1]" if r["key"]["clipped"] else "unclipped", str(r["key"]["dt"]), str(r["key"]["sigma"]),
+                      f"{r['red']:.3f}", f"{r['blue']:.3f}", converged])
+    return table
+
+
 def exact_play_table(rows):
     """Noise-free gradient play: how close a table of actions and a shared network end to Proposition 2's policy."""
     runs = study(rows, "exact_play")
@@ -533,7 +553,7 @@ if __name__ == "__main__":
                         ("walking hard long", walking_hard_long_table(studies)), ("inertia equilibrium", inertia_equilibrium_table(studies)),
                         ("selection noise", selection_noise_table(studies)), ("inertia dp", inertia_dp_table(studies)),
                         ("markov potential", markov_potential_table(studies)), ("selection clip", selection_clip_table(studies)),
-                        ("inertia explicit", inertia_explicit_table(studies)), ("inertia random", inertia_random_table(studies)), ("many houses", many_houses_table(studies)), ("feedback learning", feedback_learning_table(studies)), ("exact play", exact_play_table(studies))):
+                        ("inertia explicit", inertia_explicit_table(studies)), ("inertia random", inertia_random_table(studies)), ("many houses", many_houses_table(studies)), ("feedback learning", feedback_learning_table(studies)), ("exact play", exact_play_table(studies)), ("noisy inertia", noisy_inertia_table(studies))):
         print(f"\n### {name}\n\n{markdown(table)}")
     print("\nconvergence counts:", convergence_counts(runs))
     print("inertia median distance:", inertia_distances(studies))

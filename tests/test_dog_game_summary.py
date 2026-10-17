@@ -1,4 +1,4 @@
-from doggame.dog_game_summary import (exact_play_table, feedback_learning_table, many_houses_table, inertia_dp_table, inertia_explicit_table, inertia_random_table, mirror_p, selection_clip_table, markov_potential_table, selection_noise_table, algorithms_table, convergence_counts, markdown, noise_table, resolution_table,
+from doggame.dog_game_summary import (noisy_inertia_table, exact_play_table, feedback_learning_table, many_houses_table, inertia_dp_table, inertia_explicit_table, inertia_random_table, mirror_p, selection_clip_table, markov_potential_table, selection_noise_table, algorithms_table, convergence_counts, markdown, noise_table, resolution_table,
                                       selection_outcome, selection_table, walking_algorithms_table, walking_share_series, walking_table,
                                       ppo_epochs_table, ppo_long_table, ppo_walking_table, walking_equilibrium_table, walking_houses_table, walking_inertia_table,
                                       walking_settings_table)
@@ -229,3 +229,11 @@ def test_the_exact_play_table_lists_tables_before_networks():
     table = exact_play_table(rows)
     assert table[1] == ["setup 3 x, w0 = 0.6", "table, sigmoid", "1", "1 of 1", "0 of 1", "0.0007"]
     assert table[2] == ["setup 3 x, w0 = 0.6", "network, 16 units", "2", "0 of 2", "1 of 2", "0.0528 (0.0300 to 0.0756)"]
+
+
+def test_the_noisy_inertia_table_puts_the_closed_form_and_limit_first():
+    rows = [run("noisy_inertia", dict(dt=0.05, sigma=0.2, clipped=True), red=0.765, blue=0.545, sweeps=559, unresolved=0),
+            run("noisy_inertia", dict(dt=0.05, sigma=0.4, clipped=True), red=0.79, blue=0.59, sweeps=8000, unresolved=0)]
+    table = noisy_inertia_table(rows)
+    assert table[1][:3] == ["closed form (Proposition 2)", "0.05", "0"] and table[2] == ["continuous-time limit", "0", "0", "0.700", "0.533", "-"]
+    assert table[3][3:] == ["0.765", "0.545", "559 sweeps"] and table[4][-1] == "did not converge"
