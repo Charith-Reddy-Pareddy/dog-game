@@ -180,3 +180,8 @@ def test_the_target_study_uses_the_same_200_games():
 
 def test_the_many_targets_study_covers_three_five_and_eight_players():
     assert sorted({k["n"] for k, _ in studies.study_many_targets(range(5))}) == [3, 5, 8]
+
+
+def test_the_many_player_exact_play_study_has_four_policies_per_game():
+    keys = [k for k, _ in studies.study_exact_play_many(range(5))]
+    assert len(keys) == 2 * 5 * 4 and {k["kind"] for k in keys} == {"holding", "target", "table", "network"}
