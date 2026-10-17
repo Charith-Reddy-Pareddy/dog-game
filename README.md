@@ -122,6 +122,8 @@ from the saved runs in `results/`:
   threshold, REINFORCE 2/5, and PPO 1/5. These exploratory results use five seeds per algorithm.
 - **The walking-game ranking holds on other house setups.** A2C is again the most reliable wherever
   learning works, and one setup is much harder (no algorithm learns it in 300 episodes).
+- **An entropy bonus does not make PPO reliable on the walking game.** A coefficient of 0.03 lowers the mean
+  distance from the corners but leaves 3 of 5 seeds there, as without it (Q31).
 - **PPO's speed comes from reusing each episode.** With one epoch (one gradient step per
   episode, like REINFORCE) it is no faster than REINFORCE.
 - **Polar actions did not improve the primary setup.** At episode 1,500, expected
