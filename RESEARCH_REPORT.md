@@ -494,6 +494,30 @@ On 200 random one-coordinate games (houses, weight, inertia and discount drawn u
 - **It does not extend to interior one-shot actions**: there the policy is an equilibrium in 70 of 123 games and fails in the rest (largest gain 0.023). A player whose one-shot action is interior holds only at `d*` and pushes at an edge elsewhere, so the dog returns faster than under holding and the other player's best target moves: in one such game the dynamic program's red aims at about 0.785 where the policy aims at 0.771. The feedback equilibrium in that case is open.
 - **Scope.** The propositions are for this game (one dimension per coordinate, quadratic rewards on the next dog position, a box of actions). Uniqueness of the feedback equilibrium is not shown.
 
+### 5.21 Many houses
+
+With N houses `h_i` and weights `w_i` summing to 1, the dog is at `d = sum_i w_i a_i`, the one-shot game is still an exact potential game, and in each coordinate its equilibrium is a weighted generalized median: players with houses above the dog push to the top, players below push to the bottom, and at most one player, the *pivot*, stops the dog exactly on its own house from inside the box. This is the known Nash outcome of the average voting rule (Renault and Trannoy, 2005); `doggame/many_houses.py` computes it and the tests check it against the potential's maximum. Proposition 1's argument never used the number of players, so it holds verbatim: with inertia, holding the one-shot actions is Markov-perfect if and only if no pivot is inside the box and every player at an edge has slack at least `rho(w0, g)`.
+
+The study draws N houses from a skewed distribution (Beta(2, 5)) with equal weights, 200 draws per N, discount 0.9:
+
+| Houses N | One-shot dog: mean (sd); limit 0.339 | No pivot inside (limit 0.34) | Largest inertia: mean | N times it, median when no pivot |
+|---|---|---|---|---|
+| 2 | 0.368 (0.115) | 0.20 | 0.0399 | 0.27 |
+| 4 | 0.340 (0.090) | 0.28 | 0.0357 | 0.43 |
+| 8 | 0.340 (0.055) | 0.34 | 0.0206 | 0.27 |
+| 16 | 0.337 (0.038) | 0.29 | 0.0111 | 0.45 |
+| 32 | 0.340 (0.028) | 0.35 | 0.0058 | 0.33 |
+| 64 | 0.341 (0.019) | 0.32 | 0.0024 | 0.32 |
+| 128 | 0.339 (0.013) | 0.34 | 0.0012 | 0.34 |
+| 256 | 0.340 (0.010) | 0.34 | 0.0007 | 0.33 |
+| 512 | 0.340 (0.007) | 0.28 | 0.0003 | 0.43 |
+| 1024 | 0.340 (0.005) | 0.32 | 0.0002 | 0.35 |
+
+- **The one-shot dog converges to the solution of `d = 1 - F(d)`** (0.339 here), not to the median house (0.264): the mean rule's generalized median, as Renault and Trannoy show.
+- **A pivot is inside the box about two times in three**, and then holding is never Markov-perfect at any inertia. The share without a pivot settles near `1 / (1 + f(d))` (0.34), where `f` is the houses' density at the limit dog; this is a heuristic renewal argument, not a proof.
+- **Without a pivot, the largest inertia that keeps holding Markov-perfect shrinks like 1/N** (about 0.35/N here), because the houses nearest the dog leave the edge players a slack of order 1/N. So for any fixed inertia, the static equilibrium of a game with many houses is almost never a feedback equilibrium.
+- **Open:** the feedback equilibrium itself with many houses, where several players can want to leave their edges at once, and a mean-field formulation of it.
+
 ## 6. Research questions and answers
 
 The statuses are the same as in [RESEARCH_QUESTIONS.md](RESEARCH_QUESTIONS.md).
@@ -556,7 +580,9 @@ The statuses are the same as in [RESEARCH_QUESTIONS.md](RESEARCH_QUESTIONS.md).
 
 **Q34. Is there an explicit piecewise-affine feedback equilibrium?** *Partly answered.* Yes whenever the houses straddle the dog (Proposition 2, with a proof; 77 of 77 random games and all straddling setups); open when a one-shot action is interior (Section 5.20).
 
-**Q35-Q36.** A noisy continuous-time version (which needs an action cost for a Riccati benchmark) and the many-house mean-field limit are open.
+**Q35.** A noisy continuous-time version (which needs an action cost for a Riccati benchmark) is open.
+
+**Q36. What happens with many houses?** *Partly answered.* The one-shot dog converges to the generalized median `d = 1 - F(d)` (known for the average voting rule), and with inertia the static equilibrium stays a feedback equilibrium only without a pivot and below an inertia of order 1/N (Section 5.21). The many-house feedback equilibrium is open.
 
 ## 7. Limits
 
@@ -592,4 +618,4 @@ The code, results and this report are released under the [MIT license](https://g
 
 ## 9. References
 
-**Selected related work:** Wu et al. (2025), [Battling Influencers Game](https://arxiv.org/abs/2502.01127); Hu and Wellman (2003), [Nash-Q](https://www.jmlr.org/papers/v4/hu03a.html); Hambly et al. (2023), [policy gradients for LQ games](https://www.jmlr.org/papers/v24/21-0842.html); Schulman et al. (2017), [PPO](https://arxiv.org/abs/1707.06347); Leonardos et al., [Markov potential games](https://arxiv.org/abs/2106.01969); Kavuncu, Yaraneri and Mehr (RSS 2021), [Potential iLQR](https://arxiv.org/abs/2107.04926); Benenati and Belgioioso (2025), [explicit constrained LQ games](https://arxiv.org/abs/2512.07749); [constrained nonlinear dynamic games](https://arxiv.org/abs/2001.01826) (piecewise-affine feedback Nash); Monderer and Shapley (1996), potential games; Blume (1993), log-linear learning; Fudenberg and Tirole (1991), *Game Theory* (the one-shot deviation principle). The LQ guarantees do not cover this deterministic clipped setup.
+**Selected related work:** Wu et al. (2025), [Battling Influencers Game](https://arxiv.org/abs/2502.01127); Hu and Wellman (2003), [Nash-Q](https://www.jmlr.org/papers/v4/hu03a.html); Hambly et al. (2023), [policy gradients for LQ games](https://www.jmlr.org/papers/v24/21-0842.html); Schulman et al. (2017), [PPO](https://arxiv.org/abs/1707.06347); Leonardos et al., [Markov potential games](https://arxiv.org/abs/2106.01969); Kavuncu, Yaraneri and Mehr (RSS 2021), [Potential iLQR](https://arxiv.org/abs/2107.04926); Benenati and Belgioioso (2025), [explicit constrained LQ games](https://arxiv.org/abs/2512.07749); [constrained nonlinear dynamic games](https://arxiv.org/abs/2001.01826) (piecewise-affine feedback Nash); Monderer and Shapley (1996), potential games; Blume (1993), log-linear learning; Fudenberg and Tirole (1991), *Game Theory* (the one-shot deviation principle); Renault and Trannoy (2005), Protecting minorities through the average voting rule, *Journal of Public Economic Theory* 7, 169-199. The LQ guarantees do not cover this deterministic clipped setup.
