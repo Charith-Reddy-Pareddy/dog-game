@@ -128,3 +128,7 @@ def test_the_dp_and_markov_potential_studies_define_their_checks():
 
     assert len(dp) == 15 and {k["w0"] for k in dp} == {0.3, 0.6, 0.9}
     assert len(cycles) == 8 and {k["policies"] for k in cycles} == {"fixed", "reacting"}
+
+
+def test_the_many_houses_study_covers_two_to_1024_houses():
+    assert [k["n"] for k, _ in studies.study_many_houses(range(5))] == [2 ** k for k in range(1, 11)]
