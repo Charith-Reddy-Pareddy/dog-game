@@ -518,6 +518,23 @@ The study draws N houses from a skewed distribution (Beta(2, 5)) with equal weig
 - **Without a pivot, the largest inertia that keeps holding Markov-perfect shrinks like 1/N** (about 0.35/N here), because the houses nearest the dog leave the edge players a slack of order 1/N. So for any fixed inertia, the static equilibrium of a game with many houses is almost never a feedback equilibrium.
 - **Open:** the feedback equilibrium itself with many houses, where several players can want to leave their edges at once, and a mean-field formulation of it.
 
+### 5.22 Does self-play learn the feedback equilibrium?
+
+Section 5.20 gives a feedback equilibrium that differs from the one-shot actions off the equilibrium path. To give learners a chance to find it, each episode here starts from a uniformly random dog position (setup 3, inertia 0.6, 3000 episodes, five seeds). A learned policy's mean actions are scored by their *feedback exploitability*: the largest and the mean gain, over an 11 x 11 grid of dog positions and both players, from changing one round's action (a 21 x 21 grid) and then following the learned policy again, with the dog simulated exactly. Any feedback equilibrium scores 0, whichever one it is, so this does not assume the equilibrium is unique.
+
+| Policy | Runs | Largest one-round gain: median (range) | Mean one-round gain: median |
+|---|---|---|---|
+| Proposition 2 | 1 | 0.0000 | 0.0000 |
+| hold the one-shot actions | 1 | 0.0756 | 0.0114 |
+| REINFORCE | 5 | 0.1537 (0.1156 to 0.6714) | 0.0275 |
+| A2C | 5 | 0.0756 (0.0755 to 0.0759) | 0.0115 |
+| PPO | 5 | 0.0756 (0.0756 to 0.4599) | 0.0115 |
+
+- **A2C and PPO learn to hold the one-shot actions, not a feedback equilibrium.** Their gains match holding's (0.0756) in all five A2C runs and four of five PPO runs, so the learned policies are the one-shot profile at every dog position: unexploitable on the equilibrium path, exploitable off it, although every episode started off the path.
+- **REINFORCE ends further away** (0.12 to 0.67), with policies that are neither.
+- **A likely reason is saturation.** In the A2C and PPO runs the policy's pre-sigmoid outputs are 6 to 12 at every dog position, so the sigmoid's slope is below 0.003 (A2C) and about 0.00001 (PPO): the actions are pinned at the box's edges, where the gradient needed to learn the off-path easing has nearly vanished. This is measured on one run per algorithm and is not a causal test.
+- **Consequence.** Low exploitability on the equilibrium path, which the earlier sections measure, does not show that a learned policy is a feedback equilibrium of the dynamic game.
+
 ## 6. Research questions and answers
 
 The statuses are the same as in [RESEARCH_QUESTIONS.md](RESEARCH_QUESTIONS.md).
@@ -581,6 +598,8 @@ The statuses are the same as in [RESEARCH_QUESTIONS.md](RESEARCH_QUESTIONS.md).
 **Q34. Is there an explicit piecewise-affine feedback equilibrium?** *Partly answered.* Yes whenever the houses straddle the dog (Proposition 2, with a proof; 77 of 77 random games and all straddling setups); open when a one-shot action is interior (Section 5.20).
 
 **Q35.** A noisy continuous-time version (which needs an action cost for a Riccati benchmark) is open.
+
+**Q37. Does self-play learn a feedback equilibrium with inertia?** *Answered for one setting: no.* From random starts, A2C and PPO learn to hold the one-shot actions everywhere, which is exploitable off the equilibrium path, and REINFORCE ends further away (Section 5.22).
 
 **Q36. What happens with many houses?** *Partly answered.* The one-shot dog converges to the generalized median `d = 1 - F(d)` (known for the average voting rule), and with inertia the static equilibrium stays a feedback equilibrium only without a pivot and below an inertia of order 1/N (Section 5.21). The many-house feedback equilibrium is open.
 
