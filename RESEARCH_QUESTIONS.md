@@ -78,8 +78,11 @@ with the numbers and the caveats, are in [RESEARCH_REPORT.md](RESEARCH_REPORT.md
 
 7. **What is the right multi-agent network architecture?** Separate
    networks, a shared trunk, or a partly shared trunk.
-   *Status: partly answered. All three converge (24, 25 and 25 of 25 runs);
-   cross-play between independently trained architectures is untested.*
+   *Status: answered for the dog game. All three converge (24, 25 and 25 of 25 runs), and
+   cross-play works where the equilibrium is unique (red from one layout's run against blue
+   from another's: 0 of 150 pairs above the 0.004 threshold). In the shared-y setup 216 of 600
+   cross pairs are exploitable (up to 0.25), exactly the pairs whose runs picked different
+   mirror images, so the failures come from equilibrium selection, not from the layout.*
 8. **When is the equilibrium unique?** The conjecture is that the houses must
    differ in both coordinates.
    *Status: answered. Confirmed, and every shared coordinate opens a
@@ -292,6 +295,7 @@ with the numbers and the caveats, are in [RESEARCH_REPORT.md](RESEARCH_REPORT.md
 | 12, 18 | study `inertia` (40 runs) |
 | 19, 34 | studies `inertia_dp` (15 solves), `inertia_explicit` (15) and `inertia_random` (200 games), `doggame/inertia_dp.py`, `doggame/inertia_mpe.py`, `doggame/inertia_theory.py` |
 | 33 | study `markov_potential` (8 cycles), `doggame/markov_potential.py` |
+| 7 | studies `cross_play` (15 runs) and `selection` (30 runs) |
 | 13 | study `vertex_selection` (6 solves), `selection` in `doggame/inertia_dp.py` |
 | 36 | study `many_houses` (2,000 draws), `doggame/many_houses.py` |
 | 37 | studies `feedback_learning` (55 rows) and `exact_play` (24 runs), `doggame/feedback_learning.py`, `doggame/exact_play.py` |
@@ -306,6 +310,6 @@ with the numbers and the caveats, are in [RESEARCH_REPORT.md](RESEARCH_REPORT.md
 | walking game | `results/dog_game_runs.jsonl`, `results/dog_game_trajectories.json` |
 | 32 | `docs/POLAR_ACTION_PROTOCOL.md`, `docs/POLAR_ACTION_ROBUSTNESS_PROTOCOL.md`, `doggame/polar_action_study.py`, `doggame/polar_action_robustness.py`, `results/polar_action_pg.jsonl`, `results/polar_action_pg_robustness.jsonl` |
 
-Questions 11 and 14 are open, and 7, 12, 15, 25, 30, 32, 34, 35 and 36 are partly answered. The studies are in
+Questions 11 and 14 are open, and 12, 15, 25, 30, 32, 34, 35 and 36 are partly answered. The studies are in
 [`doggame/dog_game_studies.py`](doggame/dog_game_studies.py) and the tables are
 produced by [`doggame/dog_game_summary.py`](doggame/dog_game_summary.py).
