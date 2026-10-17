@@ -360,6 +360,14 @@ def noisy_inertia_table(rows):
     return table
 
 
+def vertex_selection_table(rows):
+    """The feedback equilibrium with the default selection against "vertex Nash" (largest total value per state)."""
+    table = [["Coordinate", "Inertia w0", "Mean total value: default / vertex", "States whose actions differ", "Largest value difference"]]
+    for r in study(rows, "vertex_selection"):
+        table.append([r["key"]["coordinate"], str(r["key"]["w0"]), f"{r['first']:.4f} / {r['vertex']:.4f}", f"{100 * r['differ']:.0f}%", f"{r['value_gap']:.1e}"])
+    return table
+
+
 def exact_play_table(rows):
     """Noise-free gradient play: how close a table of actions and a shared network end to Proposition 2's policy."""
     runs = study(rows, "exact_play")
@@ -594,7 +602,7 @@ if __name__ == "__main__":
                         ("walking hard long", walking_hard_long_table(studies)), ("inertia equilibrium", inertia_equilibrium_table(studies)),
                         ("selection noise", selection_noise_table(studies)), ("inertia dp", inertia_dp_table(studies)),
                         ("markov potential", markov_potential_table(studies)), ("selection clip", selection_clip_table(studies)),
-                        ("inertia explicit", inertia_explicit_table(studies)), ("inertia random", inertia_random_table(studies)), ("many houses", many_houses_table(studies)), ("feedback learning", feedback_learning_table(studies)), ("exact play", exact_play_table(studies)), ("noisy inertia", noisy_inertia_table(studies)), ("pretraining mechanism", pretraining_mechanism_table(studies)), ("walking entropy", walking_entropy_table(studies)), ("walking clip", walking_clip_table(studies))):
+                        ("inertia explicit", inertia_explicit_table(studies)), ("inertia random", inertia_random_table(studies)), ("many houses", many_houses_table(studies)), ("feedback learning", feedback_learning_table(studies)), ("exact play", exact_play_table(studies)), ("noisy inertia", noisy_inertia_table(studies)), ("pretraining mechanism", pretraining_mechanism_table(studies)), ("walking entropy", walking_entropy_table(studies)), ("walking clip", walking_clip_table(studies)), ("vertex selection", vertex_selection_table(studies))):
         print(f"\n### {name}\n\n{markdown(table)}")
     print("\nconvergence counts:", convergence_counts(runs))
     print("inertia median distance:", inertia_distances(studies))
