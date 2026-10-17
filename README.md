@@ -81,7 +81,8 @@ from the saved runs in `results/`:
   the best-response solver returns the interior point, but none of 30 trained policies
   did: all ended at the edges, one player on top and one at the bottom. Which one is a fair
   coin over 50 seeds (an earlier 23 to 7 was a small-sample effect). All are genuinely
-  unexploitable.
+  unexploitable, but pairing players from runs that picked different mirror images is not
+  (36% of cross pairs exploitable, up to 0.25); with a unique equilibrium cross-play is fine (Q7).
 - **Dog inertia slows training**, sharply on the harder setup (4, 5, 1 and 0 of 5 runs
   converge at `w0` of 0, 0.3, 0.6 and 0.9).
 - **Pre-training helps or hurts** depending on whether the source setup has the same
