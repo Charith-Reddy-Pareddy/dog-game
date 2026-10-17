@@ -143,6 +143,22 @@ def walking_entropy_table(rows, late=450):
     return table
 
 
+def walking_clip_table(rows, late=450):
+    """PPO (four epochs) on the walking game for 900 episodes with tighter clipping, next to the default clip and to
+    one epoch from the `ppo_long` study."""
+    long_runs, clip_runs = study(rows, "ppo_long"), study(rows, "walking_clip")
+    runs = long_runs + clip_runs
+    shown = [e for e in (300, 600, 900) if any(str(e) in r["curve"] for r in runs)]
+    table = [_walking_header("PPO setting", late, shown)]
+    groups = [("4 epochs, clip 0.2 (default)", [r for r in long_runs if r["key"]["setting"] == "ppo4"])]
+    groups += [(f"4 epochs, clip {c}", [r for r in clip_runs if r["key"]["clip"] == c]) for c in sorted({r["key"]["clip"] for r in clip_runs}, reverse=True)]
+    groups += [("1 epoch, clip 0.2", [r for r in long_runs if r["key"]["setting"] == "ppo1"])]
+    for label, mine in groups:
+        if mine:
+            table.append(_walking_row(label, mine, late, shown))
+    return table
+
+
 def walking_settings_table(rows, late=150):
     """A2C on the walking game with a different maximum step or discount, next to the default (0.2 and 0.9)."""
     shown = (50, 100, 200, 300)
@@ -578,7 +594,7 @@ if __name__ == "__main__":
                         ("walking hard long", walking_hard_long_table(studies)), ("inertia equilibrium", inertia_equilibrium_table(studies)),
                         ("selection noise", selection_noise_table(studies)), ("inertia dp", inertia_dp_table(studies)),
                         ("markov potential", markov_potential_table(studies)), ("selection clip", selection_clip_table(studies)),
-                        ("inertia explicit", inertia_explicit_table(studies)), ("inertia random", inertia_random_table(studies)), ("many houses", many_houses_table(studies)), ("feedback learning", feedback_learning_table(studies)), ("exact play", exact_play_table(studies)), ("noisy inertia", noisy_inertia_table(studies)), ("pretraining mechanism", pretraining_mechanism_table(studies)), ("walking entropy", walking_entropy_table(studies))):
+                        ("inertia explicit", inertia_explicit_table(studies)), ("inertia random", inertia_random_table(studies)), ("many houses", many_houses_table(studies)), ("feedback learning", feedback_learning_table(studies)), ("exact play", exact_play_table(studies)), ("noisy inertia", noisy_inertia_table(studies)), ("pretraining mechanism", pretraining_mechanism_table(studies)), ("walking entropy", walking_entropy_table(studies)), ("walking clip", walking_clip_table(studies))):
         print(f"\n### {name}\n\n{markdown(table)}")
     print("\nconvergence counts:", convergence_counts(runs))
     print("inertia median distance:", inertia_distances(studies))

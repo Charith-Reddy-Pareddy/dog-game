@@ -1,4 +1,4 @@
-from doggame.dog_game_summary import (walking_entropy_table, pretraining_mechanism_table, noisy_inertia_table, exact_play_table, feedback_learning_table, many_houses_table, inertia_dp_table, inertia_explicit_table, inertia_random_table, mirror_p, selection_clip_table, markov_potential_table, selection_noise_table, algorithms_table, convergence_counts, markdown, noise_table, resolution_table,
+from doggame.dog_game_summary import (walking_clip_table, walking_entropy_table, pretraining_mechanism_table, noisy_inertia_table, exact_play_table, feedback_learning_table, many_houses_table, inertia_dp_table, inertia_explicit_table, inertia_random_table, mirror_p, selection_clip_table, markov_potential_table, selection_noise_table, algorithms_table, convergence_counts, markdown, noise_table, resolution_table,
                                       selection_outcome, selection_table, walking_algorithms_table, walking_share_series, walking_table,
                                       ppo_epochs_table, ppo_long_table, ppo_walking_table, walking_equilibrium_table, walking_houses_table, walking_inertia_table,
                                       walking_settings_table)
@@ -251,3 +251,10 @@ def test_the_walking_entropy_table_has_a_row_per_coefficient():
     rows = [run("walking_entropy", dict(entropy=c, seed=0), start=1.0, curve=curve) for c in (0.0, 0.1)]
     table = walking_entropy_table(rows)
     assert [r[0] for r in table[1:]] == ["0.0", "0.1"] and table[1][-1] == "1 of 1"
+
+
+def test_the_walking_clip_table_orders_default_tight_clips_and_one_epoch():
+    curve = {"300": 0.05, "450": 0.04, "600": 0.03, "900": 0.02}
+    rows = [run("ppo_long", dict(setting="ppo4", seed=0), start=1.0, curve=curve), run("ppo_long", dict(setting="ppo1", seed=0), start=1.0, curve=curve),
+            run("walking_clip", dict(clip=0.05, seed=0), start=1.0, curve=curve), run("walking_clip", dict(clip=0.1, seed=0), start=1.0, curve=curve)]
+    assert [r[0] for r in walking_clip_table(rows)[1:]] == ["4 epochs, clip 0.2 (default)", "4 epochs, clip 0.1", "4 epochs, clip 0.05", "1 epoch, clip 0.2"]
