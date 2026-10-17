@@ -164,8 +164,10 @@ continuous-time game is not proved here.
   single point d*, and off it that player pushes at an edge; the dog then returns faster than under holding, the
   continuation in Lemma 2 is wrong, and the other player's best target moves. In one random game
   (houses 0.754 and 0.538, w = 0.347, w0 = 0.767, g = 0.335) the dynamic program's red aims at about 0.785 where the
-  policy of Proposition 2 aims at 0.771. The policy fails in 53 of 123 such random games; the equilibrium there is
-  open.
+  policy of Proposition 2 aims at 0.771. The policy fails in 53 of 123 such random games. Because a player's one-round objective depends only on the next
+  position, an equilibrium in target form still exists whenever the objectives stay single-peaked; with the
+  targets from a two-dimensional fixed point (`target_equilibrium`), this holds numerically in 122 of the 123
+  games. A proof is open.
 - **Uniqueness.** The propositions give one feedback equilibrium; they do not rule out others.
 - **Shared coordinates.** When the houses coincide, both one-shot actions can be interior and the one-shot game has a
   continuum of equilibria.
