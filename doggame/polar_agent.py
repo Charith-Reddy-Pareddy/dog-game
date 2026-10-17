@@ -39,6 +39,17 @@ class PolarPolicy(nn.Module):
         radius = Beta(F.softplus(out[..., 3]) + 1.0, F.softplus(out[..., 4]) + 1.0)
         return angle, radius
 
+    def entropy(self, states):
+        """Each player's policy entropy (angle plus radius) for a batch of states. Torch has no von Mises entropy, so
+        it uses log(2 pi I0(k)) - k I1(k) / I0(k), with exponentially scaled Bessel functions for stability."""
+        result = []
+        for net in (self.red, self.blue):
+            angle, radius = self._distributions(net, states)
+            k = angle.concentration
+            i0, i1 = torch.special.i0e(k), torch.special.i1e(k)
+            result.append(np.log(2 * np.pi) + torch.log(i0) + k - k * i1 / i0 + radius.entropy())
+        return result[0], result[1]
+
     def act(self, state):
         """One sampled move per player: ((theta, r), (theta, r)), r in [0, 1]."""
         state = torch.as_tensor(state, dtype=torch.float32)
