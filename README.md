@@ -114,6 +114,9 @@ from the saved runs in `results/`:
   player inside the box and below an inertia of about 0.35/N (Q36).
 - **Self-play does not learn the feedback equilibrium.** Even starting every episode off the equilibrium path,
   A2C and PPO learn to hold the one-shot actions everywhere, which is exploitable off the path (Q37).
+- **In continuous time the feedback equilibrium is bang-bang, and noise moves its switching points.** Holding the
+  one-shot actions then needs slack at least (1 + r)/(2 + r), and a noisy dog shifts the thresholds, unlike a
+  linear-quadratic benchmark (Q35).
 - **The hard walking setup at 900 episodes remains seed-sensitive.** A2C has 4/5 final seeds under the corner
   threshold, REINFORCE 2/5, and PPO 1/5. These exploratory results use five seeds per algorithm.
 - **The walking-game ranking holds on other house setups.** A2C is again the most reliable wherever
