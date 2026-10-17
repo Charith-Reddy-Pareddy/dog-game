@@ -76,8 +76,9 @@ from the saved runs in `results/`:
   one seed, at 0.18; the other four seeds of that setup converge.
 - **Shared coordinates give many equilibria.** When both houses share a y-coordinate,
   the best-response solver returns the interior point, but none of 30 trained policies
-  did: all ended at the edges, one player on top and one at the bottom (23 with red on
-  top, 7 the other way). All are genuinely unexploitable.
+  did: all ended at the edges, one player on top and one at the bottom. Which one is a fair
+  coin over 50 seeds (an earlier 23 to 7 was a small-sample effect). All are genuinely
+  unexploitable.
 - **Dog inertia slows training**, sharply on the harder setup (4, 5, 1 and 0 of 5 runs
   converge at `w0` of 0, 0.3, 0.6 and 0.9).
 - **Pre-training helps or hurts** depending on whether the source setup has the same
@@ -95,15 +96,16 @@ from the saved runs in `results/`:
   walking game easier to learn.
 - **Walking to the corners is a near-equilibrium.** Resting on the one-shot corners is an exact equilibrium
   of the walking game, and the best deviation from walking straight there gains 0.13% to 4.7% of the reward.
-- **Under inertia, a coordinate-wise argument certifies** that the one-shot profile is optimal against any
-  unilateral action sequence in all five tested house configurations when the opponent holds its action,
-  for every horizon and `w0` in [0, 1]. The exact feedback equilibrium, by
-  dynamic programming, plays the same actions on the equilibrium path but eases off at some dog
-  positions off it, so holding the one-shot actions everywhere is not Markov-perfect (Q19).
+- **Under inertia, a closed form says exactly when holding the one-shot actions is a feedback
+  equilibrium**: when each player's slack beyond the dog is at least `w0 (1 - g w0) / (1 - g w0^2)`. Where it
+  is not, an explicit piecewise-affine policy (each player aims the next dog position at
+  `d* + k (h - d*)`) is a feedback equilibrium whenever the houses lie on either side of the dog. Both match
+  the dynamic program to one grid step (Q19, Q34). Against an opponent that holds its action, the one-shot
+  profile is also optimal against any unilateral action sequence, for every horizon and `w0` in [0, 1].
 - **The one-shot game is an exact potential game, the dynamic game is not a Markov potential game.**
-  The potential is flat along the shared-coordinate continuum, and the initial exploration noise flips
-  which mirror image self-play finds (Fisher p = 0.0014). With policies that react to the dog, 4-cycles of
-  unilateral changes sum to +1.85 to +7.90 instead of 0 (Q17, Q33).
+  Along the potential's flat direction, learning random-walks until the box stops it, which is why self-play
+  never ends at the interior equilibrium (Q17). With policies that react to the dog, 4-cycles of unilateral
+  changes sum to +1.85 to +7.90 instead of 0 (Q33).
 - **The hard walking setup at 900 episodes remains seed-sensitive.** A2C has 4/5 final seeds under the corner
   threshold, REINFORCE 2/5, and PPO 1/5. These exploratory results use five seeds per algorithm.
 - **The walking-game ranking holds on other house setups.** A2C is again the most reliable wherever
