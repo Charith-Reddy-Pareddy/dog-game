@@ -458,6 +458,13 @@ At round 800, per seed:
   from [0.05, 0.95] and the discount from [0.05, 0.99]; one fixed draw per
   game number.
 
+## Many houses
+
+- The many-houses study draws houses independently from Beta(2, 5), chosen so that the
+  mean-field dog differs from the median house, with equal weights, one coordinate, 200
+  draws per N and discount 0.9. The 1 / (1 + f(d)) limit for the share without a pivot is
+  a heuristic, checked only against these draws.
+
 ## Settled points
 
 - **Which game for PG:** any one where the solver is correct and the comparison

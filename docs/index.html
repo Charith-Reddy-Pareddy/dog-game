@@ -216,7 +216,7 @@
       <li><b>PPO is fast because it reuses each episode.</b> With one epoch it is no faster than REINFORCE. <a href="#experiments">More experiments</a></li>
       <li><b>The walking game reverses the ranking.</b> A2C is the most reliable there, and PPO is fast but swings away from the corners again; a gentler PPO settles with more training. <a href="#trajectories">Walking game</a> &middot; <a href="#walking-report">Report</a></li>
       <li><b>With dog inertia, a closed form says when the one-shot actions stay a feedback equilibrium, and an explicit piecewise-affine policy is one when they do not; the game is not a Markov potential game.</b> <a href="#experiments">More experiments</a></li>
-      <li><b>21 of 37 research questions are answered, 8 partly, 8 open.</b> <a href="#questions">Research questions</a></li>
+      <li><b>21 of 37 research questions are answered, 9 partly, 7 open.</b> <a href="#questions">Research questions</a></li>
       <li><b>Polar actions did not improve the primary policy-gradient comparison.</b> In the first setup, their expected one-shot gain was higher than Cartesian Beta in all 30 paired seeds; the four-house REINFORCE follow-up was mixed. <a href="#polar-actions">See the study</a></li>
     </ul>
   </section>
@@ -499,6 +499,18 @@
       <li>When a one-shot action is interior, the policy fails in 53 of 123 games; that case is open, and uniqueness is not shown.</li>
     </ul>
 
+    <h3>Many houses</h3>
+    <p class="hint" style="margin:0 0 6px">N houses drawn from a skewed distribution (Beta(2, 5)), equal weights, 200 draws per N, one coordinate. The one-shot dog is the generalized median of the average voting rule (Renault and Trannoy, 2005); Proposition 1 holds for any number of players.</p>
+    <p class="hint scroll-hint">Swipe the table sideways to see every column.</p>
+    <div class="table-scroll">
+    <table><thead><tr><th>Houses N</th><th>One-shot dog: mean (sd); limit 0.339</th><th>No pivot inside (limit 0.34)</th><th>Largest inertia: mean</th><th>N times it, median when no pivot</th></tr></thead><tbody><tr><td>2</td><td>0.368 (0.115)</td><td>0.20</td><td>0.0399</td><td>0.27</td></tr><tr><td>4</td><td>0.340 (0.090)</td><td>0.28</td><td>0.0357</td><td>0.43</td></tr><tr><td>8</td><td>0.340 (0.055)</td><td>0.34</td><td>0.0206</td><td>0.27</td></tr><tr><td>16</td><td>0.337 (0.038)</td><td>0.29</td><td>0.0111</td><td>0.45</td></tr><tr><td>32</td><td>0.340 (0.028)</td><td>0.35</td><td>0.0058</td><td>0.33</td></tr><tr><td>64</td><td>0.341 (0.019)</td><td>0.32</td><td>0.0024</td><td>0.32</td></tr><tr><td>128</td><td>0.339 (0.013)</td><td>0.34</td><td>0.0012</td><td>0.34</td></tr><tr><td>256</td><td>0.340 (0.010)</td><td>0.34</td><td>0.0007</td><td>0.33</td></tr><tr><td>512</td><td>0.340 (0.007)</td><td>0.28</td><td>0.0003</td><td>0.43</td></tr><tr><td>1024</td><td>0.340 (0.005)</td><td>0.32</td><td>0.0002</td><td>0.35</td></tr></tbody></table>
+    </div>
+    <ul>
+      <li>The one-shot dog converges to the d with d = 1 &minus; F(d) (0.339 here), not to the median house (0.264).</li>
+      <li>About two draws in three have a pivot player inside the box, and then holding the one-shot actions is never Markov-perfect with inertia.</li>
+      <li>Otherwise the largest inertia that keeps it Markov-perfect shrinks like 1/N (about 0.35/N): with many houses the static equilibrium is almost never a feedback equilibrium.</li>
+    </ul>
+
     <h3>Potential structure and what selects the equilibrium</h3>
     <p class="hint" style="margin:0 0 6px">The one-shot game is an exact potential game (as proved for the Battling Influencers Game), and its potential is exactly flat along the shared-y continuum, so it cannot choose. Fifty REINFORCE runs per initial exploration noise, separate layout; the last column tests that the two mirror images are equally likely, as the setup&#x27;s symmetry says.</p>
     <p class="hint scroll-hint">Swipe the table sideways to see every column.</p>
@@ -716,7 +728,7 @@
     <details class="q"><summary><span class="q-num">Q33</span>Is the dog game a Markov potential game?<span class="chip answered">Answered</span></summary><p>4-cycles of unilateral policy changes sum to +7.90, +7.12, +5.63 and +1.85 at w&#8320; of 0, 0.3, 0.6 and 0.9 when policies react to the dog, and to zero when they do not.</p><p><b>Status:</b> Answered: no, though it is a potential game in open-loop strategies.</p></details>
     <details class="q"><summary><span class="q-num">Q34</span>Does an explicit piecewise-affine solution of the box-constrained game reproduce the dynamic-programming feedback equilibrium exactly?<span class="chip partly">Partly</span></summary><p>When the houses lie on either side of the dog, each player aiming the next dog position at d* + k (h &minus; d*) is a feedback equilibrium (proved, not yet refereed; 77 of 77 random games; within one grid step of the dynamic program). When a one-shot action is interior it fails in 53 of 123 random games.</p><p><b>Status:</b> Partly answered.</p></details>
     <details class="q"><summary><span class="q-num">Q35</span>What happens in a noisy, continuous-time dog game, and does continuous-time q-learning recover the box-constrained equilibrium?<span class="chip open">Open</span></summary><p>A Riccati benchmark needs a quadratic action cost: without one, each player&#x27;s Hamiltonian is linear in its own action and the unconstrained game has no equilibrium.</p><p><b>Status:</b> Open.</p></details>
-    <details class="q"><summary><span class="q-num">Q36</span>Does the many-house game have a mean-field limit, and what do learners find there?<span class="chip open">Open</span></summary><p><b>Status:</b> Open.</p></details>
+    <details class="q"><summary><span class="q-num">Q36</span>Does the many-house game have a mean-field limit, and what do learners find there?<span class="chip partly">Partly</span></summary><p>With equal weights the one-shot dog converges to the generalized median d = 1 &minus; F(d), the known outcome of the average voting rule. With inertia, holding the one-shot actions is Markov-perfect only without a pivot player inside the box (about one draw in three) and below an inertia of about 0.35/N.</p><p><b>Status:</b> Partly answered; the many-house feedback equilibrium and what learners find are open.</p></details>
   </section>
 
   <section class="card notes" id="assumptions">

@@ -108,6 +108,9 @@ from the saved runs in `results/`:
   Along the potential's flat direction, learning random-walks until the box stops it, which is why self-play
   never ends at the interior equilibrium (Q17). With policies that react to the dog, 4-cycles of unilateral
   changes sum to +1.85 to +7.90 instead of 0 (Q33).
+- **With many houses the static equilibrium is almost never a feedback equilibrium.** The one-shot dog is the
+  generalized median of the average voting rule; with inertia, holding it is Markov-perfect only without a pivot
+  player inside the box and below an inertia of about 0.35/N (Q36).
 - **The hard walking setup at 900 episodes remains seed-sensitive.** A2C has 4/5 final seeds under the corner
   threshold, REINFORCE 2/5, and PPO 1/5. These exploratory results use five seeds per algorithm.
 - **The walking-game ranking holds on other house setups.** A2C is again the most reliable wherever
