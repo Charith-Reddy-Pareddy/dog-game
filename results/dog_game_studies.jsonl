@@ -1168,3 +1168,6 @@
 {"study": "noisy_inertia", "key": {"dt": 0.05, "sigma": 0.2, "clipped": false}, "red": 0.7650000000000001, "blue": 0.5449999999999999, "sweeps": 559, "unresolved": 0}
 {"study": "noisy_inertia", "key": {"dt": 0.05, "sigma": 0.4, "clipped": false}, "red": 0.7750000000000001, "blue": 0.585, "sweeps": 605, "unresolved": 0}
 {"study": "noisy_inertia", "key": {"dt": 0.05, "sigma": 0.4, "clipped": true}, "red": 0.79, "blue": 0.585, "sweeps": 8000, "unresolved": 0}
+{"study": "noisy_inertia", "key": {"dt": 0.05, "sigma": 0.02, "clipped": false}, "red": 0.73, "blue": 0.5249999999999999, "sweeps": 551, "unresolved": 0}
+{"study": "noisy_inertia", "key": {"dt": 0.05, "sigma": 0.05, "clipped": false}, "red": 0.74, "blue": 0.5249999999999999, "sweeps": 548, "unresolved": 0}
+{"study": "noisy_inertia", "key": {"dt": 0.05, "sigma": 0.1, "clipped": false}, "red": 0.76, "blue": 0.53, "sweeps": 550, "unresolved": 0}
