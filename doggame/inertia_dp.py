@@ -26,16 +26,16 @@ def _pure_nash(q_red, q_blue, red, blue, rounds=200):
     return red, blue, stable
 
 
-def solve_1d(h_red, h_blue, w, w0, discount=0.9, states=401, actions=101, tol=1e-10, max_iter=2000, noise=0.0, nodes=7):
+def solve_1d(h_red, h_blue, w, w0, discount=0.9, states=401, actions=101, tol=1e-10, max_iter=2000, noise=0.0, nodes=7, low=0.0, high=1.0):
     """Feedback equilibrium of one coordinate. Returns the state grid, each player's action and value per state,
     the number of value-iteration sweeps, and how many states had no pure grid equilibrium. With `noise`, the dog's
-    next position gets a Gaussian shock of that standard deviation (clipped to [0, 1], like the environment), and
-    expectations use Gauss-Hermite quadrature with `nodes` points."""
-    z, a = np.linspace(0.0, 1.0, states), np.linspace(0.0, 1.0, actions)
+    next position gets a Gaussian shock of that standard deviation (clipped to [low, high], [0, 1] like the environment
+    by default), and expectations use Gauss-Hermite quadrature with `nodes` points."""
+    z, a = np.linspace(low, high, states), np.linspace(0.0, 1.0, actions)
     shock, weight = np.polynomial.hermite_e.hermegauss(nodes) if noise else (np.zeros(1), np.ones(1))
     weight = weight / weight.sum()
     mean = w0 * z[:, None, None] + (1 - w0) * (w * a[None, :, None] + (1 - w) * a[None, None, :])
-    nxt = np.clip(mean[..., None] + noise * shock, 0.0, 1.0)
+    nxt = np.clip(mean[..., None] + noise * shock, low, high)
     r_red, r_blue = -((nxt - h_red) ** 2) @ weight, -((nxt - h_blue) ** 2) @ weight
     v_red, v_blue = np.zeros(states), np.zeros(states)
     red, blue = np.full(states, actions - 1), np.zeros(states, dtype=int)
