@@ -60,8 +60,14 @@ with the numbers and the caveats, are in [RESEARCH_REPORT.md](RESEARCH_REPORT.md
    about as 1 over the number of fictitious-play iterations.*
 5b. Is there literature on how precisely the stage game must be solved for
     the outer loop to converge?
-    *Status: open as a literature question; this repository measures it
-    for one game but does not survey the literature.*
+    *Status: answered as a literature question (a short search, not a systematic
+    review). For two-player zero-sum games, error-propagation analyses of approximate
+    dynamic programming (Perolat et al., ICML 2015) bound how an approximate stage-game
+    (greedy) step degrades the final policy, with a factor that grows like 1/(1 - g)^2.
+    For general-sum games no comparable bound was found: Nash-Q converges only under
+    restrictive conditions on the stage games (Hu and Wellman, JMLR 2003), whose proof
+    Bowling (ICML 2000) shows to be incomplete, and Bellman-residual methods give
+    epsilon-Nash guarantees instead (Perolat et al., arXiv 1606.08718).*
 6. How does grid resolution trade off against solution quality, and is a
    neural network needed as the grid grows?
    *Status: answered for the dog game. Quality stops improving at 5 x 5;
@@ -290,6 +296,6 @@ with the numbers and the caveats, are in [RESEARCH_REPORT.md](RESEARCH_REPORT.md
 | walking game | `results/dog_game_runs.jsonl`, `results/dog_game_trajectories.json` |
 | 32 | `docs/POLAR_ACTION_PROTOCOL.md`, `docs/POLAR_ACTION_ROBUSTNESS_PROTOCOL.md`, `doggame/polar_action_study.py`, `doggame/polar_action_robustness.py`, `results/polar_action_pg.jsonl`, `results/polar_action_pg_robustness.jsonl` |
 
-Questions 5b, 11, 13, 14 and 27 are open, and 7, 12, 15, 25, 30, 31, 32, 34, 35 and 36 are partly answered. The studies are in
+Questions 11, 13, 14 and 27 are open, and 7, 12, 15, 25, 30, 31, 32, 34, 35 and 36 are partly answered. The studies are in
 [`doggame/dog_game_studies.py`](doggame/dog_game_studies.py) and the tables are
 produced by [`doggame/dog_game_summary.py`](doggame/dog_game_summary.py).
