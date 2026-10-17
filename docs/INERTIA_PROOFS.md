@@ -148,6 +148,9 @@ So Proposition 1 holds verbatim: holding the one-shot actions is a feedback equi
 has slack at least rho(w0, g) and, when w0 > 0, no player (the pivot) is strictly inside the box. In the one-shot
 equilibrium, which is the generalized median of Renault and Trannoy (2005), at most one player is inside. The
 study `many_houses` measures how often there is none, and how the largest admissible inertia scales with N.
+The target form also carries over numerically: if every player aims at a target, each round is the one-shot game
+with the targets as houses, and targets from a fixed point give a feedback equilibrium whenever every player's
+one-round objective is single-peaked (study `many_targets`); there is no proof for many houses.
 
 ## Continuous-time limit
 
