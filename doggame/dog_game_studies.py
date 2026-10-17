@@ -307,19 +307,31 @@ def study_markov_potential(seeds):
 
 
 def study_feedback_learning(seeds):
-    """Self-play from random dog positions on setup 3 with inertia 0.6, 3000 episodes: the learned policy's feedback
-    exploitability (doggame.feedback_learning), next to Proposition 2's policy and holding the one-shot actions."""
+    """Self-play from random dog positions on setup 3 with inertia 0.6: the learned policy's feedback exploitability
+    (doggame.feedback_learning), next to Proposition 2's policy and holding the one-shot actions. Gaussian and Beta
+    policies, 3000 episodes, and A2C for 15000; and setup 5 at inertia 0.9."""
     from doggame.feedback_learning import explicit_2d, feedback_gain, holding_2d, learn, mean_policy
 
     config, w0 = DEFAULT_CONFIGS[2], 0.6
     for name, act in (("explicit", lambda: explicit_2d(config, w0)), ("holding", lambda: holding_2d(config))):
         yield dict(algorithm=name, seed=0), lambda act=act: dict(zip(("max_gain", "mean_gain"), feedback_gain(act(), config, w0)))
+    variants = [(dict(), algorithm, seed, 3000, "gaussian") for algorithm in ("reinforce", "a2c", "ppo") for seed in seeds]
+    variants += [(dict(family="beta"), algorithm, seed, 3000, "beta") for algorithm in ("reinforce", "a2c", "ppo") for seed in seeds]
+    variants += [(dict(family=family, episodes=15000), "a2c", seed, 15000, family) for family in ("gaussian", "beta") for seed in range(3)]
+    for extra, algorithm, seed, episodes, family in variants:
+        def run(algorithm=algorithm, seed=seed, episodes=episodes, family=family):
+            policy = learn(config, w0, algorithm, seed, episodes, family)
+            return dict(zip(("max_gain", "mean_gain"), feedback_gain(mean_policy(policy), config, w0)))
+        yield dict(algorithm=algorithm, seed=seed, **extra), run
+    big = dict(setup=4, w0=0.9)  # setup 5 at w0 = 0.9 has the largest off-path incentive of the five setups
+    for name, act in (("explicit", lambda: explicit_2d(DEFAULT_CONFIGS[4], 0.9)), ("holding", lambda: holding_2d(DEFAULT_CONFIGS[4]))):
+        yield dict(algorithm=name, seed=0, **big), lambda act=act: dict(zip(("max_gain", "mean_gain"), feedback_gain(act(), DEFAULT_CONFIGS[4], 0.9)))
     for algorithm in ("reinforce", "a2c", "ppo"):
         for seed in seeds:
             def run(algorithm=algorithm, seed=seed):
-                policy = learn(config, w0, algorithm, seed, 3000)
-                return dict(zip(("max_gain", "mean_gain"), feedback_gain(mean_policy(policy), config, w0)))
-            yield dict(algorithm=algorithm, seed=seed), run
+                policy = learn(DEFAULT_CONFIGS[4], 0.9, algorithm, seed, 3000)
+                return dict(zip(("max_gain", "mean_gain"), feedback_gain(mean_policy(policy), DEFAULT_CONFIGS[4], 0.9)))
+            yield dict(algorithm=algorithm, seed=seed, **big), run
 
 
 def study_many_houses(seeds):
