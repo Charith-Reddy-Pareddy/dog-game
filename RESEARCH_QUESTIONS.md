@@ -242,7 +242,11 @@ with the numbers and the caveats, are in [RESEARCH_REPORT.md](RESEARCH_REPORT.md
     q-learning recover the box-constrained equilibrium as that cost goes to zero?
     *Status: open.*
 36. **Does the many-house game have a mean-field limit, and what do learners find there?**
-    *Status: open.*
+    *Status: partly answered. With equal weights the one-shot dog converges to the generalized
+    median d = 1 - F(d) of the houses' distribution, the known Nash outcome of the average voting
+    rule. With inertia, holding the one-shot actions is Markov-perfect only when no pivot player is
+    inside the box (about one draw in three) and the inertia is below roughly 0.35/N. The
+    many-house feedback equilibrium and what learners find are open.*
 
 ## Where each question is answered in this repository
 
@@ -259,6 +263,7 @@ with the numbers and the caveats, are in [RESEARCH_REPORT.md](RESEARCH_REPORT.md
 | 12, 18 | study `inertia` (40 runs) |
 | 19, 34 | studies `inertia_dp` (15 solves), `inertia_explicit` (15) and `inertia_random` (200 games), `doggame/inertia_dp.py`, `doggame/inertia_mpe.py`, `doggame/inertia_theory.py` |
 | 33 | study `markov_potential` (8 cycles), `doggame/markov_potential.py` |
+| 36 | study `many_houses` (2,000 draws), `doggame/many_houses.py` |
 | 26 | study `walking` (15 runs) |
 | walking game, all questions | [WALKING_GAME_REPORT.md](WALKING_GAME_REPORT.md) ([PDF](docs/walking_game_report.pdf)) |
 | 24, 27, 28 | study `ppo_variants` (65 runs) |
@@ -269,6 +274,6 @@ with the numbers and the caveats, are in [RESEARCH_REPORT.md](RESEARCH_REPORT.md
 | walking game | `results/dog_game_runs.jsonl`, `results/dog_game_trajectories.json` |
 | 32 | `docs/POLAR_ACTION_PROTOCOL.md`, `docs/POLAR_ACTION_ROBUSTNESS_PROTOCOL.md`, `doggame/polar_action_study.py`, `doggame/polar_action_robustness.py`, `results/polar_action_pg.jsonl`, `results/polar_action_pg_robustness.jsonl` |
 
-Questions 5b, 11, 13, 14, 20, 27, 35 and 36 are open, and 7, 12, 15, 25, 30, 31, 32 and 34 are partly answered. The studies are in
+Questions 5b, 11, 13, 14, 20, 27 and 35 are open, and 7, 12, 15, 25, 30, 31, 32, 34 and 36 are partly answered. The studies are in
 [`doggame/dog_game_studies.py`](doggame/dog_game_studies.py) and the tables are
 produced by [`doggame/dog_game_summary.py`](doggame/dog_game_summary.py).

@@ -140,6 +140,15 @@ max(T_red, z_h(x) - (1 - w0) w) on R). On B, blue moves the position up to N(x) 
 so U = N(x) <= T_red and the best reply is red's edge, as in the policy. Blue's case is the mirror image. By the
 one-shot deviation principle the policy is a feedback equilibrium. ∎
 
+## Many houses
+
+With N players, weights w_i summing to 1 and the dog at sum_i w_i a_i, Lemmas 1 and 2 hold unchanged for each player
+(the other players' held actions only enter through d*, and player i reaches an interval of length (1 - w0) w_i).
+So Proposition 1 holds verbatim: holding the one-shot actions is a feedback equilibrium iff every player at an edge
+has slack at least rho(w0, g) and, when w0 > 0, no player (the pivot) is strictly inside the box. In the one-shot
+equilibrium, which is the generalized median of Renault and Trannoy (2005), at most one player is inside. The
+study `many_houses` measures how often there is none, and how the largest admissible inertia scales with N.
+
 ## What the propositions do not cover
 
 - **Interior one-shot actions.** If a player's one-shot action is strictly inside the box, its hold region is the
