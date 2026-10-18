@@ -16,6 +16,20 @@ Each item lists the question, what counts as done, and the literature it must be
 - Learning: self-play learns the static profile, not the feedback equilibrium; exact gradient play
   finds it with a table of actions but not with a shared network (dog game and soccer).
 
+## Done since (Sections 5.25 to 5.27)
+
+- Item 1: the overshoot in closed form for two players (largest at inertia 1 / (1 + sqrt(1 - g)),
+  where a target is at most twice as far from the long-run dog as the house); the many-player
+  version is numerical.
+- Item 2: Propositions 3 and 4, with numbers for 3, 5 and 7 players.
+- Item 3: price of anarchy by inertia and players, and with shocks; a welfare-maximizing inertia
+  exists when the shock comes with the aggregate (Proposition 5 for the planner).
+- Items 4 and 5: the duopoly's exact equilibrium; per-state regression fixes the network on all
+  three games, five seeds each. State-local features were not tried.
+
+Next: patience and more players for the reversal; a sampled (model-free) version of the fix;
+item 6.
+
 ## Economics
 
 1. **Exaggeration under persistence.** In the one-shot game players exaggerate (push to the edges).

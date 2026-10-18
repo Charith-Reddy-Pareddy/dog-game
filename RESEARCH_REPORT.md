@@ -15,6 +15,8 @@ This report studies the dog game, a two-player, general-sum game with continuous
 - **Nash-Q on a grid.** The stage-game error falls about as 1 over the fictitious-play iterations, and re-solving less often changes nothing in this game. The grid is exact from 5 x 5, the exact equilibrium is always a single action pair, and all of fictitious play's apparent mixing is noise (Sections 5.6 to 5.8).
 - **Walking game.** REINFORCE and the 10-direction Nash-Q network both end near the one-shot Nash corners in all 5 seeds (Section 5.9). With A2C and PPO added, the ranking changes: A2C is the most reliable (5 of 5 seeds at the corners), while PPO is the fastest to get there but swings away again in 3 of 5 seeds. A smaller learning rate does not fix it. One epoch does, but only given three times more training, and default PPO still has two seeds stuck far from the corners after 900 episodes (Sections 5.10 to 5.12). A lower discount makes the walking game easier to learn and a higher one harder (Section 5.12).
 - **Exact dynamic results.** With dog inertia, a closed form says exactly when holding the one-shot Nash actions is a feedback (Markov-perfect) equilibrium, and an explicit piecewise-affine policy is a feedback equilibrium whenever the houses lie on either side of the dog; both match the dynamic program to one grid step (Sections 5.15 and 5.20). The one-shot game is an exact potential game, flat along its continuum of equilibria; there, learning drifts along the flat direction until the box stops it, and the dynamic game is not a Markov potential game once policies react to the dog (Section 5.19).
+- **Persistence and mechanism choice.** With inertia the strategy-proof median rule is no longer strategy-proof (Proposition 3), yet it moves the outcome as fast as any mechanism could (Proposition 4). So the mean rule loses less without inertia and the median rule with high inertia, for 3, 5 and 7 players. When shocks come with the new aggregate, the welfare-maximizing inertia is interior (about 0.45 to 0.75; Proposition 5 for the planner) (Sections 5.25 and 5.26).
+- **Learning feedback equilibria: a diagnosis and a fix.** Whether a table or a network learns the equilibrium by gradient play depends on the equilibrium's shape: the network fails on the dog game's jumps and the table on a sticky-price duopoly's linear equilibrium. Fitting the network to per-state best responses (stage equilibria on value-iteration values in zero-sum soccer) reaches the equilibrium in all three games, five of five seeds each (Section 5.27).
 - **Open:** the feedback equilibrium when a one-shot action is interior, the equilibrium of the walking game, continuous-time q-learning, and whether the findings transfer to harder games (Section 6).
 
 ## 1. Background
@@ -730,6 +732,132 @@ The group's week-7 notes ask for a Q-network over continuous actions, Q(s, a_red
 
 **Paths.** Greedy equilibrium paths of the seed-0 networks from four starts (`docs/continuous_q_trajectories.svg`): with Cartesian and square moves both players head for their corners from every start and, where a straight line would leave the square, slide along the edge, which is what happens at the turn; with polar moves blue barely moves. Five seeds and one house setup; the reading of the notes is in ASSUMPTIONS.md.
 
+### 5.25 Mean against median when the outcome has inertia
+
+The dog game aggregates by the mean: the dog moves to `w0 x + (1 - w0) sum_i w_i r_i`. Its one-shot equilibrium is the generalized median of the average voting rule (Section 5.21), and players exaggerate to the edges. The median of the reports is the textbook alternative: in one shot it is strategy-proof (Moulin, 1980). `doggame/mechanisms.py` compares the two rules with inertia for N equally weighted players on one coordinate, each losing `(z - h_i)^2` per round (discount 0.9). In both rules a player's one-round objective depends only on the next outcome, so equilibria come in target form (Section 5.20), and the targets solve a fixed point. A planner who minimizes the summed loss moves the outcome as close to the mean house as it can each round. Two results are proved in [docs/INERTIA_PROOFS.md](docs/INERTIA_PROOFS.md):
+
+- **Proposition 3.** Truthful median reporting is a feedback equilibrium without inertia and is not one for any `w0 > 0`. The median player gains by aiming the next outcome straight at its house instead of letting the inertia hold it back.
+- **Proposition 4.** For every `w0`, the median rule has a feedback equilibrium in which the median player aims at its own house and everyone else reports an edge. The outcome then moves to the median house as fast as any mechanism could.
+
+Thirty random draws of the houses per row (uniform on [0, 1]); the price of anarchy is the discounted summed loss over the planner's, averaged over evenly spread starts (median over draws); exaggeration is the mean distance between a player's report and its house at the long-run outcome. One-round deviation checks on five draws per row find no gain above 1e-5 in 40 of 40 median-rule games and 37 of 40 mean-rule games (largest remaining gain 0.0015):
+
+| Players | Inertia | Price of anarchy: mean rule / median rule | Exaggeration: mean / median | Long-run outcome to median house: mean / median | Median rule loses less | Truthful median: largest gain |
+|---|---|---|---|---|---|---|
+| 3 | 0.0 | 1.069 / 1.220 | 0.258 / 0.000 | 0.022 / 0.000 | 7 of 30 | 0.000 |
+| 3 | 0.3 | 1.132 / 1.213 | 0.258 / 0.044 | 0.022 / 0.000 | 13 of 30 | 0.052 |
+| 3 | 0.6 | 1.156 / 1.151 | 0.258 / 0.103 | 0.022 / 0.000 | 21 of 30 | 0.115 |
+| 3 | 0.9 | 1.159 / 1.039 | 0.258 / 0.189 | 0.022 / 0.000 | 27 of 30 | 0.122 |
+| 5 | 0.0 | 1.048 / 1.068 | 0.221 / 0.000 | 0.016 / 0.000 | 5 of 30 | 0.000 |
+| 5 | 0.3 | 1.056 / 1.068 | 0.221 / 0.053 | 0.016 / 0.000 | 15 of 30 | 0.039 |
+| 5 | 0.6 | 1.092 / 1.061 | 0.221 / 0.117 | 0.016 / 0.000 | 19 of 30 | 0.089 |
+| 5 | 0.9 | 1.128 / 1.029 | 0.221 / 0.173 | 0.016 / 0.000 | 28 of 30 | 0.142 |
+
+- **Persistence makes the median rule manipulable.** Truthful median reporting gains nothing without inertia and up to 0.12 to 0.14 with it, and in equilibrium the median rule's players exaggerate more and more as inertia grows (0 to about 0.19), though still less than under the mean rule (0.22 to 0.26).
+- **The ranking of the rules reverses.** Without inertia the mean rule loses less in most draws; with high inertia the median rule does, in 27 to 28 of 30 draws.
+
+The same comparison on 100 draws for 3, 5 and 7 players and seven inertias:
+
+| Players | Inertia | Price of anarchy: mean / median | Median rule loses less | Long run: mean / median |
+|---|---|---|---|---|
+| 3 | 0.0 | 1.104 / 1.142 | 17 of 100 | 1.104 / 1.142 |
+| 3 | 0.15 | 1.109 / 1.142 | 34 of 100 | 1.104 / 1.142 |
+| 3 | 0.3 | 1.108 / 1.140 | 51 of 100 | 1.104 / 1.142 |
+| 3 | 0.45 | 1.121 / 1.136 | 64 of 100 | 1.104 / 1.142 |
+| 3 | 0.6 | 1.138 / 1.122 | 67 of 100 | 1.104 / 1.142 |
+| 3 | 0.75 | 1.156 / 1.103 | 74 of 100 | 1.104 / 1.142 |
+| 3 | 0.9 | 1.155 / 1.056 | 87 of 100 | 1.104 / 1.142 |
+| 5 | 0.0 | 1.045 / 1.070 | 21 of 100 | 1.045 / 1.070 |
+| 5 | 0.15 | 1.046 / 1.070 | 29 of 100 | 1.045 / 1.070 |
+| 5 | 0.3 | 1.051 / 1.070 | 39 of 100 | 1.045 / 1.070 |
+| 5 | 0.45 | 1.064 / 1.069 | 49 of 100 | 1.045 / 1.070 |
+| 5 | 0.6 | 1.082 / 1.067 | 59 of 100 | 1.045 / 1.070 |
+| 5 | 0.75 | 1.104 / 1.061 | 67 of 100 | 1.045 / 1.070 |
+| 5 | 0.9 | 1.125 / 1.042 | 81 of 100 | 1.045 / 1.070 |
+| 7 | 0.0 | 1.032 / 1.083 | 17 of 100 | 1.032 / 1.083 |
+| 7 | 0.15 | 1.034 / 1.083 | 28 of 100 | 1.032 / 1.083 |
+| 7 | 0.3 | 1.041 / 1.083 | 37 of 100 | 1.032 / 1.083 |
+| 7 | 0.45 | 1.054 / 1.082 | 45 of 100 | 1.032 / 1.083 |
+| 7 | 0.6 | 1.065 / 1.079 | 55 of 100 | 1.032 / 1.083 |
+| 7 | 0.75 | 1.084 / 1.072 | 68 of 100 | 1.032 / 1.083 |
+| 7 | 0.9 | 1.120 / 1.044 | 88 of 100 | 1.032 / 1.083 |
+
+- **The reversal holds for 3, 5 and 7 players.** The median rule loses less in 17 to 21 of 100 draws without inertia and in 81 to 88 with inertia 0.9; the crossover lies between `w0 = 0.3` and `0.6`.
+- **The cause is adjustment speed, not where the outcome ends up.** The long-run price of anarchy does not change with inertia (last column), so inertia changes only the path. By Proposition 4 the median rule moves the outcome at the fastest feasible speed. Under the mean rule the players on the far side of the outcome keep pulling against the move, and the summed loss along the way grows with inertia.
+
+Prior work: Dziuda and Loeper (2016, *Journal of Political Economy* 124(4)) study dynamic collective choice where the last agreement becomes the next status quo. De Keijzer and Wojtczak ([IJCAI 2018](https://www.ijcai.org/proceedings/2018/26)) study a facility that is relocated each stage at a moving cost, where the optimal mechanisms are not strategy-proof. Bailey and Tovey (AAMAS 2025) measure the price of anarchy in static spatial voting. We found no paper that compares the mean and the median rule when the outcome has inertia, or shows that persistence makes the median rule manipulable, as far as the literature we checked goes.
+
+### 5.26 Cooling off: is some inertia good?
+
+Without noise, inertia only slows the outcome, so every rule and the planner lose more as `w0` grows (Section 5.25). With noise there is a reason to want inertia. Add a normal shock to each round's outcome (then clipped to [0, 1]). It either comes with the new aggregate, `(1 - w0) s eps`, so that the inertia filters it, or hits the outcome itself, `s eps`. Values come from the stationary Bellman equation with Gauss-Hermite quadrature. A first version averaged over fixed simulated shock paths, but that makes the problem non-stationary: one-round deviations could exploit the particular draws, and the "optimal" planner lost slightly more than the greedy one, so it was replaced. With clipping the greedy planner is no longer optimal, so the planner here is the optimal one: a single player aiming at the mean house, whose target accounts for the clipping. Twenty draws per row; mean discounted summed loss without inertia, and the inertia with the lowest loss (on the grid 0, 0.15, ..., 0.9, loss in brackets):
+
+| Players | Shock | Inertia | Planner | Mean rule | Median rule |
+|---|---|---|---|---|---|
+| 3 | 0.1 with the aggregate | 0.0 | 1.903 | 2.047 | 2.117 |
+| 3 | 0.1 with the aggregate | lowest at | 0.6 (1.698) | 0.45 (1.895) | 0.6 (1.891) (interior in 20 of 20 draws) |
+| 3 | 0.2 with the aggregate | 0.0 | 2.652 | 2.844 | 2.895 |
+| 3 | 0.2 with the aggregate | lowest at | 0.75 (1.825) | 0.6 (2.082) | 0.75 (2.001) (interior in 19 of 20 draws) |
+| 3 | 0.4 with the aggregate | 0.0 | 4.197 | 4.676 | 4.425 |
+| 3 | 0.4 with the aggregate | lowest at | 0.75 (2.069) | 0.75 (2.434) | 0.75 (2.234) (interior in 10 of 20 draws) |
+| 3 | 0.2 on the outcome | 0.0 | 2.652 | 2.844 | 2.895 |
+| 3 | 0.2 on the outcome | lowest at | 0.0 (2.652) | 0.0 (2.844) | 0.3 (2.887) (interior in 14 of 20 draws) |
+| 5 | 0.1 with the aggregate | 0.0 | 3.513 | 3.783 | 3.986 |
+| 5 | 0.1 with the aggregate | lowest at | 0.6 (3.126) | 0.6 (3.462) | 0.6 (3.531) (interior in 19 of 20 draws) |
+| 5 | 0.2 with the aggregate | 0.0 | 4.888 | 5.206 | 5.374 |
+| 5 | 0.2 with the aggregate | lowest at | 0.75 (3.283) | 0.75 (3.700) | 0.75 (3.652) (interior in 19 of 20 draws) |
+| 5 | 0.4 with the aggregate | 0.0 | 7.657 | 8.294 | 8.189 |
+| 5 | 0.4 with the aggregate | lowest at | 0.75 (3.681) | 0.75 (4.236) | 0.9 (4.023) (interior in 6 of 20 draws) |
+| 5 | 0.2 on the outcome | 0.0 | 4.888 | 5.206 | 5.374 |
+| 5 | 0.2 on the outcome | lowest at | 0.0 (4.888) | 0.15 (5.205) | 0.45 (5.330) (interior in 16 of 20 draws) |
+
+- **Proposition 5** (proved): while the planner can reach the mean house from every outcome (`w0 <= min(hbar, 1 - hbar)`), its loss falls strictly with inertia when the shock comes with the aggregate, and does not depend on inertia when the shock hits the outcome.
+- **With a filtered shock the loss is U-shaped in inertia.** For the planner and both rules, the best inertia is 0.45 to 0.75 for shocks of 0.1 and 0.2, and it rises with the size of the shock. At a shock of 0.4 many draws are best at the largest inertia tried (0.9), so the grid may cut the optimum off there.
+- **With a shock on the outcome the planner wants no inertia**, and the mean rule nearly none. The median rule's loss is nearly flat up to `w0 = 0.45` (2.895 to 2.887 for three players), so its interior minimum there is small.
+- **The median rule's advantage survives noise** at inertia 0.75 and 0.9 in every row, and also without inertia at the largest shock (rows with the full grid of inertias are printed by `doggame/dog_game_summary.py`).
+
+So a cooling-off period helps when the new information is what is noisy, and the welfare-maximizing inertia trades the filtering of shocks against the slower adjustment. This is the trade-off of exponential smoothing, here with strategic players.
+
+### 5.27 A third game, and a fix for learning the feedback equilibrium
+
+Section 5.22 found that noise-free gradient play learns the feedback equilibrium with a table of actions but not with a network, in the dog game and in soccer. A third game tests whether that is about networks in general. `doggame/sticky_duopoly.py` is a discrete-time sticky-price duopoly (Fershtman and Kamien, 1987, *Econometrica*; Heston and Hu, 2025, *Operations Research*). The price moves part of the way toward inverse demand, `p' = w0 p + (1 - w0)(1 - q_1 - q_2)`, and each firm earns `p' q_i - 0.1 q_i - q_i^2 / 2`. Its symmetric feedback equilibrium is linear, `q = a + b p`, and is computed exactly from the coefficient fixed point (the tests check that no one-round deviation gains). Without inertia it is Cournot, in line with Heston and Hu's discrete-time result that the closed-loop equilibrium without stickiness is the static Cournot one. With inertia its steady-state output lies above the Cournot output and rises with stickiness (0.232, 0.242 and 0.254 at `w0` = 0.3, 0.6 and 0.8, against 0.225), the direction Fershtman and Kamien find. Nash value iteration on a price grid cycles here, because grid equilibria jump between neighbouring outputs, so the exact solution is used.
+
+The fix replaces the global gradient with per-state targets. Every 25 steps each player's exact best one-round action is computed at every grid state, with the rival and the continuation following the current policies, and each policy is fitted to those actions, every state counting equally (*best-response regression*). Soccer is zero-sum with discrete actions, so there the target is each state's stage-game equilibrium, fitted by cross-entropy. The continuation values come either from the current policies, a policy-iteration step that need not converge in zero-sum games (Pollatschek and Avi-Itzhak, 1969; Van der Wal, 1978), or from a value iterate that takes one Shapley step per refresh. The latter is approximate value iteration (Perolat et al., 2015) with the policy as the approximator. Largest one-round gain at the end, or in soccer the mean and largest duality gap, as median (range) over seeds:
+
+| Game | Policy | Method | Runs | Largest one-round gain, or in soccer mean / largest duality gap |
+|---|---|---|---|---|
+| dog setup 3 | network | gradient play | 5 | 0.0479 (0.0479 to 0.0756) |
+| dog setup 3 | network | best-response regression | 5 | 0.0010 (0.0008 to 0.0010) |
+| dog setup 3 | table | gradient play | 1 | 0.0007 |
+| dog setup 3 | table | best-response regression | 1 | 0.0017 |
+| dog setup 5 | network | gradient play | 5 | 0.1042 (0.1042 to 0.1042) |
+| dog setup 5 | network | best-response regression | 5 | 0.0003 (0.0002 to 0.0003) |
+| dog setup 5 | table | gradient play | 1 | 0.0000 |
+| dog setup 5 | table | best-response regression | 1 | 0.0013 |
+| duopoly | network | gradient play | 5 | 0.0004 (0.0001 to 0.0006) |
+| duopoly | network | best-response regression | 5 | 0.0003 (0.0002 to 0.0003) |
+| duopoly | table | gradient play | 1 | 0.0648 |
+| duopoly | table | best-response regression | 1 | 0.0229 |
+| soccer | network | gradient play | 5 | 0.2551 (0.0026 to 0.3557) / 1.3780 (0.7268 to 1.3783) |
+| soccer | network | equilibrium regression, policy values | 1 | 0.3499 / 1.2058 |
+| soccer | network | equilibrium regression, value iteration | 5 | 0.0189 (0.0125 to 0.0310) / 0.0822 (0.0729 to 0.1772) |
+| soccer | table | gradient play | 1 | 0.0003 / 0.0013 |
+| soccer | table | equilibrium regression, policy values | 1 | 0.0004 / 0.0013 |
+
+| Check | Setting | Result |
+|---|---|---|
+| duopoly, table, gradient play | step size 0.01, 6000 steps | largest one-round gain 0.0898 |
+| duopoly, table, gradient play | step size 0.003, 6000 steps | largest one-round gain 0.0994 |
+| duopoly, table, gradient play | step size 0.001, 6000 steps | largest one-round gain 0.0173 |
+| soccer, network fitted to the equilibrium | 64 units, 4000 steps | equilibrium action in 100.0% of states, mean / largest gap 0.0137 / 0.0652 |
+| soccer, network fitted to the equilibrium | 256 units, 4000 steps | equilibrium action in 100.0% of states, mean / largest gap 0.0031 / 0.0132 |
+
+- **Neither policy class is better in general.** In the duopoly, whose equilibrium is smooth (linear), the network learns it with plain gradient play (gain 0.0004) and the table does not (0.065). Smaller step sizes and twice the steps do not rescue the table (second table). We have no explanation yet for why it fails. In the dog game, whose equilibrium jumps, it is the other way round.
+- **Best-response regression fixes the network** in both dog-game settings (gain 0.048 and 0.104 down to at most 0.001, five of five seeds) and keeps it right in the duopoly (0.0003). In soccer, regression on value-iteration targets takes the network from a median mean gap of 0.255 to 0.019 in five of five seeds (one plain seed reaches a small mean gap but keeps a largest gap of 0.73); with the current policies' values it fails, as the policy-iteration counterexamples warn.
+- **The soccer network can represent the equilibrium**: fitted to it directly, it picks the equilibrium action in every state (second table). So plain gradient play fails there because of the learning dynamics, not because of capacity.
+- **The fix is for networks.** With a table, regression is no better than gradient play (dog game), still fails (duopoly), or is slower (soccer).
+- **Residuals.** In dog-game setup 3 the fitted network smooths over the jump in Proposition 2's policy: its largest action gap to that policy is about 0.175, though no one-round deviation gains more than 0.001.
+
+Fitting policies to per-state best responses or equilibria is standard approximate dynamic programming. Fictitious self-play does the same with average policies (Heinrich and Silver, 2016), and Perolat et al. (2015) give error bounds for zero-sum Markov games. What these games add is the diagnosis. Gradient play on a shared approximator fails when the equilibrium's shape does not suit the approximator: a network on a jump, a table on a smooth equilibrium. Per-state targets remove the gradient's uneven weighting of states. In zero-sum games the continuation must come from a contraction, not from the current policies.
+
 ## 6. Research questions and answers
 
 The statuses are the same as in [RESEARCH_QUESTIONS.md](RESEARCH_QUESTIONS.md).
@@ -799,16 +927,23 @@ The statuses are the same as in [RESEARCH_QUESTIONS.md](RESEARCH_QUESTIONS.md).
 
 **Q35. What happens in a noisy, continuous-time dog game?** *Partly answered.* In the continuous-time limit Proposition 2's equilibrium becomes bang-bang with explicit switching points, and holding needs slack at least (1 + r)/(2 + r); a noisy dog keeps the equilibrium bang-bang but moves the switching points, unlike a linear-quadratic benchmark (Section 5.23). Continuous-time q-learning is open.
 
-**Q37. Does self-play learn a feedback equilibrium with inertia?** *Answered for two settings: no.* From random starts, A2C and PPO learn to hold the one-shot actions everywhere, which is exploitable off the equilibrium path; longer training and a Beta policy do not change this. Noise-free gradient play finds the equilibrium with a table of actions but not with a shared network, so function approximation, not sampling noise, is what stops it (Section 5.22).
+**Q37. Does self-play learn a feedback equilibrium with inertia?** *Answered for two settings: no.* From random starts, A2C and PPO learn to hold the one-shot actions everywhere, which is exploitable off the equilibrium path; longer training and a Beta policy do not change this. Noise-free gradient play finds the equilibrium with a table of actions but not with a shared network, so function approximation, not sampling noise, is what stops it (Section 5.22). In a third game, a sticky-price duopoly, it is the other way round, and fitting the network to per-state best responses fixes it in all three games (Q42).
 
 **Q38. Which move coordinates work for Nash-Q with continuous moves?** *Answered for the walking game.* Cartesian (or square) moves: every seed reaches the corners; polar moves: none, because gradient play in polar coordinates does not find the stage-game equilibrium (Section 5.24).
 
 **Q39. How should a best response over a continuous move be computed?** *Answered for these networks.* A batched grid is exact and fastest on a CPU; a five-point quadratic fit needs 15 evaluations and does as well as gradient ascent, which stops at local peaks (Section 5.24).
 
+**Q40. Does persistence make the median rule manipulable, and which rule loses less?** *Answered for one coordinate.* Truthful median reporting stops being an equilibrium as soon as there is inertia (Proposition 3); the median rule then has an equilibrium that moves the outcome to the median house as fast as possible (Proposition 4). The mean rule loses less without inertia and the median rule with high inertia, for 3, 5 and 7 players, because of adjustment speed (Section 5.25).
+
+**Q41. Is there a welfare-maximizing inertia?** *Answered numerically, with one proved case.* Yes when the shock comes with the new aggregate, so that the inertia filters it: the loss is U-shaped, lowest at 0.45 to 0.75 for moderate shocks (Proposition 5 for the planner's first stretch). No when the shock hits the outcome itself (Section 5.26).
+
+**Q42. Is a network or a table better for learning a feedback equilibrium, and is there a fix?** *Answered for three games.* Neither class is better in general: the network fails on the dog game's jumps and the table on the duopoly's smooth equilibrium. Fitting the network to per-state best responses (or, in zero-sum soccer, to stage equilibria on value-iteration values) reaches the equilibrium in all three games, five of five seeds each (Section 5.27).
+
 **Q36. What happens with many houses?** *Partly answered.* The one-shot dog converges to the generalized median `d = 1 - F(d)` (known for the average voting rule), and with inertia the static equilibrium stays a feedback equilibrium only without a pivot and below an inertia of order 1/N (Section 5.21). The many-house feedback equilibrium is open.
 
 ## 7. Limits
 
+- **The mechanism, cooling-off and learning results (Sections 5.25 to 5.27) are for one coordinate**, a few players, discount 0.9 and equilibria in target form; Propositions 3 to 5 are proved, the rest is numerical. The learning fix computes exact per-state targets from the known model, so it is not yet a sampled learner.
 - **The proofs of Section 5.20 have not been refereed** ([docs/INERTIA_PROOFS.md](docs/INERTIA_PROOFS.md)), and Proposition 2 covers straddling coordinates only; they are checked numerically against the dynamic program and an exact one-round deviation test.
 
 - Most results rest on five seeds, and the equilibrium-selection study on ten per layout. Percentages are counts out of those, not estimates with error bars.
@@ -841,4 +976,4 @@ The code, results and this report are released under the [MIT license](https://g
 
 ## 9. References
 
-**Selected related work:** Wu et al. (2025), [Battling Influencers Game](https://arxiv.org/abs/2502.01127); Hu and Wellman (2003), [Nash-Q](https://www.jmlr.org/papers/v4/hu03a.html); Hambly et al. (2023), [policy gradients for LQ games](https://www.jmlr.org/papers/v24/21-0842.html); Schulman et al. (2017), [PPO](https://arxiv.org/abs/1707.06347); Leonardos et al., [Markov potential games](https://arxiv.org/abs/2106.01969); Kavuncu, Yaraneri and Mehr (RSS 2021), [Potential iLQR](https://arxiv.org/abs/2107.04926); Benenati and Belgioioso (2025), [explicit constrained LQ games](https://arxiv.org/abs/2512.07749); [constrained nonlinear dynamic games](https://arxiv.org/abs/2001.01826) (piecewise-affine feedback Nash); Monderer and Shapley (1996), potential games; Blume (1993), log-linear learning; Fudenberg and Tirole (1991), *Game Theory* (the one-shot deviation principle); Renault and Trannoy (2005), Protecting minorities through the average voting rule, *Journal of Public Economic Theory* 7, 169-199; Basar and Olsder (1999), *Dynamic Noncooperative Game Theory*; Jia and Zhou (2023), q-learning in continuous time, *JMLR*; Perolat, Scherrer, Piot and Pietquin (2015), [approximate dynamic programming for two-player zero-sum Markov games](https://proceedings.mlr.press/v37/perolat15.html), ICML; Bowling (2000), convergence problems of general-sum multiagent reinforcement learning, ICML. The LQ guarantees do not cover this deterministic clipped setup.
+**Selected related work:** Wu et al. (2025), [Battling Influencers Game](https://arxiv.org/abs/2502.01127); Hu and Wellman (2003), [Nash-Q](https://www.jmlr.org/papers/v4/hu03a.html); Hambly et al. (2023), [policy gradients for LQ games](https://www.jmlr.org/papers/v24/21-0842.html); Schulman et al. (2017), [PPO](https://arxiv.org/abs/1707.06347); Leonardos et al., [Markov potential games](https://arxiv.org/abs/2106.01969); Kavuncu, Yaraneri and Mehr (RSS 2021), [Potential iLQR](https://arxiv.org/abs/2107.04926); Benenati and Belgioioso (2025), [explicit constrained LQ games](https://arxiv.org/abs/2512.07749); [constrained nonlinear dynamic games](https://arxiv.org/abs/2001.01826) (piecewise-affine feedback Nash); Monderer and Shapley (1996), potential games; Blume (1993), log-linear learning; Fudenberg and Tirole (1991), *Game Theory* (the one-shot deviation principle); Renault and Trannoy (2005), Protecting minorities through the average voting rule, *Journal of Public Economic Theory* 7, 169-199; Basar and Olsder (1999), *Dynamic Noncooperative Game Theory*; Jia and Zhou (2023), q-learning in continuous time, *JMLR*; Perolat, Scherrer, Piot and Pietquin (2015), [approximate dynamic programming for two-player zero-sum Markov games](https://proceedings.mlr.press/v37/perolat15.html), ICML; Bowling (2000), convergence problems of general-sum multiagent reinforcement learning, ICML; Moulin (1980), On strategy-proofness and single peakedness, *Public Choice* 35, 437-455; Dziuda and Loeper (2016), Dynamic collective choice with endogenous status quo, *Journal of Political Economy* 124(4); de Keijzer and Wojtczak (2018), [facility reallocation on the line](https://www.ijcai.org/proceedings/2018/26), IJCAI; Bailey and Tovey (2025), the price of anarchy in spatial social choice, AAMAS; Fershtman and Kamien (1987), Dynamic duopolistic competition with sticky prices, *Econometrica* 55(5), 1151-1164; Heston and Hu (2025), technical note on duopoly with sticky prices in discrete time, *Operations Research* 73(5), 2627-2635, [doi:10.1287/opre.2023.0473](https://doi.org/10.1287/opre.2023.0473); Pollatschek and Avi-Itzhak (1969), algorithms for stochastic games, *Management Science* 15(7), 399-415; Van der Wal (1978), [discounted Markov games: generalized policy iteration method](https://link.springer.com/doi/10.1007/BF00933260), *Journal of Optimization Theory and Applications*; Heinrich and Silver (2016), [neural fictitious self-play](https://arxiv.org/abs/1603.01121). The LQ guarantees do not cover this deterministic clipped setup.

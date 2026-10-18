@@ -510,6 +510,62 @@ At round 800, per seed:
   falling from 1 to 0.05; the equilibrium solver starts from the zero move (polar: half radius,
   angle 0).
 
+## Mean against median with inertia
+
+- One coordinate, N odd and equally weighted players, houses uniform on [0, 1], discount 0.9,
+  losses (z - h_i)^2. The outcome moves to w0 x + (1 - w0) rule(reports); reports lie in [0, 1].
+- Equilibria are computed in target form only (each player aims the next outcome at a target),
+  from a damped fixed-point iteration that starts at the houses, on a grid of 801 candidate
+  outcomes (401 with shocks). Where there are several equilibria, this picks one. The
+  one-round deviation checks in `mechanisms` (first five draws of each row) find no gain above
+  1e-5 in 40 of 40 median-rule games and in 37 of 40 mean-rule games; the largest remaining
+  gain is 0.0015 (five players, inertia 0.6), as target form also fails in a few many-player
+  games in Section 5.21. The other draws are not checked.
+- The price of anarchy averages the discounted summed loss over 101 evenly spread starting
+  outcomes (200 rounds) and divides by the planner's; the table reports the median over draws.
+  The planner moves the outcome as close to the mean house as it can each round, which is
+  optimal without shocks (summed quadratic loss is minimized at the mean).
+- "Exaggeration" is the mean distance between a player's report and its house at the long-run
+  outcome.
+
+## Cooling off
+
+- The shock is normal, added to each next outcome and then clipped to [0, 1]; "with the
+  aggregate" scales it by (1 - w0), "on the outcome" does not. Expectations use 9 Gauss-Hermite
+  nodes and values on a grid of 401 outcomes (linear interpolation, 200 Bellman sweeps).
+- The optimal planner is restricted to target form (one target, aimed at as closely as can be
+  reached). This is exact if its one-round objective is single-peaked in the next outcome, which
+  was not checked in every draw.
+- Twenty draws per row, inertia on the grid 0, 0.15, ..., 0.9; an optimum at 0.9 may lie beyond
+  the grid.
+- A first version used 64 fixed simulated shock paths; it was replaced because fixed draws per
+  round make the problem non-stationary (see Section 5.26). Its rows were deleted, not kept.
+
+## Sticky-price duopoly
+
+- Demand intercept 1, marginal cost 0.1, a quadratic cost q^2 / 2 so that the one-round problem is
+  strictly concave, outputs in [0, 0.5], price clipped to [0, 1], discount 0.9, inertia 0.8 for
+  the learning runs. The quadratic cost is my choice; Fershtman and Kamien use a general convex
+  cost.
+- The exact equilibrium is the symmetric linear one, derived without the output and price bounds;
+  the tests check that no one-round deviation gains at prices 0.05 to 0.95 with the bounds in
+  place. Other (nonlinear) feedback equilibria are not ruled out.
+- Learning scores use the inner prices of the 41-point grid (the two outer prices on each side are
+  dropped, where the equilibrium output reaches a bound).
+
+## A fix for learning
+
+- Best-response regression refreshes the per-state targets every 25 Adam steps (1500 steps in
+  all) and fits by squared error; soccer's equilibrium regression fits by cross-entropy (squared
+  error on probabilities stalls when a softmax saturates on a wrong action) for 4000 steps.
+- Plain gradient play numbers for the dog game and soccer come from the earlier studies
+  `exact_play` (networks with 16 units, sigmoid) and `soccer_exact_play`, five seeds; the fix
+  uses five seeds per row and one run for tables (their start is deterministic).
+- The value-iteration variant in soccer computes the continuation from a separate value iterate
+  that takes one Shapley step per refresh (160 steps over 4000 Adam steps). The policy network is
+  then only an approximator of each state's stage equilibrium, so this variant is closer to
+  approximate value iteration than to learning from play.
+
 ## Settled points
 
 - **Which game for PG:** any one where the solver is correct and the comparison

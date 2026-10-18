@@ -295,7 +295,10 @@ with the numbers and the caveats, are in [RESEARCH_REPORT.md](RESEARCH_REPORT.md
     noise-free gradient play finds the equilibrium with a table of actions (4 of 4) but not with a
     shared network (0 of 20), so function approximation, not noise, is what stops it. The same
     holds in a second game, grid soccer with a pure equilibrium: a table reaches it, while five
-    networks leave a largest duality gap of at least 0.73.*
+    networks leave a largest duality gap of at least 0.73. A third game qualifies this: in a
+    sticky-price duopoly the network learns the equilibrium and the table does not, and fitting
+    the network to per-state best responses or stage equilibria reaches it in all three games
+    (Q42).*
 38. **Which move coordinates work better for Nash-Q with continuous moves, (vx, vy) or (r, theta)?**
     (Week-7 notes.) *Status: answered for the walking game (five seeds per encoding).
     Cartesian moves, in a disk or a square, bring both players to the one-shot corners from
@@ -307,6 +310,30 @@ with the numbers and the caveats, are in [RESEARCH_REPORT.md](RESEARCH_REPORT.md
     back onto the move set.) *Status: answered for these networks. A batched dense grid is exact
     and fastest on a CPU; a quadratic through five points needs 15 evaluations and does as well
     as gradient ascent, which stops at local peaks; autograd and finite differences agree.*
+
+40. **Does persistence make the strategy-proof median rule manipulable, and which rule loses less?**
+    *Status: answered for one coordinate with 3, 5 and 7 players. Truthful median reporting is
+    a feedback equilibrium without inertia and is not one for any inertia (Proposition 3,
+    proved). An equilibrium in which the median player aims at its house moves the outcome to
+    the median house as fast as any mechanism could (Proposition 4). The mean rule loses less
+    without inertia (the median rule wins in 17 to 21 of 100 draws) and the median rule loses
+    less with high inertia (81 to 88 of 100). The long-run price of anarchy does not change
+    with inertia, so the reversal comes from adjustment speed (Section 5.25).*
+41. **Is there a welfare-maximizing inertia ("cooling off")?**
+    *Status: answered for one coordinate with 3 and 5 players (numerically, with one proved
+    case). When the shock comes with the new aggregate, so that the inertia filters it, the
+    loss is U-shaped in inertia for the planner and both rules, lowest at 0.45 to 0.75 for
+    shocks of 0.1 and 0.2 and at 0.75 or above for 0.4. While the planner can reach the mean
+    house from every outcome, its loss falls strictly with inertia (Proposition 5, proved). When the shock hits the outcome itself, the planner is best off
+    without inertia (Section 5.26).*
+42. **Is a network or a table better for learning a feedback equilibrium, and is there a fix?**
+    *Status: answered for three games (five seeds each). Neither: in a sticky-price duopoly,
+    whose equilibrium is linear, a network learns it by exact gradient play and a table does
+    not; in the dog game, whose equilibrium jumps, the reverse. Fitting a network to each
+    state's exact best response (best-response regression) reaches the equilibrium in both
+    dog-game settings and the duopoly, and in soccer fitting it to each state's stage
+    equilibrium on value-iteration values does (median mean gap 0.019 against 0.255); with the
+    current policies' values it fails, as policy iteration in zero-sum games can (Section 5.27).*
 
 ## Where each question is answered in this repository
 
@@ -337,6 +364,8 @@ with the numbers and the caveats, are in [RESEARCH_REPORT.md](RESEARCH_REPORT.md
 | 30 | studies `walking_houses` (45 runs) and `walking_inertia` (10 runs) |
 | 23 | study `walking_equilibrium` (8 checks), `doggame/walking_equilibrium.py` |
 | walking game | `results/dog_game_runs.jsonl`, `results/dog_game_trajectories.json` |
+| 40, 41 | studies `mechanisms` (240 games), `mechanisms_wide` (2,100), `mechanisms_noise` (1,120) and `mechanisms_noise_planner` (1,120), `doggame/mechanisms.py` |
+| 42 | studies `learning_fix` (31 runs) and `learning_checks` (5), `doggame/sticky_duopoly.py`, `doggame/duopoly_learning.py`, `doggame/exact_play.py`, `doggame/soccer_exact_play.py` |
 | 32 | `docs/POLAR_ACTION_PROTOCOL.md`, `docs/POLAR_ACTION_ROBUSTNESS_PROTOCOL.md`, `doggame/polar_action_study.py`, `doggame/polar_action_robustness.py`, `results/polar_action_pg.jsonl`, `results/polar_action_pg_robustness.jsonl` |
 
 Question 14 is open, and 11, 15, 25, 30, 32, 34, 35 and 36 are partly answered. The studies are in
