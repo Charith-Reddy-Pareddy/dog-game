@@ -442,6 +442,44 @@ def soccer_exact_play_table(rows):
     return table
 
 
+def learning_fix_table(rows):
+    """Plain exact gradient play against per-state regression (best responses in the dog game and the
+    duopoly, stage equilibria in soccer), by game and policy class: the largest one-round deviation gain,
+    or in soccer the mean and largest duality gap, at the end of training (median and range over seeds)."""
+    spread = lambda v: f"{np.median(v):.4f}" + (f" ({min(v):.4f} to {max(v):.4f})" if len(v) > 1 else "")  # noqa: E731
+    groups = defaultdict(list)
+    for r in study(rows, "exact_play"):
+        k = r["key"]
+        if k["squash"] == "sigmoid" and k["hidden"] == 16:
+            groups[(f"dog setup {k['setup'] + 1}", k["kind"], "gradient play")].append(r["gain"])
+    for r in study(rows, "soccer_exact_play"):
+        groups[("soccer", r["key"]["policy"], "gradient play")].append(r["curve"][-1][1:3])
+    names = {"best response": "best-response regression", "policy": "equilibrium regression, policy values",
+             "value": "equilibrium regression, value iteration", None: "gradient play"}
+    for r in study(rows, "learning_fix"):
+        k = r["key"]
+        groups[(k["game"], k["kind"], names[k["fix"]])].append(r["curve"][-1][1:3] if k["game"] == "soccer" else r["gain"])
+    table = [["Game", "Policy", "Method", "Runs", "Largest one-round gain, or in soccer mean / largest duality gap"]]
+    for (game, kind, method), v in sorted(groups.items(), key=lambda g: (g[0][0], g[0][1], g[0][2] != "gradient play", g[0][2])):
+        cell = spread(v) if game != "soccer" else f"{spread([x[0] for x in v])} / {spread([x[1] for x in v])}"
+        table.append([game, kind, method, str(len(v)), cell])
+    return table
+
+
+def learning_checks_table(rows):
+    """The two checks behind learning_fix: plain gradient play with a table on the duopoly at smaller step sizes,
+    and the soccer network fitted directly to the equilibrium."""
+    table = [["Check", "Setting", "Result"]]
+    for r in sorted(study(rows, "learning_checks"), key=lambda r: (r["key"]["check"], -r["key"].get("lr", 0), r["key"].get("hidden", 0))):
+        k = r["key"]
+        if k["check"] == "duopoly table":
+            table.append(["duopoly, table, gradient play", f"step size {k['lr']}, 6000 steps", f"largest one-round gain {r['gain']:.4f}"])
+        else:
+            table.append(["soccer, network fitted to the equilibrium", f"{k['hidden']} units, 4000 steps",
+                          f"equilibrium action in {r['agree']:.1%} of states, mean / largest gap {r['mean_gap']:.4f} / {r['max_gap']:.4f}"])
+    return table
+
+
 def mechanisms_table(rows):
     """Mean against median aggregation with inertia, per number of players and inertia (30 draws):
     median price of anarchy (summed discounted loss over the planner's), mean exaggeration at the
@@ -775,7 +813,7 @@ if __name__ == "__main__":
                         ("walking hard long", walking_hard_long_table(studies)), ("inertia equilibrium", inertia_equilibrium_table(studies)),
                         ("selection noise", selection_noise_table(studies)), ("inertia dp", inertia_dp_table(studies)),
                         ("markov potential", markov_potential_table(studies)), ("selection clip", selection_clip_table(studies)),
-                        ("inertia explicit", inertia_explicit_table(studies)), ("inertia random", inertia_random_table(studies)), ("many houses", many_houses_table(studies)), ("feedback learning", feedback_learning_table(studies)), ("exact play", exact_play_table(studies)), ("noisy inertia", noisy_inertia_table(studies)), ("pretraining mechanism", pretraining_mechanism_table(studies)), ("walking entropy", walking_entropy_table(studies)), ("walking clip", walking_clip_table(studies)), ("vertex selection", vertex_selection_table(studies)), ("cross play", cross_play_table(studies)), ("target random", target_random_table(studies)), ("many targets", many_targets_table(studies)), ("exact play many", exact_play_many_table(studies)), ("soccer exact play", soccer_exact_play_table(studies)), ("mechanisms", mechanisms_table(studies)), ("mechanisms wide", mechanisms_wide_table(studies)), ("mechanisms noise", mechanisms_noise_table(studies)), ("continuous q", continuous_q_table(studies)),
+                        ("inertia explicit", inertia_explicit_table(studies)), ("inertia random", inertia_random_table(studies)), ("many houses", many_houses_table(studies)), ("feedback learning", feedback_learning_table(studies)), ("exact play", exact_play_table(studies)), ("noisy inertia", noisy_inertia_table(studies)), ("pretraining mechanism", pretraining_mechanism_table(studies)), ("walking entropy", walking_entropy_table(studies)), ("walking clip", walking_clip_table(studies)), ("vertex selection", vertex_selection_table(studies)), ("cross play", cross_play_table(studies)), ("target random", target_random_table(studies)), ("many targets", many_targets_table(studies)), ("exact play many", exact_play_many_table(studies)), ("soccer exact play", soccer_exact_play_table(studies)), ("mechanisms", mechanisms_table(studies)), ("mechanisms wide", mechanisms_wide_table(studies)), ("mechanisms noise", mechanisms_noise_table(studies)), ("learning fix", learning_fix_table(studies)), ("learning checks", learning_checks_table(studies)), ("continuous q", continuous_q_table(studies)),
                         ("continuous best responses", continuous_br_table(studies)), ("continuous convergence", continuous_convergence_table(studies))):
         print(f"\n### {name}\n\n{markdown(table)}")
     print("\nconvergence counts:", convergence_counts(runs))

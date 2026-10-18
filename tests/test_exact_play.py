@@ -1,6 +1,6 @@
 import numpy as np
 
-from doggame.exact_play import GRID, play, score
+from doggame.exact_play import GRID, best_actions, play, score
 from doggame.inertia_theory import explicit_policy, nash_1d
 
 SETTING = (0.7, 0.6, 0.7, 0.6)  # setup 3's x coordinate at inertia 0.6
@@ -33,3 +33,12 @@ def test_the_many_player_check_scores_the_target_form_at_zero_and_holding_above_
     small = dict(states=6, grid=51, rounds=80)
     assert deviation_gain_many(target_form, houses, weights, w0, **small) < 1e-4 < deviation_gain_many(holding, houses, weights, w0, **small)
     assert play_many(houses, weights, w0, steps=3, rounds=10).shape == (3, GRID)
+
+
+def test_best_responses_to_proposition_2_are_its_own_actions():
+    grid = np.linspace(0, 1, GRID)
+    a_red, a_blue, _ = nash_1d(*SETTING[:3])
+    red, blue = explicit_policy(*SETTING[:3], a_red, a_blue, SETTING[3])(grid)
+    best = best_actions(red, blue, *SETTING, actions=101, rounds=60)
+    inner = slice(2, -2)  # away from the edges, where actions tie
+    assert np.abs(best[0][inner] - red[inner]).max() < 0.02 and np.abs(best[1][inner] - blue[inner]).max() < 0.02

@@ -38,17 +38,45 @@ def _policies(kind, squash, hidden, seed):
     return [list(n.parameters()) for n in nets], [lambda x, n=n: f(n(x[:, None])[:, 0]) for n in nets]
 
 
-def play(h_red, h_blue, w, w0, kind="table", squash="sigmoid", hidden=16, seed=0, steps=3000, discount=0.9, rounds=60, lr=None):
-    """Run exact gradient play; returns the learned actions on the grid of dog positions (red, blue)."""
+def best_actions(red, blue, h_red, h_blue, w, w0, discount=0.9, actions=201, rounds=120):
+    """Each player's best one-round action at every grid position, the other player and the
+    continuation following the current actions (numpy arrays on the grid, interpolated)."""
+    xs, cand = np.linspace(0, 1, GRID), np.linspace(0, 1, actions)
+    act = lambda z: (np.interp(z, xs, red), np.interp(z, xs, blue))  # noqa: E731
+    best = np.zeros((2, GRID))
+    for k, x in enumerate(xs):
+        for i, h in enumerate((h_red, h_blue)):
+            z = w0 * x + (1 - w0) * (w * cand + (1 - w) * blue[k] if i == 0 else w * red[k] + (1 - w) * cand)
+            total = -(z - h) ** 2
+            for t in range(1, rounds):
+                r, b = act(z)
+                z = w0 * z + (1 - w0) * (w * r + (1 - w) * b)
+                total -= discount ** t * (z - h) ** 2
+            best[i, k] = cand[total.argmax()]
+    return best
+
+
+def play(h_red, h_blue, w, w0, kind="table", squash="sigmoid", hidden=16, seed=0, steps=3000, discount=0.9, rounds=60, lr=None,
+         fix=False, refresh=25):
+    """Run exact gradient play; returns the learned actions on the grid of dog positions (red, blue). With
+    ``fix``, best-response regression instead: every ``refresh`` steps each player's best one-round action
+    at every grid position is recomputed, and the policies are fitted to those actions."""
     params, policy = _policies(kind, squash, hidden, seed)
     opts = [torch.optim.Adam(p, lr=lr or (0.05 if kind == "table" else 0.01)) for p in params]
     grid, houses = torch.linspace(0, 1, GRID), (h_red, h_blue)
-    for _ in range(steps):
-        x, values = grid, [0.0, 0.0]
-        for k in range(rounds):
-            x = w0 * x + (1 - w0) * (w * policy[0](x) + (1 - w) * policy[1](x))
-            values = [v - discount ** k * (x - h) ** 2 for v, h in zip(values, houses)]
-        grads = [torch.autograd.grad(-values[i].mean(), params[i], retain_graph=i == 0) for i in range(2)]  # each its own payoff
+    for t in range(steps):
+        if fix:
+            if t % refresh == 0:
+                with torch.no_grad():
+                    now = [policy[i](grid).numpy().astype(float) for i in range(2)]
+                goal = torch.as_tensor(best_actions(*now, h_red, h_blue, w, w0, discount), dtype=torch.float32)
+            grads = [torch.autograd.grad(((policy[i](grid) - goal[i]) ** 2).mean(), params[i]) for i in range(2)]
+        else:
+            x, values = grid, [0.0, 0.0]
+            for k in range(rounds):
+                x = w0 * x + (1 - w0) * (w * policy[0](x) + (1 - w) * policy[1](x))
+                values = [v - discount ** k * (x - h) ** 2 for v, h in zip(values, houses)]
+            grads = [torch.autograd.grad(-values[i].mean(), params[i], retain_graph=i == 0) for i in range(2)]  # each its own payoff
         for i in range(2):  # then both step at once
             for p, g in zip(params[i], grads[i]):
                 p.grad = g

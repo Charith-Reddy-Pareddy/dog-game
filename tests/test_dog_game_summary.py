@@ -1,4 +1,4 @@
-from doggame.dog_game_summary import (mechanisms_table, mechanisms_wide_table, mechanisms_noise_table, continuous_br_table, continuous_convergence_table, continuous_q_table, soccer_exact_play_table, exact_play_many_table, many_targets_table, target_random_table, cross_play_table, vertex_selection_table, walking_clip_table, walking_entropy_table, pretraining_mechanism_table, noisy_inertia_table, exact_play_table, feedback_learning_table, many_houses_table, inertia_dp_table, inertia_explicit_table, inertia_random_table, mirror_p, selection_clip_table, markov_potential_table, selection_noise_table, algorithms_table, convergence_counts, markdown, noise_table, resolution_table,
+from doggame.dog_game_summary import (mechanisms_table, mechanisms_wide_table, mechanisms_noise_table, learning_fix_table, learning_checks_table, continuous_br_table, continuous_convergence_table, continuous_q_table, soccer_exact_play_table, exact_play_many_table, many_targets_table, target_random_table, cross_play_table, vertex_selection_table, walking_clip_table, walking_entropy_table, pretraining_mechanism_table, noisy_inertia_table, exact_play_table, feedback_learning_table, many_houses_table, inertia_dp_table, inertia_explicit_table, inertia_random_table, mirror_p, selection_clip_table, markov_potential_table, selection_noise_table, algorithms_table, convergence_counts, markdown, noise_table, resolution_table,
                                       selection_outcome, selection_table, walking_algorithms_table, walking_share_series, walking_table,
                                       ppo_epochs_table, ppo_long_table, ppo_walking_table, walking_equilibrium_table, walking_houses_table, walking_inertia_table,
                                       walking_settings_table)
@@ -330,3 +330,20 @@ def test_the_cooling_off_table_finds_the_inertia_with_the_lowest_loss():
     assert table[2] == ["3", "0.2 with the aggregate", "0.5", "1.000", "1.500", "1.200"]
     assert table[4] == ["3", "0.2 with the aggregate", "lowest at", "0.5 (1.000)", "0.5 (1.500)", "0.5 (1.200) (interior in 1 of 1 draws)"]
 
+
+def test_the_learning_fix_table_puts_gradient_play_next_to_the_fix():
+    rows = [run("exact_play", dict(setup=2, w0=0.6, kind="network", squash="sigmoid", hidden=16, seed=0), gain=0.05),
+            run("learning_fix", dict(game="dog setup 3", kind="network", fix="best response", seed=0), gain=0.001),
+            run("learning_fix", dict(game="soccer", kind="network", fix="value", seed=0), curve=[[0, 1.0, 1.2, 1.0], [4000, 0.01, 0.05, 0.02]])]
+    table = learning_fix_table(rows)
+    assert table[1] == ["dog setup 3", "network", "gradient play", "1", "0.0500"]
+    assert table[2] == ["dog setup 3", "network", "best-response regression", "1", "0.0010"]
+    assert table[3] == ["soccer", "network", "equilibrium regression, value iteration", "1", "0.0100 / 0.0500"]
+
+
+def test_the_learning_checks_table_reports_both_checks():
+    rows = [run("learning_checks", dict(check="duopoly table", lr=0.001), gain=0.02),
+            run("learning_checks", dict(check="soccer fit", hidden=64), agree=1.0, mean_gap=0.0137, max_gap=0.0652)]
+    table = learning_checks_table(rows)
+    assert table[1] == ["duopoly, table, gradient play", "step size 0.001, 6000 steps", "largest one-round gain 0.0200"]
+    assert table[2][2] == "equilibrium action in 100.0% of states, mean / largest gap 0.0137 / 0.0652"

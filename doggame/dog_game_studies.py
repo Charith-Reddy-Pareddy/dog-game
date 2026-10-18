@@ -33,6 +33,8 @@ to do only the second of four shards.
 - exact_play: noise-free gradient play on feedback policies, a table against a shared network
 - exact_play_many: the same with 3 and 5 players
 - soccer_exact_play: exact gradient play on the soccer game, a table against a network
+- learning_fix: per-state best-response or equilibrium regression on the dog game, the duopoly and soccer
+- learning_checks: smaller step sizes for the duopoly table, and fitting the soccer network to the equilibrium
 - vertex_selection: whether a largest-total-value equilibrium selection changes the feedback equilibrium
 - noisy_inertia: where the equilibrium switches when the dog gets a Gaussian shock, as the time step shrinks
 - inertia_explicit: the closed-form hold condition and explicit feedback equilibrium against the dynamic program
@@ -548,6 +550,51 @@ def study_soccer_exact_play(seeds):
         yield dict(policy=policy, seed=seed), run
 
 
+def study_learning_fix(seeds):
+    """A fix for learning feedback equilibria on three games, five seeds each: the dog game (setup 3's x at
+    inertia 0.6, setup 5's x at 0.9) and the sticky-price duopoly (inertia 0.8) with best-response
+    regression, soccer with equilibrium regression on value-iteration (or the current policies')
+    continuation values; the duopoly also with plain exact gradient play, a table and networks."""
+    from doggame import duopoly_learning, exact_play, soccer_exact_play
+    from doggame.soccer import Soccer
+
+    seeds = range(5)
+    for setup, w0 in ((2, 0.6), (4, 0.9)):
+        c = DEFAULT_CONFIGS[setup]
+        game = (c["house_red"][0], c["house_blue"][0], c["w"], w0)
+        for kind, seed in [("table", 0)] + [("network", s) for s in seeds]:
+            def run(game=game, kind=kind, seed=seed):
+                return exact_play.score(*exact_play.play(*game, kind=kind, seed=seed, steps=1500, fix=True), *game)
+            yield dict(game=f"dog setup {setup + 1}", kind=kind, fix="best response", seed=seed), run
+    for kind, fix, seed in [("table", None, 0), ("table", "best response", 0)] + [("network", f, s) for f in (None, "best response") for s in seeds]:
+        def run(kind=kind, fix=fix, seed=seed):
+            steps = 1500 if fix else 3000
+            return duopoly_learning.score(duopoly_learning.play(0.8, kind, seed=seed, steps=steps, fix=bool(fix)), 0.8)
+        yield dict(game="duopoly", kind=kind, fix=fix, seed=seed), run
+    for kind, fix, seed in [("table", "policy", 0), ("network", "policy", 0)] + [("network", "value", s) for s in seeds]:
+        def run(kind=kind, fix=fix, seed=seed):
+            return dict(curve=[list(r) for r in soccer_exact_play.play(Soccer(), kind, seed=seed, steps=4000, every=500, fix=fix)])
+        yield dict(game="soccer", kind=kind, fix=fix, seed=seed), run
+
+
+def study_learning_checks(seeds):
+    """Two checks for learning_fix: plain exact gradient play with a table on the duopoly at smaller step sizes
+    and twice the steps, and whether the soccer network can represent the equilibrium at all (fitted to it
+    directly, 64 and 256 units)."""
+    from doggame import duopoly_learning
+    from doggame.soccer import Soccer
+    from doggame.soccer_exact_play import fit
+    from doggame.soccer_solver import solve_soccer
+
+    for lr in (0.01, 0.003, 0.001):
+        yield dict(check="duopoly table", lr=lr), lambda lr=lr: duopoly_learning.score(duopoly_learning.play(0.8, "table", steps=6000, lr=lr), 0.8)
+    for hidden in (64, 256):
+        def run(hidden=hidden):
+            game = Soccer()
+            return fit(game, solve_soccer(game), hidden=hidden)
+        yield dict(check="soccer fit", hidden=hidden), run
+
+
 def study_feedback_learning(seeds):
     """Self-play from random dog positions on setup 3 with inertia 0.6: the learned policy's feedback exploitability
     (doggame.feedback_learning), next to Proposition 2's policy and holding the one-shot actions. Gaussian and Beta
@@ -832,7 +879,7 @@ def study_noise(seeds, resolution=9):
     yield dict(iterations="exact", seed=0), lambda: dict(spread=float(spread), gap=float(gap), support=int((exact_red > 1e-3).sum()), top=float(exact_red.max()))
 
 
-STUDIES = dict(mechanisms_noise_planner=study_mechanisms_noise_planner, mechanisms_noise=study_mechanisms_noise, mechanisms_wide=study_mechanisms_wide, mechanisms=study_mechanisms, continuous_q=study_continuous_q, continuous_q_tools=study_continuous_q_tools, soccer_exact_play=study_soccer_exact_play, exact_play_many=study_exact_play_many, many_targets=study_many_targets, target_random=study_target_random, cross_play=study_cross_play, vertex_selection=study_vertex_selection, walking_clip=study_walking_clip, walking_entropy=study_walking_entropy, pretraining_mechanism=study_pretraining_mechanism, noisy_inertia=study_noisy_inertia, exact_play=study_exact_play, feedback_learning=study_feedback_learning, many_houses=study_many_houses, selection_linear=study_selection_linear, selection_clip=study_selection_clip, inertia_explicit=study_inertia_explicit, inertia_random=study_inertia_random, selection_noise=study_selection_noise, inertia_dp=study_inertia_dp, markov_potential=study_markov_potential, algorithms=study_algorithms, walking=study_walking, ppo_variants=study_ppo_variants, ppo_long=study_ppo_long,
+STUDIES = dict(learning_checks=study_learning_checks, learning_fix=study_learning_fix, mechanisms_noise_planner=study_mechanisms_noise_planner, mechanisms_noise=study_mechanisms_noise, mechanisms_wide=study_mechanisms_wide, mechanisms=study_mechanisms, continuous_q=study_continuous_q, continuous_q_tools=study_continuous_q_tools, soccer_exact_play=study_soccer_exact_play, exact_play_many=study_exact_play_many, many_targets=study_many_targets, target_random=study_target_random, cross_play=study_cross_play, vertex_selection=study_vertex_selection, walking_clip=study_walking_clip, walking_entropy=study_walking_entropy, pretraining_mechanism=study_pretraining_mechanism, noisy_inertia=study_noisy_inertia, exact_play=study_exact_play, feedback_learning=study_feedback_learning, many_houses=study_many_houses, selection_linear=study_selection_linear, selection_clip=study_selection_clip, inertia_explicit=study_inertia_explicit, inertia_random=study_inertia_random, selection_noise=study_selection_noise, inertia_dp=study_inertia_dp, markov_potential=study_markov_potential, algorithms=study_algorithms, walking=study_walking, ppo_variants=study_ppo_variants, ppo_long=study_ppo_long,
                walking_settings=study_walking_settings, walking_houses=study_walking_houses, walking_inertia=study_walking_inertia,
                walking_equilibrium=study_walking_equilibrium, walking_capacity=study_walking_capacity, walking_ppo_inertia=study_walking_ppo_inertia,
                walking_hard_long=study_walking_hard_long, inertia_equilibrium=study_inertia_equilibrium, selection=study_selection, inertia=study_inertia, pretraining=study_pretraining,
