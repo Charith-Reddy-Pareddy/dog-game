@@ -1,4 +1,4 @@
-from doggame.dog_game_summary import (soccer_exact_play_table, exact_play_many_table, many_targets_table, target_random_table, cross_play_table, vertex_selection_table, walking_clip_table, walking_entropy_table, pretraining_mechanism_table, noisy_inertia_table, exact_play_table, feedback_learning_table, many_houses_table, inertia_dp_table, inertia_explicit_table, inertia_random_table, mirror_p, selection_clip_table, markov_potential_table, selection_noise_table, algorithms_table, convergence_counts, markdown, noise_table, resolution_table,
+from doggame.dog_game_summary import (continuous_br_table, continuous_convergence_table, continuous_q_table, soccer_exact_play_table, exact_play_many_table, many_targets_table, target_random_table, cross_play_table, vertex_selection_table, walking_clip_table, walking_entropy_table, pretraining_mechanism_table, noisy_inertia_table, exact_play_table, feedback_learning_table, many_houses_table, inertia_dp_table, inertia_explicit_table, inertia_random_table, mirror_p, selection_clip_table, markov_potential_table, selection_noise_table, algorithms_table, convergence_counts, markdown, noise_table, resolution_table,
                                       selection_outcome, selection_table, walking_algorithms_table, walking_share_series, walking_table,
                                       ppo_epochs_table, ppo_long_table, ppo_walking_table, walking_equilibrium_table, walking_houses_table, walking_inertia_table,
                                       walking_settings_table)
@@ -299,3 +299,13 @@ def test_the_soccer_exact_play_table_reports_final_gaps():
             run("soccer_exact_play", dict(policy="network", seed=0), curve=[[0, 0.9, 1.2, 1.0], [2000, 0.25, 1.37, 0.75]])]
     table = soccer_exact_play_table(rows)
     assert table[1] == ["table, 2000 steps", "1", "0.000", "0.001", "0.000"] and table[2][2] == "0.250"
+
+
+def test_the_continuous_q_tables_report_distances_methods_and_convergence():
+    rows = [run("continuous_q", dict(encoding="polar", seed=0), curve={"25": [0.6, 1.1], "300": [0.46, 1.06]}),
+            run("continuous_q_tools", dict(encoding="cartesian"), trajectories={},
+                best_response={"grid": dict(shortfall=0.0, relative=0.0, evals=1257, ms=0.2)},
+                convergence={"0.1": dict(converged=0.13, iterations=500, gap=0.0005)})]
+    assert continuous_q_table(rows)[1] == ["polar", "1", "0.460 (0.460 to 0.460)", "1.060 (1.060 to 1.060)", "0 of 1"]
+    assert continuous_br_table(rows)[1] == ["cartesian", "grid", "0.0000", "0.0%", "1257", "0.20"]
+    assert continuous_convergence_table(rows)[1] == ["cartesian", "0.1", "13%", "500", "0.0005"]

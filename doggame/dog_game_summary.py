@@ -442,6 +442,41 @@ def soccer_exact_play_table(rows):
     return table
 
 
+def continuous_q_table(rows):
+    """Nash-Q with continuous moves on the walking game: the summed distance of the players' final
+    positions from the one-shot Nash corners after 300 episodes, from the houses and from eight fixed
+    random starts (median and range over seeds), and the seeds under 0.1 from the random starts."""
+    runs = study(rows, "continuous_q")
+    table = [["Move encoding", "Seeds", "From the houses", "From random starts", "Seeds under 0.1 from random starts"]]
+    for encoding in ("cartesian", "polar", "square"):
+        mine = [r for r in runs if r["key"]["encoding"] == encoding]
+        if mine:
+            final = [r["curve"][str(max(int(e) for e in r["curve"]))] for r in mine]
+            cell = lambda k: f"{np.median([f[k] for f in final]):.3f} ({min(f[k] for f in final):.3f} to {max(f[k] for f in final):.3f})"
+            table.append([encoding, str(len(mine)), cell(0), cell(1), f"{sum(f[1] < 0.1 for f in final)} of {len(mine)}"])
+    return table
+
+
+def continuous_br_table(rows):
+    """Best-response methods on the trained continuous Nash-Q networks against a dense grid: the mean
+    shortfall in Q (also as a share of the Q spread over moves), Q evaluations and milliseconds."""
+    table = [["Encoding", "Method", "Shortfall in Q", "Share of the Q spread", "Q evaluations", "Milliseconds"]]
+    for r in study(rows, "continuous_q_tools"):
+        for method, v in r["best_response"].items():
+            table.append([r["key"]["encoding"], method, f"{v['shortfall']:.4f}", f"{100 * v['relative']:.1f}%", f"{v['evals']:.0f}", f"{v['ms']:.2f}"])
+    return table
+
+
+def continuous_convergence_table(rows):
+    """Simultaneous gradient play on the learned stage games by step size: the share of 30 states
+    where no move changes by more than 1e-5 within 500 iterations, and the remaining equilibrium gap."""
+    table = [["Encoding", "Step size", "Settled within 500", "Median iterations", "Equilibrium gap (mean)"]]
+    for r in study(rows, "continuous_q_tools"):
+        for lr, v in r["convergence"].items():
+            table.append([r["key"]["encoding"], lr, f"{100 * v['converged']:.0f}%", f"{v['iterations']:.0f}", f"{v['gap']:.4f}"])
+    return table
+
+
 def feedback_learning_table(rows):
     """Feedback exploitability (largest and mean one-round gain over dog positions) of policies learned from random
     starts, next to Proposition 2's policy and holding the one-shot actions."""
@@ -678,7 +713,8 @@ if __name__ == "__main__":
                         ("walking hard long", walking_hard_long_table(studies)), ("inertia equilibrium", inertia_equilibrium_table(studies)),
                         ("selection noise", selection_noise_table(studies)), ("inertia dp", inertia_dp_table(studies)),
                         ("markov potential", markov_potential_table(studies)), ("selection clip", selection_clip_table(studies)),
-                        ("inertia explicit", inertia_explicit_table(studies)), ("inertia random", inertia_random_table(studies)), ("many houses", many_houses_table(studies)), ("feedback learning", feedback_learning_table(studies)), ("exact play", exact_play_table(studies)), ("noisy inertia", noisy_inertia_table(studies)), ("pretraining mechanism", pretraining_mechanism_table(studies)), ("walking entropy", walking_entropy_table(studies)), ("walking clip", walking_clip_table(studies)), ("vertex selection", vertex_selection_table(studies)), ("cross play", cross_play_table(studies)), ("target random", target_random_table(studies)), ("many targets", many_targets_table(studies)), ("exact play many", exact_play_many_table(studies)), ("soccer exact play", soccer_exact_play_table(studies))):
+                        ("inertia explicit", inertia_explicit_table(studies)), ("inertia random", inertia_random_table(studies)), ("many houses", many_houses_table(studies)), ("feedback learning", feedback_learning_table(studies)), ("exact play", exact_play_table(studies)), ("noisy inertia", noisy_inertia_table(studies)), ("pretraining mechanism", pretraining_mechanism_table(studies)), ("walking entropy", walking_entropy_table(studies)), ("walking clip", walking_clip_table(studies)), ("vertex selection", vertex_selection_table(studies)), ("cross play", cross_play_table(studies)), ("target random", target_random_table(studies)), ("many targets", many_targets_table(studies)), ("exact play many", exact_play_many_table(studies)), ("soccer exact play", soccer_exact_play_table(studies)), ("continuous q", continuous_q_table(studies)),
+                        ("continuous best responses", continuous_br_table(studies)), ("continuous convergence", continuous_convergence_table(studies))):
         print(f"\n### {name}\n\n{markdown(table)}")
     print("\nconvergence counts:", convergence_counts(runs))
     print("inertia median distance:", inertia_distances(studies))
