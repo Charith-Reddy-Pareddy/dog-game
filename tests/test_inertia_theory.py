@@ -89,3 +89,13 @@ def test_the_target_fixed_point_reproduces_proposition_2_and_repairs_an_interior
     act = target_policy(*target_equilibrium(h_red, h_blue, w, w0, g)[0], w, w0)
     gains = [deviation_gain(act, h, w, w0, x, red, g, grid=401) for x in np.linspace(0, 1, 21) for h, red in ((h_red, True), (h_blue, False))]
     assert max(gains) < 1e-8
+
+
+def test_the_overshoot_peaks_where_the_closed_form_says():
+    from doggame.inertia_theory import kappa, overshoot_peak
+
+    for g in (0.5, 0.9, 0.99):
+        w0, k = overshoot_peak(g)
+        grid = np.linspace(0, 0.999, 20001)
+        assert np.isclose(kappa(w0, g), k) and kappa(grid, g).max() <= k + 1e-12
+        assert np.isclose(kappa(0.0, g), 1) and np.isclose(kappa(1.0, g), 1)

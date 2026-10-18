@@ -166,3 +166,12 @@ def target_equilibrium(h_red, h_blue, w, w0, discount=0.9, grid=2001, rounds=300
             return new, it
         targets = 0.5 * targets + 0.5 * new
     return targets, max_iter
+
+
+def overshoot_peak(discount):
+    """The inertia at which players overshoot most, and the largest k. A player aims the next dog
+    position at d* + k (h - d*), past its own house by (k - 1)(h - d*); k is 1 with no inertia and
+    with full inertia, and solving dk/dw0 = 0 (g w0^2 - 2 w0 + 1 = 0) gives the peak
+    w0 = 1 / (1 + s) with k = 2 / (1 + s), where s = sqrt(1 - g)."""
+    s = np.sqrt(1 - discount)
+    return 1 / (1 + s), 2 / (1 + s)
