@@ -161,6 +161,54 @@ With time step dt, w0 = 1 - dt and g = exp(-r dt), 1 - g w0 = (r + 1) dt + O(dt^
 of width O(dt). This describes the limit of the discrete-time equilibria; that it is an equilibrium of the
 continuous-time game is not proved here.
 
+## Overshooting
+
+In Proposition 2 a player aims the next dog position at T_i = d* + k (h_i - d*), so it aims past its
+own house by (k - 1)(h_i - d*). Since k = (1 - g w0^2) / (1 - g w0), dk/dw0 has the sign of
+g w0^2 - 2 w0 + 1, which vanishes at w0 = (1 - s) / g = 1 / (1 + s) with s = sqrt(1 - g). So k = 1 at
+w0 = 0 and at w0 = 1, and the overshoot is largest at the intermediate inertia 1 / (1 + s), where
+k = 2 / (1 + s): at most 2, approached by patient players.
+
+## Persistence and the median rule
+
+Now N players (N odd) with distinct houses h_1 < ... < h_N report points r_i in [0, 1], and the outcome
+moves to z = w0 x + (1 - w0) median(r); losses are (z - h_i)^2, discounted. Let h_m be the median house.
+
+**Proposition 3.** For w0 = 0 truthful reporting (r_i = h_i at every outcome) is a feedback equilibrium;
+for any w0 in (0, 1) it is not.
+
+*Proof.* With w0 = 0 the round does not depend on the outcome, so each round is the one-shot median
+game, where truthful reporting is dominant (Moulin, 1980). With w0 > 0 and everyone truthful, the
+outcome moves to w0 x + (1 - w0) h_m and converges to h_m, so by Lemma 2 (with d* = h_m, the median
+player's house) the median player's one-round objective is a concave quadratic in the next outcome
+peaked at T_m = h_m. By changing its report within [h_(m-1), h_(m+1)] the median player moves the next
+outcome over an interval that contains w0 x + (1 - w0) h_m strictly inside, and that contains h_m itself
+whenever x is close enough to h_m. At such an x other than h_m, reporting (h_m - w0 x) / (1 - w0), not
+h_m, puts the outcome on its peak, a strict gain. ∎
+
+**Proposition 4.** For every w0 in [0, 1) the following profile is a feedback equilibrium: the median
+player reports clip((h_m - w0 x) / (1 - w0), 0, 1), players with houses above h_m report 1 and players
+below report 0. Under it the outcome moves to G(x) = clip(h_m, w0 x, w0 x + 1 - w0) each round: as close
+to the median house as can be reached, the path a planner minimising (z - h_m)^2 would choose.
+
+*Proof.* The median of the reports is the median player's report, which gives G. By the one-shot
+deviation principle it suffices to check one-round deviations.
+- The median player can move the median, hence the next outcome, anywhere in [w0 x, w0 x + 1 - w0]. Its
+  problem is then a one-player control problem with loss (z - h_m)^2: if h_m is reachable it stays
+  reachable forever after, and otherwise the reachable interval moves monotonically with the outcome, so
+  moving as close to h_m as possible each round is optimal.
+- A player with house h_i > h_m can only lower the median (by reporting below the median player's
+  report), never raise it. If G(x) <= h_m, lowering the next outcome brings it further from h_i and, since
+  G is nondecreasing, lowers the whole future path, which stays at or below h_m < h_i: a loss. If
+  G(x) > h_m, the median player is reporting 0, so G(x) = w0 x is already the lowest reachable outcome
+  and nothing can be lowered.
+- Players below the median are the mirror image. ∎
+
+So inertia costs the median rule its truthfulness but not its speed: the outcome still moves to the
+median house as fast as any mechanism could move it there. The mean rule has no such property; in the
+study `mechanisms` its outcome moves more slowly, because players on the far side of the outcome keep
+pulling against it.
+
 ## What the propositions do not cover
 
 - **Interior one-shot actions.** If a player's one-shot action is strictly inside the box, its hold region is the
