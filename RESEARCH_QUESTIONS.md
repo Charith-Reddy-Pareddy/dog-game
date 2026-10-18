@@ -296,6 +296,17 @@ with the numbers and the caveats, are in [RESEARCH_REPORT.md](RESEARCH_REPORT.md
     shared network (0 of 20), so function approximation, not noise, is what stops it. The same
     holds in a second game, grid soccer with a pure equilibrium: a table reaches it, while five
     networks leave a largest duality gap of at least 0.73.*
+38. **Which move coordinates work better for Nash-Q with continuous moves, (vx, vy) or (r, theta)?**
+    (Week-7 notes.) *Status: answered for the walking game (five seeds per encoding).
+    Cartesian moves, in a disk or a square, bring both players to the one-shot corners from
+    every start in every seed; polar moves in none. In polar coordinates gradient play does not
+    find the stage-game equilibrium (best responses miss 27 to 32% of the Q spread), and the
+    learning target depends on it.*
+39. **How should a best response over a continuous move be computed from a Q-network, quickly?**
+    (Week-7 notes: finite differences, gradients, a quadratic through a few points, projection
+    back onto the move set.) *Status: answered for these networks. A batched dense grid is exact
+    and fastest on a CPU; a quadratic through five points needs 15 evaluations and does as well
+    as gradient ascent, which stops at local peaks; autograd and finite differences agree.*
 
 ## Where each question is answered in this repository
 
@@ -315,6 +326,7 @@ with the numbers and the caveats, are in [RESEARCH_REPORT.md](RESEARCH_REPORT.md
 | 7 | studies `cross_play` (15 runs) and `selection` (30 runs) |
 | 13 | study `vertex_selection` (6 solves), `selection` in `doggame/inertia_dp.py` |
 | 36 | studies `many_houses` (2,000 draws) and `many_targets` (60 games), `doggame/many_houses.py` |
+| 38, 39 | studies `continuous_q` (15 runs) and `continuous_q_tools` (3), `doggame/continuous_q.py`, `docs/continuous_q_trajectories.svg` |
 | 37 | studies `feedback_learning` (55 rows) and `exact_play` (24 runs), `doggame/feedback_learning.py`, `doggame/exact_play.py` |
 | 35 | study `noisy_inertia` (9 solves), `continuous_limit` in `doggame/inertia_theory.py`, `noise` in `doggame/inertia_dp.py` |
 | 26 | study `walking` (15 runs) |

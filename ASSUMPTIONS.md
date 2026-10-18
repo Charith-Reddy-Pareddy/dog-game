@@ -492,6 +492,24 @@ At round 800, per seed:
   angle plus Beta radius, averaged over the episode's states) to that player's objective,
   in every PPO epoch. Coefficients 0, 0.01, 0.03 and 0.1 were chosen by me; five seeds each.
 
+## Continuous moves for Nash-Q (week-7 notes)
+
+- I read the notes' network sketch as Q(state, red move, blue move) with both players' Q-values
+  as outputs. The sketch ends in a ReLU with outputs in (0, infinity); the walking game's rewards
+  are negative squared distances, so the output layer here is linear. "[0, 1]" is read as moves
+  scaled to the unit disk or square.
+- "Which coordinate system is better?" is tested as three encodings of the same moves (polar
+  through cos and sin of the angle so that it wraps). "Set maximal speed to size of square" is
+  read as the maximum step, kept at 0.2 as in the other walking-game studies; I did not test
+  other step sizes here.
+- The quadratic best response fits a parabola along each axis through five points (the notes say
+  "3 or 4 points"); four points cannot fit a full two-dimensional quadratic. "Jason is saying
+  maximum speed is both" and the V-shaped "not possible" sketch are not implemented because I
+  could not read what they ask for.
+- The four trajectory starts are my choice. Exploration is uniform random moves with a rate
+  falling from 1 to 0.05; the equilibrium solver starts from the zero move (polar: half radius,
+  angle 0).
+
 ## Settled points
 
 - **Which game for PG:** any one where the solver is correct and the comparison
