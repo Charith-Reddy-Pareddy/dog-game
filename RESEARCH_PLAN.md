@@ -27,8 +27,16 @@ Each item lists the question, what counts as done, and the literature it must be
 - Items 4 and 5: the duopoly's exact equilibrium; per-state regression fixes the network on all
   three games, five seeds each. State-local features were not tried.
 
-Next: patience and more players for the reversal; a sampled (model-free) version of the fix;
-item 6.
+Next: a sampled (model-free) version of the fix; item 6; and the three items toward a paper:
+
+- **A general reversal theorem** (started, [docs/REVERSAL_NOTES.md](docs/REVERSAL_NOTES.md)): in the
+  continuous-time limit the median rule runs at full speed and the mean rule is a tug of war; a
+  candidate proposition and a threshold conjecture.
+- **Robustness** (started, study `mechanisms_robust`): discount 0.95 and 0.99, 9 and 15 players. Not
+  started: unequal weights (needs a weighted median rule for a fair comparison) and two or more
+  dimensions (coordinate-wise rules).
+- **Related work** (started, [docs/RELATED_WORK.md](docs/RELATED_WORK.md)): a draft list, with the
+  areas not yet covered.
 
 ## Economics
 
