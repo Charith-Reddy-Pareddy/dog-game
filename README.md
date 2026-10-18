@@ -127,6 +127,13 @@ from the saved runs in `results/`:
 - **For Nash-Q with continuous moves, Cartesian coordinates work and polar ones do not.** Every seed reaches
   the corners with (vx, vy) moves and none with (r, theta), because gradient play cannot find the stage-game
   equilibrium in polar coordinates; a batched grid or a five-point quadratic gives fast best responses (Q38, Q39).
+- **Persistence changes which voting rule is better.** With inertia truthful median reporting is no longer an
+  equilibrium, but the median rule moves the outcome as fast as any mechanism could, so it loses less than the
+  mean rule at high inertia; when shocks come with the new aggregate some inertia is welfare-maximizing
+  (Q40, Q41, `doggame/mechanisms.py`, proofs in `docs/INERTIA_PROOFS.md`).
+- **A fix for learning feedback equilibria.** A network fails by gradient play on the dog game's jumps and a
+  table on a sticky-price duopoly's linear equilibrium; fitting the network to per-state best responses reaches
+  the equilibrium in the dog game, the duopoly and soccer, five of five seeds each (Q42).
 - **PPO is unstable there because each update moves too far.** A tighter clipping range (0.05) with four epochs
   nearly matches one-epoch PPO (Q27).
 - **PPO's speed comes from reusing each episode.** With one epoch (one gradient step per
