@@ -674,6 +674,62 @@ Shrink the time step: with step `dt`, inertia `w0 = 1 - dt` (the dog moves a fra
 - **It is not the clipping.** With the dog living on [-0.5, 1.5], so that it is never clipped inside [0, 1], the switching points are the same. The shift is also the same with half the time step, and finer state and action grids give the same values (checked separately).
 - **Limits.** One setup; the clipped run at `sigma = 0.4` did not converge in 8000 sweeps; why noise moves the switching points this way is not tested. Continuous-time q-learning on this game (the direction of Jia and Zhou, 2023) is open.
 
+### 5.24 Continuous moves for Nash-Q (the week-7 notes)
+
+The group's week-7 notes ask for a Q-network over continuous actions, Q(s, a_red, a_blue), a fast best response from it, both players moving at once, and paths from interesting starts. `doggame/continuous_q.py` does this on the walking game (houses as in Section 5.9, maximum step 0.2, discount 0.9, 15 steps): a move is any vector in the player's move set, one network reads the state and both players' moves and outputs both Q-values, the learning target is `r + discount * Q_target(s', equilibrium moves)`, and the equilibrium moves of each stage game come from simultaneous gradient play on the network (each player steps up the gradient of its own Q, then projects back onto its move set). Three move encodings answer the notes' "which coordinate system is better?": Cartesian (vx, vy) in a disk, polar (r, theta) in the same disk, given to the network as (r, cos theta, sin theta), and a square ("could do square as well"). Five seeds, 300 episodes; the distance is the players' summed distance from the one-shot Nash corners after 15 greedy steps:
+
+| Move encoding | Seeds | From the houses | From random starts | Seeds under 0.1 from random starts |
+|---|---|---|---|---|
+| cartesian | 5 | 0.000 (0.000 to 0.001) | 0.000 (0.000 to 0.001) | 5 of 5 |
+| polar | 5 | 0.461 (0.461 to 0.564) | 1.061 (0.969 to 1.213) | 0 of 5 |
+| square | 5 | 0.000 (0.000 to 0.014) | 0.000 (0.000 to 0.014) | 5 of 5 |
+
+- **Cartesian moves work and polar moves do not.** Cartesian and square networks bring both players to the corners from the houses and from eight random starts in every seed; polar networks in none.
+
+**Fast best responses.** Each player's best move against a fixed opponent move on the trained networks, at 50 random states: a dense grid (the reference), gradient ascent by autograd and by finite differences (30 steps, projected), and a quadratic fitted through five evaluations along the two axes, jumping to its vertex and projecting (three rounds with a shrinking spacing):
+
+| Encoding | Method | Shortfall in Q | Share of the Q spread | Q evaluations | Milliseconds |
+|---|---|---|---|---|---|
+| square | grid | 0.0000 | 0.0% | 1681 | 0.36 |
+| square | autograd | 0.0742 | 14.3% | 30 | 5.71 |
+| square | finite | 0.0742 | 14.2% | 120 | 4.41 |
+| square | quadratic | 0.0237 | 4.5% | 15 | 0.45 |
+| polar | grid | 0.0000 | 0.0% | 1722 | 0.32 |
+| polar | autograd | 0.3897 | 27.2% | 30 | 5.76 |
+| polar | finite | 0.3897 | 27.2% | 120 | 4.69 |
+| polar | quadratic | 0.4241 | 31.7% | 15 | 0.41 |
+| cartesian | grid | 0.0000 | 0.0% | 1257 | 0.23 |
+| cartesian | autograd | 0.0392 | 10.6% | 30 | 4.00 |
+| cartesian | finite | 0.0392 | 10.6% | 120 | 3.14 |
+| cartesian | quadratic | 0.0426 | 9.6% | 15 | 0.30 |
+
+- **A batched grid is exact and, on a CPU, also the fastest**, because its 1,257 to 1,722 evaluations run as one batch. The quadratic fit needs only 15 evaluations and is about as good as gradient ascent or better; gradient ascent leaves 10 to 14% of the Q spread on Cartesian and square moves, so the learned Q has several local peaks over a player's moves. Autograd and finite differences agree, so the analytic gradient (the notes' "??") is not needed.
+- **On polar moves every local method fails** (27 to 32% of the spread), which explains why polar learning fails: its learning target comes from the same gradient play.
+
+**Both players at once.** Simultaneous gradient play on the learned stage games at 30 random states, by step size (in units of the move set's radius):
+
+| Encoding | Step size | Settled within 500 | Median iterations | Equilibrium gap (mean) |
+|---|---|---|---|---|
+| square | 0.03 | 17% | 500 | 0.0058 |
+| square | 0.1 | 40% | 500 | 0.0009 |
+| square | 0.3 | 43% | 500 | 0.0005 |
+| square | 1.0 | 43% | 500 | 0.0006 |
+| square | 3.0 | 43% | 500 | 0.0012 |
+| polar | 0.03 | 0% | 500 | 0.7640 |
+| polar | 0.1 | 0% | 500 | 0.7012 |
+| polar | 0.3 | 3% | 500 | 0.6589 |
+| polar | 1.0 | 7% | 500 | 0.6551 |
+| polar | 3.0 | 0% | 500 | 0.5676 |
+| cartesian | 0.03 | 3% | 500 | 0.0017 |
+| cartesian | 0.1 | 13% | 500 | 0.0005 |
+| cartesian | 0.3 | 27% | 500 | 0.0006 |
+| cartesian | 1.0 | 27% | 500 | 0.0007 |
+| cartesian | 3.0 | 30% | 500 | 0.0006 |
+
+- **Step sizes of 0.1 to 1 work best.** The moves rarely stop changing by less than 1e-5 within 500 iterations, but where they hover leaves either player at most about 0.001 to gain on Cartesian and square moves; on polar moves the gap stays at 0.57 to 0.76.
+
+**Paths.** Greedy equilibrium paths of the seed-0 networks from four starts (`docs/continuous_q_trajectories.svg`): with Cartesian and square moves both players head for their corners from every start and, where a straight line would leave the square, slide along the edge, which is what happens at the turn; with polar moves blue barely moves. Five seeds and one house setup; the reading of the notes is in ASSUMPTIONS.md.
+
 ## 6. Research questions and answers
 
 The statuses are the same as in [RESEARCH_QUESTIONS.md](RESEARCH_QUESTIONS.md).
@@ -744,6 +800,10 @@ The statuses are the same as in [RESEARCH_QUESTIONS.md](RESEARCH_QUESTIONS.md).
 **Q35. What happens in a noisy, continuous-time dog game?** *Partly answered.* In the continuous-time limit Proposition 2's equilibrium becomes bang-bang with explicit switching points, and holding needs slack at least (1 + r)/(2 + r); a noisy dog keeps the equilibrium bang-bang but moves the switching points, unlike a linear-quadratic benchmark (Section 5.23). Continuous-time q-learning is open.
 
 **Q37. Does self-play learn a feedback equilibrium with inertia?** *Answered for two settings: no.* From random starts, A2C and PPO learn to hold the one-shot actions everywhere, which is exploitable off the equilibrium path; longer training and a Beta policy do not change this. Noise-free gradient play finds the equilibrium with a table of actions but not with a shared network, so function approximation, not sampling noise, is what stops it (Section 5.22).
+
+**Q38. Which move coordinates work for Nash-Q with continuous moves?** *Answered for the walking game.* Cartesian (or square) moves: every seed reaches the corners; polar moves: none, because gradient play in polar coordinates does not find the stage-game equilibrium (Section 5.24).
+
+**Q39. How should a best response over a continuous move be computed?** *Answered for these networks.* A batched grid is exact and fastest on a CPU; a five-point quadratic fit needs 15 evaluations and does as well as gradient ascent, which stops at local peaks (Section 5.24).
 
 **Q36. What happens with many houses?** *Partly answered.* The one-shot dog converges to the generalized median `d = 1 - F(d)` (known for the average voting rule), and with inertia the static equilibrium stays a feedback equilibrium only without a pivot and below an inertia of order 1/N (Section 5.21). The many-house feedback equilibrium is open.
 
