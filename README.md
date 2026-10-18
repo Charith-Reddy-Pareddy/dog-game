@@ -124,6 +124,9 @@ from the saved runs in `results/`:
   learning works, and one setup is much harder (no algorithm learns it in 300 episodes).
 - **An entropy bonus does not make PPO reliable on the walking game.** A coefficient of 0.03 lowers the mean
   distance from the corners but leaves 3 of 5 seeds there, as without it (Q31).
+- **For Nash-Q with continuous moves, Cartesian coordinates work and polar ones do not.** Every seed reaches
+  the corners with (vx, vy) moves and none with (r, theta), because gradient play cannot find the stage-game
+  equilibrium in polar coordinates; a batched grid or a five-point quadratic gives fast best responses (Q38, Q39).
 - **PPO is unstable there because each update moves too far.** A tighter clipping range (0.05) with four epochs
   nearly matches one-epoch PPO (Q27).
 - **PPO's speed comes from reusing each episode.** With one epoch (one gradient step per

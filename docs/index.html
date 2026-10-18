@@ -216,7 +216,7 @@
       <li><b>PPO is fast because it reuses each episode.</b> With one epoch it is no faster than REINFORCE. <a href="#experiments">More experiments</a></li>
       <li><b>The walking game reverses the ranking.</b> A2C is the most reliable there, and PPO is fast but swings away from the corners again; a gentler PPO settles with more training. <a href="#trajectories">Walking game</a> &middot; <a href="#walking-report">Report</a></li>
       <li><b>With dog inertia, a closed form says when the one-shot actions stay a feedback equilibrium, and an explicit piecewise-affine policy is one when they do not; the game is not a Markov potential game.</b> <a href="#experiments">More experiments</a></li>
-      <li><b>29 of 38 research questions are answered, 8 partly, 1 open.</b> <a href="#questions">Research questions</a></li>
+      <li><b>31 of 40 research questions are answered, 8 partly, 1 open.</b> <a href="#questions">Research questions</a></li>
       <li><b>Polar actions did not improve the primary policy-gradient comparison.</b> In the first setup, their expected one-shot gain was higher than Cartesian Beta in all 30 paired seeds; the four-house REINFORCE follow-up was mixed. <a href="#polar-actions">See the study</a></li>
     </ul>
   </section>
@@ -546,6 +546,25 @@
       <li>It is not the clipping at the box&#x27;s edge: an unclipped dog gives the same switching points. Why noise moves them is open.</li>
     </ul>
 
+    <h3>Continuous moves for Nash-Q (week-7 notes)</h3>
+    <p class="hint" style="margin:0 0 6px">One network reads the state and both players&#x27; moves; each stage game&#x27;s equilibrium comes from simultaneous gradient play on it. Three encodings of the same moves, five seeds: summed distance from the one-shot corners after 15 greedy steps.</p>
+    <p class="hint scroll-hint">Swipe the table sideways to see every column.</p>
+    <div class="table-scroll">
+    <table><thead><tr><th>Move encoding</th><th>Seeds</th><th>From the houses</th><th>From random starts</th><th>Seeds under 0.1 from random starts</th></tr></thead><tbody><tr><td>cartesian</td><td>5</td><td>0.000 (0.000 to 0.001)</td><td>0.000 (0.000 to 0.001)</td><td>5 of 5</td></tr><tr><td>polar</td><td>5</td><td>0.461 (0.461 to 0.564)</td><td>1.061 (0.969 to 1.213)</td><td>0 of 5</td></tr><tr><td>square</td><td>5</td><td>0.000 (0.000 to 0.014)</td><td>0.000 (0.000 to 0.014)</td><td>5 of 5</td></tr></tbody></table>
+    </div>
+    <ul>
+      <li>Cartesian (and square) moves reach the corners from every start in every seed; polar moves never do.</li>
+    </ul>
+    <p class="hint" style="margin:10px 0 6px">Best responses on the trained networks against a dense grid (50 states).</p>
+    <p class="hint scroll-hint">Swipe the table sideways to see every column.</p>
+    <div class="table-scroll">
+    <table><thead><tr><th>Encoding</th><th>Method</th><th>Shortfall in Q</th><th>Share of the Q spread</th><th>Q evaluations</th><th>Milliseconds</th></tr></thead><tbody><tr><td>square</td><td>grid</td><td>0.0000</td><td>0.0%</td><td>1681</td><td>0.36</td></tr><tr><td>square</td><td>autograd</td><td>0.0742</td><td>14.3%</td><td>30</td><td>5.71</td></tr><tr><td>square</td><td>finite</td><td>0.0742</td><td>14.2%</td><td>120</td><td>4.41</td></tr><tr><td>square</td><td>quadratic</td><td>0.0237</td><td>4.5%</td><td>15</td><td>0.45</td></tr><tr><td>polar</td><td>grid</td><td>0.0000</td><td>0.0%</td><td>1722</td><td>0.32</td></tr><tr><td>polar</td><td>autograd</td><td>0.3897</td><td>27.2%</td><td>30</td><td>5.76</td></tr><tr><td>polar</td><td>finite</td><td>0.3897</td><td>27.2%</td><td>120</td><td>4.69</td></tr><tr><td>polar</td><td>quadratic</td><td>0.4241</td><td>31.7%</td><td>15</td><td>0.41</td></tr><tr><td>cartesian</td><td>grid</td><td>0.0000</td><td>0.0%</td><td>1257</td><td>0.23</td></tr><tr><td>cartesian</td><td>autograd</td><td>0.0392</td><td>10.6%</td><td>30</td><td>4.00</td></tr><tr><td>cartesian</td><td>finite</td><td>0.0392</td><td>10.6%</td><td>120</td><td>3.14</td></tr><tr><td>cartesian</td><td>quadratic</td><td>0.0426</td><td>9.6%</td><td>15</td><td>0.30</td></tr></tbody></table>
+    </div>
+    <ul>
+      <li>A batched grid is exact and fastest on a CPU; a five-point quadratic needs 15 evaluations and matches gradient ascent, which stops at local peaks. In polar coordinates every local method fails, which is why polar learning fails.</li>
+    </ul>
+    <p><img src="continuous_q_trajectories.svg" alt="Greedy equilibrium paths of the continuous-move Nash-Q networks from four starts" style="width:100%;max-width:900px"></p>
+
     <h3>Many houses</h3>
     <p class="hint" style="margin:0 0 6px">N houses drawn from a skewed distribution (Beta(2, 5)), equal weights, 200 draws per N, one coordinate. The one-shot dog is the generalized median of the average voting rule (Renault and Trannoy, 2005); Proposition 1 holds for any number of players.</p>
     <p class="hint scroll-hint">Swipe the table sideways to see every column.</p>
@@ -801,6 +820,8 @@
     <details class="q"><summary><span class="q-num">Q35</span>What happens in a noisy, continuous-time dog game, and does continuous-time q-learning recover the box-constrained equilibrium?<span class="chip partly">Partly</span></summary><p>As the time step shrinks, Proposition 2&#x27;s equilibrium becomes bang-bang with explicit switching points, and holding needs slack at least (1 + r)/(2 + r). A noisy dog keeps the equilibrium bang-bang but moves the switching points, also without clipping, unlike a linear-quadratic benchmark with an action cost.</p><p><b>Status:</b> Partly answered; continuous-time q-learning is open.</p></details>
     <details class="q"><summary><span class="q-num">Q36</span>Does the many-house game have a mean-field limit, and what do learners find there?<span class="chip partly">Partly</span></summary><p>With equal weights the one-shot dog converges to the generalized median d = 1 &minus; F(d), the known outcome of the average voting rule. With inertia, holding the one-shot actions is Markov-perfect only without a pivot player inside the box (about one draw in three) and below an inertia of about 0.35/N.</p><p><b>Status:</b> Partly answered; the many-house feedback equilibrium and what learners find are open.</p></details>
     <details class="q"><summary><span class="q-num">Q37</span>Does policy-gradient self-play learn a feedback equilibrium of the game with inertia?<span class="chip answered">Answered</span></summary><p>From random dog positions, A2C and PPO learn to hold the one-shot actions everywhere (19 of 20 runs across two settings), which a player can exploit off the equilibrium path. Five times longer training and a Beta policy do not change this; REINFORCE does not do better.</p><p>Noise-free gradient play finds it with a table of actions but not with a shared network.</p><p><b>Status:</b> Answered for two settings: no; function approximation is what stops it.</p></details>
+    <details class="q"><summary><span class="q-num">Q38</span>Which move coordinates work better for Nash-Q with continuous moves, (vx, vy) or (r, &theta;)?<span class="chip answered">Answered</span></summary><p>Cartesian moves, in a disk or a square, bring both players to the corners from every start in every seed; polar moves in none, because gradient play in polar coordinates does not find the stage-game equilibrium.</p><p><b>Status:</b> Answered for the walking game (five seeds per encoding).</p></details>
+    <details class="q"><summary><span class="q-num">Q39</span>How should a best response over a continuous move be computed from a Q-network, quickly?<span class="chip answered">Answered</span></summary><p>A batched dense grid is exact and fastest on a CPU; a quadratic through five points needs 15 evaluations and does as well as gradient ascent, which stops at local peaks; autograd and finite differences agree.</p><p><b>Status:</b> Answered for these networks.</p></details>
   </section>
 
   <section class="card notes" id="assumptions">
