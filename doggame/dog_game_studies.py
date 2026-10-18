@@ -15,6 +15,7 @@ to do only the second of four shards.
 - continuous_q: Nash-Q with continuous moves on the walking game, three move encodings
 - mechanisms: mean against median aggregation with inertia, outcome, exaggeration and welfare
 - mechanisms_wide: the same welfare comparison on more draws, players and inertias
+- mechanisms_robust: the same with more patient players and with 9 and 15 players
 - mechanisms_noise: the same with shocks on the outcome, to look for a welfare-maximizing inertia
 - mechanisms_noise_planner: the optimal planner for those games
 - continuous_q_tools: best-response methods, simultaneous gradient play and paths on those networks
@@ -255,6 +256,35 @@ def study_mechanisms_wide(seeds):
                         out[rule] = dict(loss=M.social_loss(move, houses), long=lr(x), outcome=x)
                     return out
                 yield dict(n=n, w0=w0, draw=draw), run
+
+
+def study_mechanisms_robust(seeds):
+    """Robustness of the mean-against-median reversal (mechanisms_wide, same draws): more patient players
+    (discount 0.95 and 0.99, 3, 5 or 7 players) and more players (9 and 15, discount 0.9), 100 draws at
+    eight inertias. The horizon grows with patience so that the cut-off tail is below 1e-6; on the first
+    3 draws the one-round deviation gain of each rule's equilibrium is checked where the horizon is at most
+    300 rounds (not at discount 0.99, where the check is too slow)."""
+    from doggame import mechanisms as M
+
+    cells = [(n, g) for g in (0.95, 0.99) for n in (3, 5, 7)] + [(n, 0.9) for n in (9, 15)]
+    for n, g in cells:
+        rounds = int(np.ceil(np.log(1e-6) / np.log(g)))
+        for w0 in (0.0, 0.15, 0.3, 0.45, 0.6, 0.75, 0.9, 0.95):
+            for draw in range(100):
+                def run(n=n, g=g, rounds=rounds, w0=w0, draw=draw):
+                    houses, weights = np.random.default_rng(1000 * n + draw).random(n), np.full(n, 1 / n)
+                    lr = lambda x: float(((x - houses) ** 2).sum())  # noqa: E731
+                    out = dict(planner=M.social_loss(lambda x: M.planner_step(x, houses, w0), houses, g, rounds=rounds), planner_long=lr(houses.mean()))
+                    for rule in M.RULES:
+                        targets, it = M.target_equilibrium(rule, houses, weights, w0, g, grid=401, rounds=rounds)
+                        move = lambda x, rule=rule, targets=targets: M.step(rule, x, targets, weights, w0)
+                        x = M.steady_state(move, start=float(np.mean(houses)))
+                        out[rule] = dict(loss=M.social_loss(move, houses, g, rounds=rounds), long=lr(x), outcome=x, iterations=it)
+                        if draw < 3 and rounds <= 300:
+                            policy = lambda v, rule=rule, targets=targets: M.reports(rule, v, targets, weights, w0)
+                            out[rule]["gain"] = M.deviation_gain(rule, policy, houses, weights, w0, g, states=11, grid=101, rounds=rounds)
+                    return out
+                yield dict(n=n, discount=g, w0=w0, draw=draw), run
 
 
 def study_mechanisms_noise(seeds):
@@ -879,7 +909,7 @@ def study_noise(seeds, resolution=9):
     yield dict(iterations="exact", seed=0), lambda: dict(spread=float(spread), gap=float(gap), support=int((exact_red > 1e-3).sum()), top=float(exact_red.max()))
 
 
-STUDIES = dict(learning_checks=study_learning_checks, learning_fix=study_learning_fix, mechanisms_noise_planner=study_mechanisms_noise_planner, mechanisms_noise=study_mechanisms_noise, mechanisms_wide=study_mechanisms_wide, mechanisms=study_mechanisms, continuous_q=study_continuous_q, continuous_q_tools=study_continuous_q_tools, soccer_exact_play=study_soccer_exact_play, exact_play_many=study_exact_play_many, many_targets=study_many_targets, target_random=study_target_random, cross_play=study_cross_play, vertex_selection=study_vertex_selection, walking_clip=study_walking_clip, walking_entropy=study_walking_entropy, pretraining_mechanism=study_pretraining_mechanism, noisy_inertia=study_noisy_inertia, exact_play=study_exact_play, feedback_learning=study_feedback_learning, many_houses=study_many_houses, selection_linear=study_selection_linear, selection_clip=study_selection_clip, inertia_explicit=study_inertia_explicit, inertia_random=study_inertia_random, selection_noise=study_selection_noise, inertia_dp=study_inertia_dp, markov_potential=study_markov_potential, algorithms=study_algorithms, walking=study_walking, ppo_variants=study_ppo_variants, ppo_long=study_ppo_long,
+STUDIES = dict(mechanisms_robust=study_mechanisms_robust, learning_checks=study_learning_checks, learning_fix=study_learning_fix, mechanisms_noise_planner=study_mechanisms_noise_planner, mechanisms_noise=study_mechanisms_noise, mechanisms_wide=study_mechanisms_wide, mechanisms=study_mechanisms, continuous_q=study_continuous_q, continuous_q_tools=study_continuous_q_tools, soccer_exact_play=study_soccer_exact_play, exact_play_many=study_exact_play_many, many_targets=study_many_targets, target_random=study_target_random, cross_play=study_cross_play, vertex_selection=study_vertex_selection, walking_clip=study_walking_clip, walking_entropy=study_walking_entropy, pretraining_mechanism=study_pretraining_mechanism, noisy_inertia=study_noisy_inertia, exact_play=study_exact_play, feedback_learning=study_feedback_learning, many_houses=study_many_houses, selection_linear=study_selection_linear, selection_clip=study_selection_clip, inertia_explicit=study_inertia_explicit, inertia_random=study_inertia_random, selection_noise=study_selection_noise, inertia_dp=study_inertia_dp, markov_potential=study_markov_potential, algorithms=study_algorithms, walking=study_walking, ppo_variants=study_ppo_variants, ppo_long=study_ppo_long,
                walking_settings=study_walking_settings, walking_houses=study_walking_houses, walking_inertia=study_walking_inertia,
                walking_equilibrium=study_walking_equilibrium, walking_capacity=study_walking_capacity, walking_ppo_inertia=study_walking_ppo_inertia,
                walking_hard_long=study_walking_hard_long, inertia_equilibrium=study_inertia_equilibrium, selection=study_selection, inertia=study_inertia, pretraining=study_pretraining,

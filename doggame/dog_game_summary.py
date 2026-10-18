@@ -518,6 +518,23 @@ def mechanisms_wide_table(rows):
     return table
 
 
+def mechanisms_robust_table(rows):
+    """The mean-against-median reversal with more patient players and more players: per cell, the share of
+    draws where the median rule loses less at each inertia, the first inertia where it does in more than half,
+    and the largest one-round deviation gain where checked."""
+    runs = study(rows, "mechanisms_robust")
+    w0s = sorted({r["key"]["w0"] for r in runs})
+    table = [["Players", "Discount"] + [f"w0 = {w0}" for w0 in w0s] + ["Median rule wins from", "Largest gain"]]
+    for n, g in sorted({(r["key"]["n"], r["key"]["discount"]) for r in runs}, key=lambda c: (c[1] != 0.9, c[1], c[0])):
+        mine = [r for r in runs if (r["key"]["n"], r["key"]["discount"]) == (n, g)]
+        wins = {w0: [r["median"]["loss"] < r["mean"]["loss"] for r in mine if r["key"]["w0"] == w0] for w0 in w0s}
+        share = {w0: sum(v) / len(v) for w0, v in wins.items() if v}
+        first = next((str(w0) for w0 in w0s if share.get(w0, 0) > 0.5), "-")
+        gains = [r[rule]["gain"] for r in mine for rule in ("mean", "median") if "gain" in r[rule]]
+        table.append([str(n), str(g)] + [f"{share[w0]:.0%}" if w0 in share else "" for w0 in w0s] + [first, f"{max(gains):.4f}" if gains else "-"])
+    return table
+
+
 def mechanisms_noise_table(rows):
     """Cooling off: with a shock on each next outcome, the mean discounted summed loss (over draws) of the
     optimal planner and of each rule's equilibrium at each inertia, the inertia where each is lowest,
@@ -813,7 +830,7 @@ if __name__ == "__main__":
                         ("walking hard long", walking_hard_long_table(studies)), ("inertia equilibrium", inertia_equilibrium_table(studies)),
                         ("selection noise", selection_noise_table(studies)), ("inertia dp", inertia_dp_table(studies)),
                         ("markov potential", markov_potential_table(studies)), ("selection clip", selection_clip_table(studies)),
-                        ("inertia explicit", inertia_explicit_table(studies)), ("inertia random", inertia_random_table(studies)), ("many houses", many_houses_table(studies)), ("feedback learning", feedback_learning_table(studies)), ("exact play", exact_play_table(studies)), ("noisy inertia", noisy_inertia_table(studies)), ("pretraining mechanism", pretraining_mechanism_table(studies)), ("walking entropy", walking_entropy_table(studies)), ("walking clip", walking_clip_table(studies)), ("vertex selection", vertex_selection_table(studies)), ("cross play", cross_play_table(studies)), ("target random", target_random_table(studies)), ("many targets", many_targets_table(studies)), ("exact play many", exact_play_many_table(studies)), ("soccer exact play", soccer_exact_play_table(studies)), ("mechanisms", mechanisms_table(studies)), ("mechanisms wide", mechanisms_wide_table(studies)), ("mechanisms noise", mechanisms_noise_table(studies)), ("learning fix", learning_fix_table(studies)), ("learning checks", learning_checks_table(studies)), ("continuous q", continuous_q_table(studies)),
+                        ("inertia explicit", inertia_explicit_table(studies)), ("inertia random", inertia_random_table(studies)), ("many houses", many_houses_table(studies)), ("feedback learning", feedback_learning_table(studies)), ("exact play", exact_play_table(studies)), ("noisy inertia", noisy_inertia_table(studies)), ("pretraining mechanism", pretraining_mechanism_table(studies)), ("walking entropy", walking_entropy_table(studies)), ("walking clip", walking_clip_table(studies)), ("vertex selection", vertex_selection_table(studies)), ("cross play", cross_play_table(studies)), ("target random", target_random_table(studies)), ("many targets", many_targets_table(studies)), ("exact play many", exact_play_many_table(studies)), ("soccer exact play", soccer_exact_play_table(studies)), ("mechanisms", mechanisms_table(studies)), ("mechanisms wide", mechanisms_wide_table(studies)), ("mechanisms robust", mechanisms_robust_table(studies)), ("mechanisms noise", mechanisms_noise_table(studies)), ("learning fix", learning_fix_table(studies)), ("learning checks", learning_checks_table(studies)), ("continuous q", continuous_q_table(studies)),
                         ("continuous best responses", continuous_br_table(studies)), ("continuous convergence", continuous_convergence_table(studies))):
         print(f"\n### {name}\n\n{markdown(table)}")
     print("\nconvergence counts:", convergence_counts(runs))

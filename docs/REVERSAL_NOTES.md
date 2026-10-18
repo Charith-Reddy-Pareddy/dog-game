@@ -58,7 +58,16 @@ exactly when the adjustment is slow relative to discounting. Both limits use tar
 depend on rho; this needs care.
 
 **Testable prediction for the discrete game:** the inertia at which the median rule starts winning
-should rise with patience. The study `mechanisms_robust` (discount 0.95 and 0.99) tests this.
+should rise with patience. First results from the study `mechanisms_robust` (100 draws per cell,
+table `mechanisms robust` in `doggame/dog_game_summary.py`) agree:
+- The reversal holds in every cell: the median rule loses less in 17 to 19% of draws without inertia
+  and in a majority at high inertia, for discount 0.9, 0.95 and 0.99 and for 3 to 15 players.
+- The first inertia at which it wins in more than half the draws rises with patience: for 5 players
+  0.6, 0.6 and 0.75, for 7 players 0.6, 0.75 and 0.9 (discount 0.9, 0.95, 0.99; the 0.9 values come
+  from `mechanisms_wide`). For 3 players it is 0.3, 0.45 and 0.45.
+- With 9 and 15 players the median rule wins in 98 and 100% of draws at inertia 0.95. There the
+  target-form equilibria are not exact: the largest one-round deviation gain is about 0.011 (checked
+  on 3 draws per inertia), so these cells need a better equilibrium solver before they are reported.
 
 ## Next steps
 
