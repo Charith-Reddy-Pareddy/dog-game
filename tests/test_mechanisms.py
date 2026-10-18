@@ -65,3 +65,23 @@ def test_the_greedy_planner_loss_falls_with_inertia_while_the_mean_house_stays_r
         losses.append(M.social_loss(lambda x: M.planner_step(x, houses, w0), houses, shock=shock))
         assert np.isclose(losses[-1], (((houses - houses.mean()) ** 2).sum() + 3 * spread) / 0.1)
     assert losses[0] > losses[1] > losses[2]
+
+
+def test_in_the_continuous_limit_the_median_rule_runs_and_the_mean_rule_is_a_tug_of_war():
+    from scipy.integrate import solve_ivp
+
+    houses, weights, dt, rate = np.array([0.05, 0.2, 0.45, 0.7, 0.95]), np.full(5, 0.2), 0.02, 0.5
+    w0, discount = 1 - dt, np.exp(-rate * dt)
+    times = np.arange(int(4 / dt) + 1) * dt
+    for rule in M.RULES:
+        targets, _ = M.target_equilibrium(rule, houses, weights, w0, discount, grid=1601, rounds=1400)
+        x, path = np.array([0.0]), [0.0]
+        for _ in times[1:]:
+            x = M.step(rule, x, targets, weights, w0)
+            path.append(float(x[0]))
+        if rule == "median":  # full speed, dx/dt = 1 - x, until the median house
+            limit = np.minimum(1 - np.exp(-times), np.median(houses))
+        else:  # dx/dt = U(x) - x, U the weight of players whose targets lie above x
+            ode = solve_ivp(lambda _, y: [weights[targets > y[0]].sum() - y[0]], (0, times[-1]), [0.0], t_eval=times, max_step=dt / 4)
+            limit = ode.y[0]
+        assert np.abs(np.array(path) - limit).max() < 0.005
