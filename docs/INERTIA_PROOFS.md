@@ -209,6 +209,37 @@ median house as fast as any mechanism could move it there. The mean rule has no 
 study `mechanisms` its outcome moves more slowly, because players on the far side of the outcome keep
 pulling against it.
 
+## Cooling off
+
+Add a shock to each round: the outcome lands at y = clip(z + e, 0, 1), where z is the outcome the
+reports aim at and e has a symmetric distribution with e != 0 with positive probability. The shock
+either comes with the new aggregate, e = (1 - w0) s eps (the inertia filters it), or hits the outcome
+itself, e = s eps. The greedy planner aims at the mean house hbar of the N houses each round, as close
+as it can reach.
+
+**Proposition 5.** Let wbar = min(hbar, 1 - hbar). For w0 in [0, wbar] the greedy planner's expected
+discounted summed loss, from any start, is
+
+  L(w0) = (sum_i (h_i - hbar)^2 + N phi(sigma)) / (1 - g),  phi(sigma) = E[(clip(hbar + sigma eps, 0, 1) - hbar)^2],
+
+with sigma = (1 - w0) s when the shock comes with the aggregate and sigma = s when it hits the outcome.
+So with a filtered shock L is strictly decreasing on [0, wbar]: some inertia is strictly better than
+none, and the welfare-maximizing inertia is at least wbar. With a shock on the outcome, L is constant
+on [0, wbar].
+
+*Proof.* From any y in [0, 1] the reachable interval [w0 y, w0 y + 1 - w0] contains hbar when
+w0 <= hbar and hbar <= 1 - w0, so the planner aims at hbar in every round and every round's outcome is
+clip(hbar + e, 0, 1). The summed loss at an outcome y is sum_i (h_i - hbar)^2 + N (y - hbar)^2, which
+gives L. Each |clip(hbar + sigma eps, 0, 1) - hbar| is nondecreasing in sigma and strictly increasing
+where it is not clipped, which has positive probability, so phi is strictly increasing. ∎
+
+Above wbar the planner can no longer reach hbar from every outcome, and slow adjustment starts to
+cost; the study `mechanisms_noise` finds the loss U-shaped in w0, lowest at w0 = 0.6 to 0.75 for the
+planner and at 0.45 to 0.9 for the equilibria of the mean and the median rule (which the proposition
+does not cover), the optimum rising with the size of the shock. With a
+shock on the outcome the planner is best off with no inertia. (The greedy planner is not optimal when
+clipping is frequent; the study also computes the optimal planner.)
+
 ## What the propositions do not cover
 
 - **Interior one-shot actions.** If a player's one-shot action is strictly inside the box, its hold region is the

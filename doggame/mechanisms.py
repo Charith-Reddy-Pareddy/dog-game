@@ -11,6 +11,12 @@ the next outcome is, for the mean rule, the generalized median of the targets
 (doggame.many_houses.next_dog), and for the median rule simply the median target clipped to what can
 be reached this round. The targets solve a fixed point, found by damped iteration. A planner who
 minimizes the summed loss moves the outcome as close to the mean house as it can each round.
+
+With ``shock`` (Gauss-Hermite nodes and weights, from ``shocks``) a normal shock is added to each next
+outcome, which is then clipped to [0, 1]. A player's one-round objective still depends only on the
+outcome before the shock, so target form survives. Values then come from the stationary Bellman
+equation on a grid of outcomes (interpolated), not from simulated paths: fixed draws per round would
+make the problem non-stationary, and a one-round deviation could then exploit the particular draws.
 """
 
 import numpy as np
@@ -48,17 +54,40 @@ def _values(rule, x, targets, houses, weights, w0, discount, rounds):
     return total
 
 
-def target_equilibrium(rule, houses, weights, w0, discount=0.9, grid=801, rounds=200, tol=1e-9, max_iter=300):
+def target_equilibrium(rule, houses, weights, w0, discount=0.9, grid=801, rounds=200, tol=1e-9, max_iter=300, shock=None):
     """Targets in equilibrium for the rule, by damped fixed-point iteration from the houses."""
     houses = np.asarray(houses, dtype=float)
     targets, zs = houses.copy(), np.linspace(0, 1, grid)
     for it in range(1, max_iter + 1):
-        objective = -(zs[None, :] - houses[:, None]) ** 2 + discount * _values(rule, zs, targets, houses, weights, w0, discount, rounds)
+        if shock is None:
+            objective = -(zs[None, :] - houses[:, None]) ** 2 + discount * _values(rule, zs, targets, houses, weights, w0, discount, rounds)
+        else:
+            objective = -_shock_losses(lambda x: step(rule, x, targets, weights, w0), zs, houses, discount, shock)
         new = zs[objective.argmax(1)]
         if np.abs(new - targets).max() < tol:
             return new, it
         targets = 0.5 * targets + 0.5 * new
     return targets, max_iter
+
+
+def shocks(noise, w0, filtered=True, nodes=9):
+    """Nodes and weights for the shock: normal with standard deviation noise, times (1 - w0) when the
+    shock comes with the new aggregate (filtered by the inertia) rather than hitting the outcome itself."""
+    x, p = np.polynomial.hermite_e.hermegauss(nodes)
+    return noise * (1 - w0 if filtered else 1) * x, p / p.sum()
+
+
+def _shock_losses(move, z, houses, discount, shock, grid=401, sweeps=200):
+    """Each player's expected discounted loss when the next outcome before its shock is z and the
+    outcome then follows ``move`` and the shocks."""
+    nodes, probs = shock
+    houses, ys = np.asarray(houses, dtype=float)[:, None, None], np.linspace(0, 1, grid)
+    land = lambda v: np.clip(np.asarray(v, dtype=float)[:, None] + nodes, 0, 1)  # noqa: E731
+    y, total = land(move(ys)), np.zeros((len(houses), grid))
+    for _ in range(sweeps):  # from each realized outcome on the grid
+        total = ((y[None] - houses) ** 2 + discount * np.stack([np.interp(y, ys, t) for t in total])) @ probs
+    y = land(z)
+    return ((y[None] - houses) ** 2 + discount * np.stack([np.interp(y, ys, t) for t in total])) @ probs
 
 
 def deviation_gain(rule, policy, houses, weights, w0, discount=0.9, states=21, grid=201, rounds=200):
@@ -81,15 +110,24 @@ def deviation_gain(rule, policy, houses, weights, w0, discount=0.9, states=21, g
 
 
 def planner_step(x, houses, w0):
-    """The planner moves the outcome as close to the mean house as it can this round."""
+    """The planner moves the outcome as close to the mean house as it can this round (optimal without shocks)."""
     x = np.asarray(x, dtype=float)
     return np.clip(np.mean(houses), w0 * x, w0 * x + 1 - w0)
 
 
-def social_loss(next_fn, houses, discount=0.9, starts=101, rounds=200):
+def planner_target(houses, w0, discount=0.9, shock=None, grid=401):
+    """The planner's target with shocks: the summed loss is n (z - mean house)^2 plus a constant, so the
+    planner is a single player whose house is the mean house; with clipped shocks its target can differ
+    from that house. Its next outcome is next_median(x, [target], w0)."""
+    return float(target_equilibrium("median", [np.mean(houses)], [1.0], w0, discount, grid=grid, shock=shock)[0][0])
+
+
+def social_loss(next_fn, houses, discount=0.9, starts=101, rounds=200, shock=None):
     """Discounted summed loss of all players, averaged over evenly spread starting outcomes."""
     x, total = np.linspace(0, 1, starts), np.zeros(starts)
     houses = np.asarray(houses, dtype=float)
+    if shock is not None:
+        return float(_shock_losses(next_fn, next_fn(x), houses, discount, shock).sum(0).mean())
     for k in range(rounds):
         x = next_fn(x)
         total += discount ** k * ((x[:, None] - houses[None, :]) ** 2).sum(1)

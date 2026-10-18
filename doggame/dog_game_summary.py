@@ -480,6 +480,30 @@ def mechanisms_wide_table(rows):
     return table
 
 
+def mechanisms_noise_table(rows):
+    """Cooling off: with a shock on each next outcome, the mean discounted summed loss (over draws) of the
+    optimal planner and of each rule's equilibrium at each inertia, the inertia where each is lowest,
+    with the loss there, and in how many draws the median rule's own loss is lowest at an interior inertia."""
+    runs, plans = study(rows, "mechanisms_noise"), {json.dumps(r["key"], sort_keys=True): r for r in study(rows, "mechanisms_noise_planner")}
+    table = [["Players", "Shock", "Inertia", "Planner", "Mean rule", "Median rule"]]
+    cells = sorted({(r["key"]["n"], r["key"]["noise"], r["key"]["filtered"]) for r in runs}, key=lambda c: (c[0], not c[2], c[1]))
+    for n, noise, filtered in cells:
+        mine = [r for r in runs if (r["key"]["n"], r["key"]["noise"], r["key"]["filtered"]) == (n, noise, filtered)]
+        w0s = sorted({r["key"]["w0"] for r in mine})
+        loss = {(w0, who): np.mean([plans[json.dumps(r["key"], sort_keys=True)]["loss"] if who == "planner" else r[who]["loss"]
+                                    for r in mine if r["key"]["w0"] == w0]) for w0 in w0s for who in ("planner", "mean", "median")}
+        shock = f"{noise}" + (" with the aggregate" if filtered else " on the outcome")
+        for w0 in w0s:
+            table.append([str(n), shock, str(w0)] + [f"{loss[w0, who]:.3f}" for who in ("planner", "mean", "median")])
+        best = [(lambda w0: f"{w0} ({loss[w0, who]:.3f})")(min(w0s, key=lambda w0: loss[w0, who])) for who in ("planner", "mean", "median")]
+        by_draw = {}
+        for r in mine:
+            by_draw.setdefault(r["key"]["draw"], {})[r["key"]["w0"]] = r["median"]["loss"]
+        interior = sum(min(d, key=d.get) not in (w0s[0], w0s[-1]) for d in by_draw.values())
+        table.append([str(n), shock, "lowest at"] + best[:2] + [f"{best[2]} (interior in {interior} of {len(by_draw)} draws)"])
+    return table
+
+
 def continuous_q_table(rows):
     """Nash-Q with continuous moves on the walking game: the summed distance of the players' final
     positions from the one-shot Nash corners after 300 episodes, from the houses and from eight fixed
@@ -751,7 +775,7 @@ if __name__ == "__main__":
                         ("walking hard long", walking_hard_long_table(studies)), ("inertia equilibrium", inertia_equilibrium_table(studies)),
                         ("selection noise", selection_noise_table(studies)), ("inertia dp", inertia_dp_table(studies)),
                         ("markov potential", markov_potential_table(studies)), ("selection clip", selection_clip_table(studies)),
-                        ("inertia explicit", inertia_explicit_table(studies)), ("inertia random", inertia_random_table(studies)), ("many houses", many_houses_table(studies)), ("feedback learning", feedback_learning_table(studies)), ("exact play", exact_play_table(studies)), ("noisy inertia", noisy_inertia_table(studies)), ("pretraining mechanism", pretraining_mechanism_table(studies)), ("walking entropy", walking_entropy_table(studies)), ("walking clip", walking_clip_table(studies)), ("vertex selection", vertex_selection_table(studies)), ("cross play", cross_play_table(studies)), ("target random", target_random_table(studies)), ("many targets", many_targets_table(studies)), ("exact play many", exact_play_many_table(studies)), ("soccer exact play", soccer_exact_play_table(studies)), ("mechanisms", mechanisms_table(studies)), ("mechanisms wide", mechanisms_wide_table(studies)), ("continuous q", continuous_q_table(studies)),
+                        ("inertia explicit", inertia_explicit_table(studies)), ("inertia random", inertia_random_table(studies)), ("many houses", many_houses_table(studies)), ("feedback learning", feedback_learning_table(studies)), ("exact play", exact_play_table(studies)), ("noisy inertia", noisy_inertia_table(studies)), ("pretraining mechanism", pretraining_mechanism_table(studies)), ("walking entropy", walking_entropy_table(studies)), ("walking clip", walking_clip_table(studies)), ("vertex selection", vertex_selection_table(studies)), ("cross play", cross_play_table(studies)), ("target random", target_random_table(studies)), ("many targets", many_targets_table(studies)), ("exact play many", exact_play_many_table(studies)), ("soccer exact play", soccer_exact_play_table(studies)), ("mechanisms", mechanisms_table(studies)), ("mechanisms wide", mechanisms_wide_table(studies)), ("mechanisms noise", mechanisms_noise_table(studies)), ("continuous q", continuous_q_table(studies)),
                         ("continuous best responses", continuous_br_table(studies)), ("continuous convergence", continuous_convergence_table(studies))):
         print(f"\n### {name}\n\n{markdown(table)}")
     print("\nconvergence counts:", convergence_counts(runs))

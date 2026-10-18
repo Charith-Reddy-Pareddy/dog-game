@@ -1,4 +1,4 @@
-from doggame.dog_game_summary import (mechanisms_table, mechanisms_wide_table, continuous_br_table, continuous_convergence_table, continuous_q_table, soccer_exact_play_table, exact_play_many_table, many_targets_table, target_random_table, cross_play_table, vertex_selection_table, walking_clip_table, walking_entropy_table, pretraining_mechanism_table, noisy_inertia_table, exact_play_table, feedback_learning_table, many_houses_table, inertia_dp_table, inertia_explicit_table, inertia_random_table, mirror_p, selection_clip_table, markov_potential_table, selection_noise_table, algorithms_table, convergence_counts, markdown, noise_table, resolution_table,
+from doggame.dog_game_summary import (mechanisms_table, mechanisms_wide_table, mechanisms_noise_table, continuous_br_table, continuous_convergence_table, continuous_q_table, soccer_exact_play_table, exact_play_many_table, many_targets_table, target_random_table, cross_play_table, vertex_selection_table, walking_clip_table, walking_entropy_table, pretraining_mechanism_table, noisy_inertia_table, exact_play_table, feedback_learning_table, many_houses_table, inertia_dp_table, inertia_explicit_table, inertia_random_table, mirror_p, selection_clip_table, markov_potential_table, selection_noise_table, algorithms_table, convergence_counts, markdown, noise_table, resolution_table,
                                       selection_outcome, selection_table, walking_algorithms_table, walking_share_series, walking_table,
                                       ppo_epochs_table, ppo_long_table, ppo_walking_table, walking_equilibrium_table, walking_houses_table, walking_inertia_table,
                                       walking_settings_table)
@@ -318,3 +318,15 @@ def test_the_mechanism_tables_compare_the_rules_with_the_planner():
             run("mechanisms_wide", dict(n=3, w0=0.6, draw=0), planner=1.0, planner_long=0.1, mean=entry(1.2, 0.47), median=entry(1.1, 0.45))]
     assert mechanisms_table(rows)[1] == ["3", "0.6", "1.200 / 1.100", "0.100 / 0.100", "0.020 / 0.000", "1 of 1", "0.100"]
     assert mechanisms_wide_table(rows)[1] == ["3", "0.6", "1.200 / 1.100", "1 of 1", "2.000 / 2.000"]
+
+
+def test_the_cooling_off_table_finds_the_inertia_with_the_lowest_loss():
+    rows = []
+    for w0, (plan, mean, median) in zip((0.0, 0.5, 0.9), ((1.5, 2.0, 2.0), (1.0, 1.5, 1.2), (2.0, 2.5, 3.0))):
+        key = dict(n=3, noise=0.2, filtered=True, w0=w0, draw=0)
+        rows += [run("mechanisms_noise", key, planner=9.9, mean=dict(loss=mean), median=dict(loss=median)),
+                 run("mechanisms_noise_planner", key, target=0.5, loss=plan)]
+    table = mechanisms_noise_table(rows)
+    assert table[2] == ["3", "0.2 with the aggregate", "0.5", "1.000", "1.500", "1.200"]
+    assert table[4] == ["3", "0.2 with the aggregate", "lowest at", "0.5 (1.000)", "0.5 (1.500)", "0.5 (1.200) (interior in 1 of 1 draws)"]
+
