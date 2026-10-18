@@ -442,6 +442,44 @@ def soccer_exact_play_table(rows):
     return table
 
 
+def mechanisms_table(rows):
+    """Mean against median aggregation with inertia, per number of players and inertia (30 draws):
+    median price of anarchy (summed discounted loss over the planner's), mean exaggeration at the
+    long-run outcome, how far that outcome is from the median house, the share of draws where the
+    median rule loses less, and the largest one-round gain of truthful median reporting."""
+    runs = study(rows, "mechanisms")
+    table = [["Players", "Inertia", "Price of anarchy: mean rule / median rule", "Exaggeration: mean / median",
+              "Long-run outcome to median house: mean / median", "Median rule loses less", "Truthful median: largest gain"]]
+    for n in sorted({r["key"]["n"] for r in runs}):
+        for w0 in sorted({r["key"]["w0"] for r in runs if r["key"]["n"] == n}):
+            mine = [r for r in runs if (r["key"]["n"], r["key"]["w0"]) == (n, w0)]
+            med = lambda f: np.median([f(r) for r in mine])
+            mid = lambda r: float(np.median(r["houses"]))
+            gains = [r["median"]["truthful_gain"] for r in mine if "truthful_gain" in r["median"]]
+            table.append([str(n), str(w0), f"{med(lambda r: r['mean']['loss'] / r['planner']):.3f} / {med(lambda r: r['median']['loss'] / r['planner']):.3f}",
+                          f"{med(lambda r: r['mean']['exaggeration']):.3f} / {med(lambda r: r['median']['exaggeration']):.3f}",
+                          f"{med(lambda r: abs(r['mean']['outcome'] - mid(r))):.3f} / {med(lambda r: abs(r['median']['outcome'] - mid(r))):.3f}",
+                          f"{sum(r['median']['loss'] < r['mean']['loss'] for r in mine)} of {len(mine)}",
+                          f"{max(gains):.3f}" if gains else "-"])
+    return table
+
+
+def mechanisms_wide_table(rows):
+    """Mean against median with inertia on 100 draws per cell: median price of anarchy of each rule
+    (discounted summed loss over evenly spread starts, over the planner's), the share of draws where the
+    median rule loses less, and the long-run price of anarchy, which inertia does not change."""
+    runs = study(rows, "mechanisms_wide")
+    table = [["Players", "Inertia", "Price of anarchy: mean / median", "Median rule loses less", "Long run: mean / median"]]
+    for n in sorted({r["key"]["n"] for r in runs}):
+        for w0 in sorted({r["key"]["w0"] for r in runs if r["key"]["n"] == n}):
+            mine = [r for r in runs if (r["key"]["n"], r["key"]["w0"]) == (n, w0)]
+            ratio = lambda rule, k, base: np.median([r[rule][k] / r[base] for r in mine])
+            table.append([str(n), str(w0), f"{ratio('mean', 'loss', 'planner'):.3f} / {ratio('median', 'loss', 'planner'):.3f}",
+                          f"{sum(r['median']['loss'] < r['mean']['loss'] for r in mine)} of {len(mine)}",
+                          f"{ratio('mean', 'long', 'planner_long'):.3f} / {ratio('median', 'long', 'planner_long'):.3f}"])
+    return table
+
+
 def continuous_q_table(rows):
     """Nash-Q with continuous moves on the walking game: the summed distance of the players' final
     positions from the one-shot Nash corners after 300 episodes, from the houses and from eight fixed
@@ -713,7 +751,7 @@ if __name__ == "__main__":
                         ("walking hard long", walking_hard_long_table(studies)), ("inertia equilibrium", inertia_equilibrium_table(studies)),
                         ("selection noise", selection_noise_table(studies)), ("inertia dp", inertia_dp_table(studies)),
                         ("markov potential", markov_potential_table(studies)), ("selection clip", selection_clip_table(studies)),
-                        ("inertia explicit", inertia_explicit_table(studies)), ("inertia random", inertia_random_table(studies)), ("many houses", many_houses_table(studies)), ("feedback learning", feedback_learning_table(studies)), ("exact play", exact_play_table(studies)), ("noisy inertia", noisy_inertia_table(studies)), ("pretraining mechanism", pretraining_mechanism_table(studies)), ("walking entropy", walking_entropy_table(studies)), ("walking clip", walking_clip_table(studies)), ("vertex selection", vertex_selection_table(studies)), ("cross play", cross_play_table(studies)), ("target random", target_random_table(studies)), ("many targets", many_targets_table(studies)), ("exact play many", exact_play_many_table(studies)), ("soccer exact play", soccer_exact_play_table(studies)), ("continuous q", continuous_q_table(studies)),
+                        ("inertia explicit", inertia_explicit_table(studies)), ("inertia random", inertia_random_table(studies)), ("many houses", many_houses_table(studies)), ("feedback learning", feedback_learning_table(studies)), ("exact play", exact_play_table(studies)), ("noisy inertia", noisy_inertia_table(studies)), ("pretraining mechanism", pretraining_mechanism_table(studies)), ("walking entropy", walking_entropy_table(studies)), ("walking clip", walking_clip_table(studies)), ("vertex selection", vertex_selection_table(studies)), ("cross play", cross_play_table(studies)), ("target random", target_random_table(studies)), ("many targets", many_targets_table(studies)), ("exact play many", exact_play_many_table(studies)), ("soccer exact play", soccer_exact_play_table(studies)), ("mechanisms", mechanisms_table(studies)), ("mechanisms wide", mechanisms_wide_table(studies)), ("continuous q", continuous_q_table(studies)),
                         ("continuous best responses", continuous_br_table(studies)), ("continuous convergence", continuous_convergence_table(studies))):
         print(f"\n### {name}\n\n{markdown(table)}")
     print("\nconvergence counts:", convergence_counts(runs))

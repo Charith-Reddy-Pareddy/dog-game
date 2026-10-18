@@ -195,3 +195,8 @@ def test_the_soccer_exact_play_study_has_one_table_and_a_network_per_seed():
 def test_the_continuous_q_studies_cover_every_encoding():
     assert {k["encoding"] for k, _ in studies.study_continuous_q(range(5))} == {"cartesian", "polar", "square"}
     assert len([k for k, _ in studies.study_continuous_q_tools(range(5))]) == 3
+
+
+def test_the_mechanism_studies_cover_players_inertias_and_draws():
+    assert len([k for k, _ in studies.study_mechanisms(range(5))]) == 2 * 4 * 30
+    assert len([k for k, _ in studies.study_mechanisms_wide(range(5))]) == 3 * 7 * 100

@@ -13,6 +13,8 @@ to do only the second of four shards.
 - walking_entropy: default PPO on the walking game with an entropy bonus
 - walking_clip: PPO on the walking game with a tighter clipping range
 - continuous_q: Nash-Q with continuous moves on the walking game, three move encodings
+- mechanisms: mean against median aggregation with inertia, outcome, exaggeration and welfare
+- mechanisms_wide: the same welfare comparison on more draws, players and inertias
 - continuous_q_tools: best-response methods, simultaneous gradient play and paths on those networks
 - walking_settings: the walking game with a shorter or longer step and a lower or higher discount
 - walking_houses: the three algorithms on three other house setups
@@ -196,6 +198,59 @@ def study_walking_clip(seeds):
 
 def _continuous_env():
     return PolarDogGameEnv(*WALK_HOUSES, w=0.5, max_step=0.2, discount=0.9)
+
+
+def study_mechanisms(seeds):
+    """Mean against median aggregation with inertia (doggame.mechanisms): 30 random draws of 3 or 5
+    equally weighted houses per inertia. For each rule: the long-run outcome, the players' mean
+    exaggeration there (|report - house|), the discounted summed loss over evenly spread starts
+    against the planner's, and, on the first 5 draws, the one-round deviation gain of the
+    target-form equilibrium and (median rule) of truthful reporting."""
+    from doggame import mechanisms as M
+
+    for n in (3, 5):
+        for w0 in (0.0, 0.3, 0.6, 0.9):
+            for draw in range(30):
+                def run(n=n, w0=w0, draw=draw):
+                    houses, weights = np.random.default_rng(100 * n + draw).random(n), np.full(n, 1 / n)
+                    planner = M.social_loss(lambda x: M.planner_step(x, houses, w0), houses)
+                    out = dict(houses=houses.tolist(), planner=planner)
+                    for rule in M.RULES:
+                        targets, _ = M.target_equilibrium(rule, houses, weights, w0)
+                        move = lambda x, rule=rule, targets=targets: M.step(rule, x, targets, weights, w0)
+                        x = M.steady_state(move, start=float(np.mean(houses)))
+                        entry = dict(targets=targets.tolist(), outcome=x, loss=M.social_loss(move, houses),
+                                     exaggeration=float(np.mean(np.abs(M.reports(rule, x, targets, weights, w0) - houses))))
+                        if draw < 5:
+                            policy = lambda v, rule=rule, targets=targets: M.reports(rule, v, targets, weights, w0)
+                            entry["gain"] = M.deviation_gain(rule, policy, houses, weights, w0, states=11, grid=101, rounds=120)
+                            if rule == "median":
+                                entry["truthful_gain"] = M.deviation_gain(rule, lambda v: houses.copy(), houses, weights, w0, states=11, grid=101, rounds=120)
+                        out[rule] = entry
+                    return out
+                yield dict(n=n, w0=w0, draw=draw), run
+
+
+def study_mechanisms_wide(seeds):
+    """The mean-against-median comparison on 100 draws of 3, 5 or 7 equally weighted houses at seven
+    inertias (no equilibrium checks): each rule's discounted summed loss over evenly spread starts and
+    its long-run loss, against the planner's."""
+    from doggame import mechanisms as M
+
+    for n in (3, 5, 7):
+        for w0 in (0.0, 0.15, 0.3, 0.45, 0.6, 0.75, 0.9):
+            for draw in range(100):
+                def run(n=n, w0=w0, draw=draw):
+                    houses, weights = np.random.default_rng(1000 * n + draw).random(n), np.full(n, 1 / n)
+                    lr = lambda x: float(((x - houses) ** 2).sum())  # summed loss at a fixed outcome  # noqa: E731
+                    out = dict(planner=M.social_loss(lambda x: M.planner_step(x, houses, w0), houses), planner_long=lr(houses.mean()))
+                    for rule in M.RULES:
+                        targets, _ = M.target_equilibrium(rule, houses, weights, w0)
+                        move = lambda x, rule=rule, targets=targets: M.step(rule, x, targets, weights, w0)
+                        x = M.steady_state(move, start=float(np.mean(houses)))
+                        out[rule] = dict(loss=M.social_loss(move, houses), long=lr(x), outcome=x)
+                    return out
+                yield dict(n=n, w0=w0, draw=draw), run
 
 
 def study_continuous_q(seeds):
@@ -740,7 +795,7 @@ def study_noise(seeds, resolution=9):
     yield dict(iterations="exact", seed=0), lambda: dict(spread=float(spread), gap=float(gap), support=int((exact_red > 1e-3).sum()), top=float(exact_red.max()))
 
 
-STUDIES = dict(continuous_q=study_continuous_q, continuous_q_tools=study_continuous_q_tools, soccer_exact_play=study_soccer_exact_play, exact_play_many=study_exact_play_many, many_targets=study_many_targets, target_random=study_target_random, cross_play=study_cross_play, vertex_selection=study_vertex_selection, walking_clip=study_walking_clip, walking_entropy=study_walking_entropy, pretraining_mechanism=study_pretraining_mechanism, noisy_inertia=study_noisy_inertia, exact_play=study_exact_play, feedback_learning=study_feedback_learning, many_houses=study_many_houses, selection_linear=study_selection_linear, selection_clip=study_selection_clip, inertia_explicit=study_inertia_explicit, inertia_random=study_inertia_random, selection_noise=study_selection_noise, inertia_dp=study_inertia_dp, markov_potential=study_markov_potential, algorithms=study_algorithms, walking=study_walking, ppo_variants=study_ppo_variants, ppo_long=study_ppo_long,
+STUDIES = dict(mechanisms_wide=study_mechanisms_wide, mechanisms=study_mechanisms, continuous_q=study_continuous_q, continuous_q_tools=study_continuous_q_tools, soccer_exact_play=study_soccer_exact_play, exact_play_many=study_exact_play_many, many_targets=study_many_targets, target_random=study_target_random, cross_play=study_cross_play, vertex_selection=study_vertex_selection, walking_clip=study_walking_clip, walking_entropy=study_walking_entropy, pretraining_mechanism=study_pretraining_mechanism, noisy_inertia=study_noisy_inertia, exact_play=study_exact_play, feedback_learning=study_feedback_learning, many_houses=study_many_houses, selection_linear=study_selection_linear, selection_clip=study_selection_clip, inertia_explicit=study_inertia_explicit, inertia_random=study_inertia_random, selection_noise=study_selection_noise, inertia_dp=study_inertia_dp, markov_potential=study_markov_potential, algorithms=study_algorithms, walking=study_walking, ppo_variants=study_ppo_variants, ppo_long=study_ppo_long,
                walking_settings=study_walking_settings, walking_houses=study_walking_houses, walking_inertia=study_walking_inertia,
                walking_equilibrium=study_walking_equilibrium, walking_capacity=study_walking_capacity, walking_ppo_inertia=study_walking_ppo_inertia,
                walking_hard_long=study_walking_hard_long, inertia_equilibrium=study_inertia_equilibrium, selection=study_selection, inertia=study_inertia, pretraining=study_pretraining,

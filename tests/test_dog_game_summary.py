@@ -1,4 +1,4 @@
-from doggame.dog_game_summary import (continuous_br_table, continuous_convergence_table, continuous_q_table, soccer_exact_play_table, exact_play_many_table, many_targets_table, target_random_table, cross_play_table, vertex_selection_table, walking_clip_table, walking_entropy_table, pretraining_mechanism_table, noisy_inertia_table, exact_play_table, feedback_learning_table, many_houses_table, inertia_dp_table, inertia_explicit_table, inertia_random_table, mirror_p, selection_clip_table, markov_potential_table, selection_noise_table, algorithms_table, convergence_counts, markdown, noise_table, resolution_table,
+from doggame.dog_game_summary import (mechanisms_table, mechanisms_wide_table, continuous_br_table, continuous_convergence_table, continuous_q_table, soccer_exact_play_table, exact_play_many_table, many_targets_table, target_random_table, cross_play_table, vertex_selection_table, walking_clip_table, walking_entropy_table, pretraining_mechanism_table, noisy_inertia_table, exact_play_table, feedback_learning_table, many_houses_table, inertia_dp_table, inertia_explicit_table, inertia_random_table, mirror_p, selection_clip_table, markov_potential_table, selection_noise_table, algorithms_table, convergence_counts, markdown, noise_table, resolution_table,
                                       selection_outcome, selection_table, walking_algorithms_table, walking_share_series, walking_table,
                                       ppo_epochs_table, ppo_long_table, ppo_walking_table, walking_equilibrium_table, walking_houses_table, walking_inertia_table,
                                       walking_settings_table)
@@ -309,3 +309,12 @@ def test_the_continuous_q_tables_report_distances_methods_and_convergence():
     assert continuous_q_table(rows)[1] == ["polar", "1", "0.460 (0.460 to 0.460)", "1.060 (1.060 to 1.060)", "0 of 1"]
     assert continuous_br_table(rows)[1] == ["cartesian", "grid", "0.0000", "0.0%", "1257", "0.20"]
     assert continuous_convergence_table(rows)[1] == ["cartesian", "0.1", "13%", "500", "0.0005"]
+
+
+def test_the_mechanism_tables_compare_the_rules_with_the_planner():
+    entry = lambda loss, x: dict(loss=loss, long=0.2, outcome=x, exaggeration=0.1, targets=[0.9, 0.5, 0.0])
+    rows = [run("mechanisms", dict(n=3, w0=0.6, draw=0), houses=[0.8, 0.45, 0.1], planner=1.0,
+                mean=entry(1.2, 0.47), median=dict(entry(1.1, 0.45), truthful_gain=0.1)),
+            run("mechanisms_wide", dict(n=3, w0=0.6, draw=0), planner=1.0, planner_long=0.1, mean=entry(1.2, 0.47), median=entry(1.1, 0.45))]
+    assert mechanisms_table(rows)[1] == ["3", "0.6", "1.200 / 1.100", "0.100 / 0.100", "0.020 / 0.000", "1 of 1", "0.100"]
+    assert mechanisms_wide_table(rows)[1] == ["3", "0.6", "1.200 / 1.100", "1 of 1", "2.000 / 2.000"]
