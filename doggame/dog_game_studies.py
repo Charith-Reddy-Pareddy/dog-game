@@ -12,6 +12,8 @@ to do only the second of four shards.
 - ppo_long:     the PPO settings trained three times longer on the walking game
 - walking_entropy: default PPO on the walking game with an entropy bonus
 - walking_clip: PPO on the walking game with a tighter clipping range
+- continuous_q: Nash-Q with continuous moves on the walking game, three move encodings
+- continuous_q_tools: best-response methods, simultaneous gradient play and paths on those networks
 - walking_settings: the walking game with a shorter or longer step and a lower or higher discount
 - walking_houses: the three algorithms on three other house setups
 - walking_inertia: A2C on the walking game with dog inertia
@@ -190,6 +192,40 @@ def study_walking_clip(seeds):
     for clip in (0.05, 0.1):
         for seed in seeds:
             yield dict(clip=clip, seed=seed), lambda clip=clip, seed=seed: walking_run("ppo", seed, episodes=900, every=25, clip=clip)
+
+
+def _continuous_env():
+    return PolarDogGameEnv(*WALK_HOUSES, w=0.5, max_step=0.2, discount=0.9)
+
+
+def study_continuous_q(seeds):
+    """Nash-Q with continuous moves on the walking game (doggame.continuous_q), for each move encoding:
+    the corner distance from the houses and from eight fixed random starts, every 25 of 300 episodes."""
+    from doggame.continuous_q import ENCODINGS, corner_distance, random_start_distance, train
+
+    for encoding in ENCODINGS:
+        for seed in seeds:
+            def run(encoding=encoding, seed=seed):
+                env, curve = _continuous_env(), {}
+                def record(episode, net):
+                    curve[episode] = [corner_distance(env, net), random_start_distance(env, net)]
+                train(env, encoding, episodes=300, seed=seed, on_checkpoint=record)
+                return dict(curve=curve)
+            yield dict(encoding=encoding, seed=seed), run
+
+
+def study_continuous_q_tools(seeds):
+    """On the seed-0 network of each encoding: the best-response methods against a grid (50 states),
+    simultaneous gradient play by step size (30 states) and greedy paths from four starts."""
+    from doggame.continuous_q import ENCODINGS, benchmark, convergence, train, trajectories
+
+    for encoding in ENCODINGS:
+        def run(encoding=encoding):
+            env = _continuous_env()
+            net = train(env, encoding, episodes=300, seed=0)
+            return dict(best_response=benchmark(net, env), convergence={str(k): v for k, v in convergence(net).items()},
+                        trajectories=trajectories(env, net))
+        yield dict(encoding=encoding), run
 
 
 def study_walking_settings(seeds):
@@ -704,7 +740,7 @@ def study_noise(seeds, resolution=9):
     yield dict(iterations="exact", seed=0), lambda: dict(spread=float(spread), gap=float(gap), support=int((exact_red > 1e-3).sum()), top=float(exact_red.max()))
 
 
-STUDIES = dict(soccer_exact_play=study_soccer_exact_play, exact_play_many=study_exact_play_many, many_targets=study_many_targets, target_random=study_target_random, cross_play=study_cross_play, vertex_selection=study_vertex_selection, walking_clip=study_walking_clip, walking_entropy=study_walking_entropy, pretraining_mechanism=study_pretraining_mechanism, noisy_inertia=study_noisy_inertia, exact_play=study_exact_play, feedback_learning=study_feedback_learning, many_houses=study_many_houses, selection_linear=study_selection_linear, selection_clip=study_selection_clip, inertia_explicit=study_inertia_explicit, inertia_random=study_inertia_random, selection_noise=study_selection_noise, inertia_dp=study_inertia_dp, markov_potential=study_markov_potential, algorithms=study_algorithms, walking=study_walking, ppo_variants=study_ppo_variants, ppo_long=study_ppo_long,
+STUDIES = dict(continuous_q=study_continuous_q, continuous_q_tools=study_continuous_q_tools, soccer_exact_play=study_soccer_exact_play, exact_play_many=study_exact_play_many, many_targets=study_many_targets, target_random=study_target_random, cross_play=study_cross_play, vertex_selection=study_vertex_selection, walking_clip=study_walking_clip, walking_entropy=study_walking_entropy, pretraining_mechanism=study_pretraining_mechanism, noisy_inertia=study_noisy_inertia, exact_play=study_exact_play, feedback_learning=study_feedback_learning, many_houses=study_many_houses, selection_linear=study_selection_linear, selection_clip=study_selection_clip, inertia_explicit=study_inertia_explicit, inertia_random=study_inertia_random, selection_noise=study_selection_noise, inertia_dp=study_inertia_dp, markov_potential=study_markov_potential, algorithms=study_algorithms, walking=study_walking, ppo_variants=study_ppo_variants, ppo_long=study_ppo_long,
                walking_settings=study_walking_settings, walking_houses=study_walking_houses, walking_inertia=study_walking_inertia,
                walking_equilibrium=study_walking_equilibrium, walking_capacity=study_walking_capacity, walking_ppo_inertia=study_walking_ppo_inertia,
                walking_hard_long=study_walking_hard_long, inertia_equilibrium=study_inertia_equilibrium, selection=study_selection, inertia=study_inertia, pretraining=study_pretraining,

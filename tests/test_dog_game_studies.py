@@ -190,3 +190,8 @@ def test_the_many_player_exact_play_study_has_four_policies_per_game():
 def test_the_soccer_exact_play_study_has_one_table_and_a_network_per_seed():
     keys = [k for k, _ in studies.study_soccer_exact_play(range(5))]
     assert keys[0] == dict(policy="table", seed=0) and len(keys) == 6
+
+
+def test_the_continuous_q_studies_cover_every_encoding():
+    assert {k["encoding"] for k, _ in studies.study_continuous_q(range(5))} == {"cartesian", "polar", "square"}
+    assert len([k for k, _ in studies.study_continuous_q_tools(range(5))]) == 3
