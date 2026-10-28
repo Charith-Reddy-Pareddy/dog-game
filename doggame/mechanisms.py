@@ -12,6 +12,11 @@ the next outcome is, for the mean rule, the generalized median of the targets
 be reached this round. The targets solve a fixed point, found by damped iteration. A planner who
 minimizes the summed loss moves the outcome as close to the mean house as it can each round.
 
+``rule`` can also be a tuple of N - 1 phantoms: the generalized median of the reports and the phantoms
+(Moulin 1980), the general anonymous strategy-proof rule in one shot. Phantoms (0, ..., 0, 1, ..., 1)
+give the median rule; with equal weights, phantoms (1/N, ..., (N-1)/N) give the same map from targets
+to next outcome as the mean rule (the max-min form of next_dog), so the same target-form equilibria.
+
 With ``shock`` (Gauss-Hermite nodes and weights, from ``shocks``) a normal shock is added to each next
 outcome, which is then clipped to [0, 1]. A player's one-round objective still depends only on the
 outcome before the shock, so target form survives. Values then come from the stationary Bellman
@@ -27,6 +32,14 @@ from doggame.many_houses import one_shot
 RULES = ("mean", "median")
 
 
+def next_phantom(x, targets, phantoms, w0):
+    """The next outcome under the generalized median with ``phantoms`` when every player aims at its target."""
+    x = np.asarray(x, dtype=float)
+    shifted = np.clip((np.asarray(targets, dtype=float)[None, :] - w0 * x[:, None]) / (1 - w0), 0, 1)
+    both = np.concatenate([shifted, np.broadcast_to(np.asarray(phantoms, dtype=float), (len(x), len(phantoms)))], 1)
+    return w0 * x + (1 - w0) * np.median(both, axis=1)
+
+
 def next_median(x, targets, w0):
     """The next outcome under the median rule when every player aims at its target (vectorized over x)."""
     x = np.asarray(x, dtype=float)
@@ -34,6 +47,8 @@ def next_median(x, targets, w0):
 
 
 def step(rule, x, targets, weights, w0):
+    if isinstance(rule, tuple):
+        return next_phantom(x, targets, rule, w0)
     return next_mean(x, targets, weights, w0) if rule == "mean" else next_median(x, targets, w0)
 
 
@@ -94,7 +109,10 @@ def deviation_gain(rule, policy, houses, weights, w0, discount=0.9, states=21, g
     """The most any player gains, at any of ``states`` outcomes, by changing its report for one round and
     then following ``policy`` again; ``policy(x)`` gives everyone's reports at outcome x."""
     houses, weights, best = np.asarray(houses, dtype=float), np.asarray(weights, dtype=float), 0.0
-    agg = (lambda r: r @ weights) if rule == "mean" else (lambda r: np.median(r, axis=-1))
+    if isinstance(rule, tuple):
+        agg = lambda r: np.median(np.concatenate([r, np.broadcast_to(rule, r.shape[:-1] + (len(rule),))], -1), axis=-1)  # noqa: E731
+    else:
+        agg = (lambda r: r @ weights) if rule == "mean" else (lambda r: np.median(r, axis=-1))
     for x in np.linspace(0, 1, states):
         now = policy(x)
         for i in range(len(houses)):

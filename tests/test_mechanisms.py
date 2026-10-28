@@ -85,3 +85,16 @@ def test_in_the_continuous_limit_the_median_rule_runs_and_the_mean_rule_is_a_tug
             ode = solve_ivp(lambda _, y: [weights[targets > y[0]].sum() - y[0]], (0, times[-1]), [0.0], t_eval=times, max_step=dt / 4)
             limit = ode.y[0]
         assert np.abs(np.array(path) - limit).max() < 0.005
+
+
+def test_the_mean_rule_is_the_generalized_median_with_evenly_spread_phantoms_and_the_median_rule_with_edge_phantoms():
+    houses, weights = np.array([0.15, 0.3, 0.9, 0.55, 0.05]), np.full(5, 0.2)
+    for rule, phantoms in (("mean", (0.2, 0.4, 0.6, 0.8)), ("median", (0.0, 0.0, 1.0, 1.0))):
+        targets, _ = M.target_equilibrium(rule, houses, weights, 0.6, grid=401)
+        same, _ = M.target_equilibrium(phantoms, houses, weights, 0.6, grid=401)
+        assert np.allclose(targets, same)
+        assert np.isclose(M.social_loss(lambda x: M.step(rule, x, targets, weights, 0.6), houses),
+                          M.social_loss(lambda x: M.step(phantoms, x, same, weights, 0.6), houses))
+    targets, _ = M.target_equilibrium((0.1, 0.3, 0.7, 0.9), houses, weights, 0.6, grid=401)
+    policy = lambda v: M.reports((0.1, 0.3, 0.7, 0.9), v, targets, weights, 0.6)  # noqa: E731
+    assert M.deviation_gain((0.1, 0.3, 0.7, 0.9), policy, houses, weights, 0.6, **SMALL) < 1e-5
