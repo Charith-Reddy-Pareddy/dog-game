@@ -5,6 +5,15 @@ the mean and median rules when the outcome has inertia, and the welfare-maximizi
 says what the work does, how ours differs, and how far it was checked. "Verified" means the title, venue
 and main claim were confirmed from the publisher's page or abstract, not that the full paper was read.
 
+## The source model
+
+- **Wu, Zhu, Cai and Zhu (2025)**, [The Battling Influencers Game: Nash equilibria structure of a
+  potential game and implications to value alignment](https://arxiv.org/abs/2502.01127), arXiv
+  2502.01127. BIG is a potential game; at every pure equilibrium all influencers but at most one
+  exaggerate to the boundary (Theorem 4); the conclusion names mechanism design against this
+  exaggeration as future work. *Ours:* BIG with a persistent receiver, and the receiver as the
+  mechanism (Proposition 7 and the study `mechanisms_phantoms`). Verified (read in full).
+
 ## Mean against median aggregation (static)
 
 - **Moulin (1980)**, On strategy-proofness and single peakedness, *Public Choice* 35, 437-455. The
@@ -19,9 +28,24 @@ and main claim were confirmed from the publisher's page or abstract, not that th
   beats the median for a utilitarian planner (uniform information, any number of agents). *Ours:*
   agrees with our ranking without inertia; with persistence the ranking reverses. The closest paper
   found so far; read in full. Verified (abstract).
-- **Freeman, Pennock, Peters and Wortman Vaughan**, truthful aggregation of budget proposals (moving
-  phantom mechanisms). Strategy-proof aggregation beyond one dimension; relevant if the paper goes
-  multi-dimensional. *Not yet verified.*
+- **Freeman, Pennock, Peters and Wortman Vaughan (2021)**, [Truthful aggregation of budget
+  proposals](https://arxiv.org/abs/1905.00457), *Journal of Economic Theory* 193, 105234. Moving
+  phantom mechanisms; with two alternatives the independent markets mechanism is the uniform phantom
+  rule, the unique anonymous, continuous and proportional one. *Ours:* the uniform phantom rule is
+  BIG's averaging receiver (Proposition 7). Verified (abstract).
+
+## Welfare-optimal strategy-proof rules (static)
+
+- **Jennings, Laraki, Puppe and Varloot (2021)**, [New characterizations of strategy-proofness under
+  single-peakedness](https://arxiv.org/abs/2102.11686), arXiv 2102.11686. For squared distance and a
+  uniform prior, the uniform (linear) median, phantoms at k/N, is the welfare-maximizing
+  strategy-proof rule. *Ours:* so without inertia BIG's averaging receiver is welfare-optimal among
+  strategy-proof receivers (our exact three-player formula, (1 - 10p^3 + 30p^4 - 18p^5)/5 with its
+  minimum at p = 1/3, is a special case); the question is whether persistence changes the optimum.
+  Verified (abstract and introduction).
+- **Caragiannis, Procaccia and Shah (2016)**, [Truthful univariate
+  estimators](https://proceedings.mlr.press/v48/caragiannis16.html), ICML. Truthful estimators of a
+  population mean are generalized medians; worst-case optimal ones beat the median. Verified (abstract).
 
 ## Dynamic collective choice and the status quo
 

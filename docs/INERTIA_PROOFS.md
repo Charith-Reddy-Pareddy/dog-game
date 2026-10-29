@@ -240,6 +240,57 @@ does not cover), the optimum rising with the size of the shock. With a
 shock on the outcome the planner is best off with no inertia. (The greedy planner is not optimal when
 clipping is frequent; the study also computes the optimal planner.)
 
+## The receiver as a mechanism
+
+In the Battling Influencers Game (Wu, Zhu, Cai and Zhu, 2025) the receiver averages the
+influencers' actions, and at every pure Nash equilibrium all influencers but at most one exaggerate to
+the boundary, the remaining one putting the receiver on its own target (their Theorem 4). The paper's
+conclusion asks for mechanism design that removes this incentive. With inertia the question becomes:
+which receiver should aggregate the influencers' actions round after round?
+
+On one coordinate with action space [0, 1] and equal weights, a natural family of receivers is the
+generalized medians of Moulin (1980): the receiver moves to z = w0 x + (1 - w0) a, where a is the median
+of the N actions and N - 1 fixed phantoms alpha_1 <= ... <= alpha_{N-1}. In one shot these are exactly
+the anonymous strategy-proof rules for single-peaked preferences (with Pareto efficiency), and they
+include the median receiver (phantoms (N - 1)/2 at 0 and (N - 1)/2 at 1).
+
+**Proposition 7.** With equal weights, the averaging receiver of BIG and the generalized median
+receiver with phantoms alpha_k = k/N have the same equilibria in target form, for every inertia w0
+and discount g, and hence the same paths and the same losses.
+
+*Proof.* In target form each influencer aims the next position at its target T_i; let
+u_i = (T_i - w0 x) / (1 - w0) be the aggregate that would put the receiver there. Under averaging, the
+round is BIG with targets u_i (Section "Many houses"): influencers with u_i > a play 1, those with
+u_i < a play 0, and at most one with u_i = a plays inside, so with A = #{u_i > a} and B = #{u_i < a},
+A / N <= a <= (N - B) / N. Among the 2N - 1 values {u_i clipped to [0, 1]} and {k / N}, the phantoms
+above a number at most N - 1 - A (they are k / N > a >= A / N, so k >= A + 1), so at most N - 1
+values lie above a; symmetrically at most N - 1 lie below. So a is their median, which is what the
+generalized median receiver produces when every influencer reports its u_i, a dominant action because
+its one-round objective is single-peaked in the next position (the assumption of target form). The
+map from targets to next position is the same for both receivers, so are the fixed-point conditions
+for the targets. ∎
+
+For w0 = 0 this is the static statement that the average voting rule's equilibrium outcome is a
+generalized median (Renault and Trannoy, 2005), and BIG's Theorem 4 is its form for the actions.
+Numerically, the two receivers' targets and losses agree to machine precision, and the generalized
+median equilibria pass the one-round deviation check (test
+`test_the_mean_rule_is_the_generalized_median_with_evenly_spread_phantoms_and_the_median_rule_with_edge_phantoms`).
+
+**Corollary (the phantoms are the speed).** While no influencer is pivotal, every influencer plays an
+edge, and with A of them pushing up the aggregate is the A-th smallest phantom (alpha_0 = 0,
+alpha_N = 1): the N - A zeros fill the bottom of the 2N - 1 values and the median is the next one.
+So z = w0 x + (1 - w0) alpha_A. The phantoms fix both where the receiver settles (the generalized
+median of the targets) and how fast it gets there: averaging moves with drift A / N - x, a tug of
+war, and the median receiver at full speed, 0 or 1, as soon as a majority pushes one way. Choosing a
+receiver means choosing this trade-off, which is what the study `mechanisms_phantoms` optimizes.
+
+Without inertia the trade-off has a known answer: for squared distance and targets drawn uniformly,
+the uniform median (phantoms k/N) is the welfare-maximizing strategy-proof rule (Jennings, Laraki,
+Puppe and Varloot, 2021). With three influencers and phantoms (p, 1 - p) the expected summed loss is
+(1 - 10p^3 + 30p^4 - 18p^5)/5, whose derivative -6p^2(3p - 1)(p - 1) makes p = 1/3 the unique
+minimizer on [0, 1/2] (5/27 against 1/5 for the median receiver). So in the static game BIG's
+averaging receiver, for all its exaggeration, is the best strategy-proof receiver.
+
 ## What the propositions do not cover
 
 - **Interior one-shot actions.** If a player's one-shot action is strictly inside the box, its hold region is the

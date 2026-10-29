@@ -98,3 +98,12 @@ def test_the_mean_rule_is_the_generalized_median_with_evenly_spread_phantoms_and
     targets, _ = M.target_equilibrium((0.1, 0.3, 0.7, 0.9), houses, weights, 0.6, grid=401)
     policy = lambda v: M.reports((0.1, 0.3, 0.7, 0.9), v, targets, weights, 0.6)  # noqa: E731
     assert M.deviation_gain((0.1, 0.3, 0.7, 0.9), policy, houses, weights, 0.6, **SMALL) < 1e-5
+
+
+def test_without_inertia_the_three_player_loss_of_phantoms_p_and_1_minus_p_matches_the_closed_form():
+    houses = np.random.default_rng(0).random((200_000, 3))
+    for p in (0.0, 0.2, 1 / 3, 0.5):
+        both = np.concatenate([houses, np.full((len(houses), 1), p), np.full((len(houses), 1), 1 - p)], 1)
+        z = np.median(both, axis=1)
+        exact = (1 - 10 * p ** 3 + 30 * p ** 4 - 18 * p ** 5) / 5
+        assert abs(((z[:, None] - houses) ** 2).sum(1).mean() - exact) < 2e-3
