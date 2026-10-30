@@ -84,8 +84,13 @@ starts, table `mechanisms phantoms` in `doggame/dog_game_summary.py`:
   averaging at inertia 0.9 to 0.95, and at most 1.2% up to 0.75.
 - Caveats: 105 of 25,200 equilibrium solves stopped at the 300-iteration cap, mostly at inertia 0.9 and
   0.95; dropping those draws leaves every best shape unchanged except 5 influencers at 0.75 (0.4
-  instead of 0.3, a neighbouring grid point). Only symmetric phantoms were searched, and the 5-player
-  grid is coarse; near the optimum several shapes tie closely.
+  instead of 0.3, a neighbouring grid point). The 5-player grid is coarse; near the optimum several
+  shapes tie closely.
+- Symmetry costs nothing (study `mechanisms_asymmetric`, 3 influencers, all 66 phantom pairs
+  0 <= p1 <= p2 <= 1 on a 0.1 grid, 50 draws): at inertia 0, 0.6, 0.9 and 0.95 the best pair overall is
+  symmetric, (0.3, 0.7) at 0 and 0.6 and the median receiver (0, 1) at 0.9 and 0.95, with asymmetric
+  neighbours next. Dropping the draws with any of the 47 solves that stopped at the iteration cap leaves
+  the best pair unchanged.
 
 ## Next steps
 

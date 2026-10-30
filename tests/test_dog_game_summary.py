@@ -1,4 +1,4 @@
-from doggame.dog_game_summary import (mechanisms_table, mechanisms_wide_table, mechanisms_noise_table, mechanisms_robust_table, mechanisms_phantoms_table, mechanisms_limit_table, learning_fix_table, learning_checks_table, continuous_br_table, continuous_convergence_table, continuous_q_table, soccer_exact_play_table, exact_play_many_table, many_targets_table, target_random_table, cross_play_table, vertex_selection_table, walking_clip_table, walking_entropy_table, pretraining_mechanism_table, noisy_inertia_table, exact_play_table, feedback_learning_table, many_houses_table, inertia_dp_table, inertia_explicit_table, inertia_random_table, mirror_p, selection_clip_table, markov_potential_table, selection_noise_table, algorithms_table, convergence_counts, markdown, noise_table, resolution_table,
+from doggame.dog_game_summary import (mechanisms_table, mechanisms_wide_table, mechanisms_noise_table, mechanisms_robust_table, mechanisms_phantoms_table, mechanisms_limit_table, mechanisms_asymmetric_table, learning_fix_table, learning_checks_table, continuous_br_table, continuous_convergence_table, continuous_q_table, soccer_exact_play_table, exact_play_many_table, many_targets_table, target_random_table, cross_play_table, vertex_selection_table, walking_clip_table, walking_entropy_table, pretraining_mechanism_table, noisy_inertia_table, exact_play_table, feedback_learning_table, many_houses_table, inertia_dp_table, inertia_explicit_table, inertia_random_table, mirror_p, selection_clip_table, markov_potential_table, selection_noise_table, algorithms_table, convergence_counts, markdown, noise_table, resolution_table,
                                       selection_outcome, selection_table, walking_algorithms_table, walking_share_series, walking_table,
                                       ppo_epochs_table, ppo_long_table, ppo_walking_table, walking_equilibrium_table, walking_houses_table, walking_inertia_table,
                                       walking_settings_table)
@@ -365,3 +365,9 @@ def test_the_phantom_table_compares_the_best_receiver_with_averaging_and_the_med
 def test_the_limit_table_compares_the_slope_in_p_with_the_first_order_prediction():
     rows = [run("mechanisms_limit", dict(w0=0.99, p=p, draw=0), loss=4.0 + 0.4 * p, iterations=600 if p else 10) for p in (0.0, 0.5)]
     assert mechanisms_limit_table(rows)[1] == ["0.99", "4.0000", "4.2000", "0", "0.400 / 0.400", "1 of 2"]
+
+
+def test_the_asymmetric_table_compares_the_best_pair_with_the_best_symmetric_one():
+    rows = [run("mechanisms_asymmetric", dict(phantoms=list(ph), w0=0.9, draw=0), loss=loss, iterations=5)
+            for ph, loss in (((0.0, 1.0), 2.0), ((0.3, 0.7), 2.2), ((0.1, 0.8), 1.9))]
+    assert mechanisms_asymmetric_table(rows)[1] == ["0.9", "(0.1, 0.8)", "(0, 1)", "1.9000 / 2.0000", "5.00%"]

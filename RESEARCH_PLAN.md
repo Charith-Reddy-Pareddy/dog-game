@@ -38,6 +38,17 @@ Next: a sampled (model-free) version of the fix; item 6; and the three items tow
 - **Related work** (started, [docs/RELATED_WORK.md](docs/RELATED_WORK.md)): a draft list, with the
   areas not yet covered.
 
+**The receiver as a mechanism** (the paper's main thread, following BIG's call for mechanism design):
+- Proposition 7 (proved): BIG's averaging receiver is the generalized median with phantoms k/N, with
+  or without inertia; the phantoms set both where the receiver settles and how fast it moves.
+- Without inertia the uniform-phantom (averaging) receiver is welfare-best among strategy-proof
+  receivers (known: Jennings, Laraki, Puppe and Varloot, 2021).
+- Proposition 8 (first-order proof): as inertia tends to 1 the welfare-best receiver is the median
+  receiver; checked at inertia 0.99 and 0.995 (study `mechanisms_limit`).
+- In between (studies `mechanisms_phantoms`, `mechanisms_asymmetric`): the best phantoms move from
+  averaging toward the edges as inertia grows.
+- Open: make Proposition 8's remainder uniform; unequal weights; a finer 5-player search.
+
 ## Economics
 
 1. **Exaggeration under persistence.** In the one-shot game players exaggerate (push to the edges).
