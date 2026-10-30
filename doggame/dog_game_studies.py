@@ -16,6 +16,7 @@ to do only the second of four shards.
 - mechanisms: mean against median aggregation with inertia, outcome, exaggeration and welfare
 - mechanisms_wide: the same welfare comparison on more draws, players and inertias
 - mechanisms_robust: the same with more patient players and with 9 and 15 players
+- mechanisms_phantoms: the welfare-best generalized median (phantom positions) at each inertia
 - mechanisms_noise: the same with shocks on the outcome, to look for a welfare-maximizing inertia
 - mechanisms_noise_planner: the optimal planner for those games
 - continuous_q_tools: best-response methods, simultaneous gradient play and paths on those networks
@@ -285,6 +286,28 @@ def study_mechanisms_robust(seeds):
                             out[rule]["gain"] = M.deviation_gain(rule, policy, houses, weights, w0, g, states=11, grid=101, rounds=rounds)
                     return out
                 yield dict(n=n, discount=g, w0=w0, draw=draw), run
+
+
+def study_mechanisms_phantoms(seeds):
+    """Which generalized median (Moulin 1980: the median of the reports and N - 1 phantoms) minimizes the
+    social loss at each inertia? Symmetric phantoms: (p, 1 - p) for 3 players, p from 0 (the median rule)
+    to 0.5 (1/3 is the mean rule), 100 draws; (p1, p2, 1 - p2, 1 - p1) for 5 players on a 0.1 grid
+    ((0.2, 0.4) is the mean rule, (0, 0) the median rule), 50 draws. Same draws as mechanisms_wide."""
+    from doggame import mechanisms as M
+
+    shapes = [(3, (p, 1 - p)) for p in np.round(np.arange(0, 0.5001, 0.025), 3)]
+    shapes += [(5, (p1, p2, 1 - p2, 1 - p1)) for p1 in np.round(np.arange(0, 0.501, 0.1), 1) for p2 in np.round(np.arange(0, 0.501, 0.1), 1) if p1 <= p2]
+    for n, phantoms in shapes:
+        phantoms = tuple(float(round(v, 3)) for v in phantoms)
+        for w0 in (0.0, 0.15, 0.3, 0.45, 0.6, 0.75, 0.9, 0.95):
+            for draw in range(100 if n == 3 else 50):
+                def run(n=n, phantoms=phantoms, w0=w0, draw=draw):
+                    houses, weights = np.random.default_rng(1000 * n + draw).random(n), np.full(n, 1 / n)
+                    targets, it = M.target_equilibrium(phantoms, houses, weights, w0, grid=401)
+                    move = lambda x: M.step(phantoms, x, targets, weights, w0)  # noqa: E731
+                    return dict(loss=M.social_loss(move, houses), outcome=M.steady_state(move, start=float(np.mean(houses))), iterations=it,
+                                planner=M.social_loss(lambda x: M.planner_step(x, houses, w0), houses))
+                yield dict(n=n, phantoms=list(phantoms), w0=w0, draw=draw), run
 
 
 def study_mechanisms_noise(seeds):
@@ -909,7 +932,7 @@ def study_noise(seeds, resolution=9):
     yield dict(iterations="exact", seed=0), lambda: dict(spread=float(spread), gap=float(gap), support=int((exact_red > 1e-3).sum()), top=float(exact_red.max()))
 
 
-STUDIES = dict(mechanisms_robust=study_mechanisms_robust, learning_checks=study_learning_checks, learning_fix=study_learning_fix, mechanisms_noise_planner=study_mechanisms_noise_planner, mechanisms_noise=study_mechanisms_noise, mechanisms_wide=study_mechanisms_wide, mechanisms=study_mechanisms, continuous_q=study_continuous_q, continuous_q_tools=study_continuous_q_tools, soccer_exact_play=study_soccer_exact_play, exact_play_many=study_exact_play_many, many_targets=study_many_targets, target_random=study_target_random, cross_play=study_cross_play, vertex_selection=study_vertex_selection, walking_clip=study_walking_clip, walking_entropy=study_walking_entropy, pretraining_mechanism=study_pretraining_mechanism, noisy_inertia=study_noisy_inertia, exact_play=study_exact_play, feedback_learning=study_feedback_learning, many_houses=study_many_houses, selection_linear=study_selection_linear, selection_clip=study_selection_clip, inertia_explicit=study_inertia_explicit, inertia_random=study_inertia_random, selection_noise=study_selection_noise, inertia_dp=study_inertia_dp, markov_potential=study_markov_potential, algorithms=study_algorithms, walking=study_walking, ppo_variants=study_ppo_variants, ppo_long=study_ppo_long,
+STUDIES = dict(mechanisms_phantoms=study_mechanisms_phantoms, mechanisms_robust=study_mechanisms_robust, learning_checks=study_learning_checks, learning_fix=study_learning_fix, mechanisms_noise_planner=study_mechanisms_noise_planner, mechanisms_noise=study_mechanisms_noise, mechanisms_wide=study_mechanisms_wide, mechanisms=study_mechanisms, continuous_q=study_continuous_q, continuous_q_tools=study_continuous_q_tools, soccer_exact_play=study_soccer_exact_play, exact_play_many=study_exact_play_many, many_targets=study_many_targets, target_random=study_target_random, cross_play=study_cross_play, vertex_selection=study_vertex_selection, walking_clip=study_walking_clip, walking_entropy=study_walking_entropy, pretraining_mechanism=study_pretraining_mechanism, noisy_inertia=study_noisy_inertia, exact_play=study_exact_play, feedback_learning=study_feedback_learning, many_houses=study_many_houses, selection_linear=study_selection_linear, selection_clip=study_selection_clip, inertia_explicit=study_inertia_explicit, inertia_random=study_inertia_random, selection_noise=study_selection_noise, inertia_dp=study_inertia_dp, markov_potential=study_markov_potential, algorithms=study_algorithms, walking=study_walking, ppo_variants=study_ppo_variants, ppo_long=study_ppo_long,
                walking_settings=study_walking_settings, walking_houses=study_walking_houses, walking_inertia=study_walking_inertia,
                walking_equilibrium=study_walking_equilibrium, walking_capacity=study_walking_capacity, walking_ppo_inertia=study_walking_ppo_inertia,
                walking_hard_long=study_walking_hard_long, inertia_equilibrium=study_inertia_equilibrium, selection=study_selection, inertia=study_inertia, pretraining=study_pretraining,

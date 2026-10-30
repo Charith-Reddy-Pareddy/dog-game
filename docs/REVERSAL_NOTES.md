@@ -19,8 +19,10 @@ roughly (1 - g) / (1 - w0), so more inertia acts like a larger rho, and more pat
 the median house h_m (0 while above), so dx/dt = 1 - x until x reaches h_m, which it does at
 t = ln((1 - x0) / (1 - h_m)), and stays there. This is the fastest any rule can move the outcome.
 
-**Mean rule (checked numerically, not proved).** Away from its long-run point, every player is at an
-edge in the target-form equilibrium, and
+**Mean rule (follows from the corollary to Proposition 7, given target form).** By Proposition 7 the
+mean rule is the generalized median with phantoms k/N, and while no player is pivotal the aggregate is
+the A-th phantom, A/N, with A the number of players pushing up. Away from its long-run point, every
+player is at an edge in the target-form equilibrium, and
 
   dx/dt = U(x) - x,   U(x) = total weight of the players whose equilibrium targets lie above x,
 
@@ -69,9 +71,27 @@ table `mechanisms robust` in `doggame/dog_game_summary.py`) agree:
   target-form equilibria are not exact: the largest one-round deviation gain is about 0.011 (checked
   on 3 draws per inertia), so these cells need a better equilibrium solver before they are reported.
 
+## The welfare-best receiver moves toward the median (study `mechanisms_phantoms`)
+
+Symmetric phantoms on a grid (3 influencers: (p, 1 - p), p in steps of 0.025, 100 draws; 5 influencers:
+(p1, p2, 1 - p2, 1 - p1) in steps of 0.1, 50 draws), expected discounted summed loss over evenly spread
+starts, table `mechanisms phantoms` in `doggame/dog_game_summary.py`:
+- Without inertia the best grid shape is the one nearest averaging (p = 0.325 next to 1/3 for 3
+  influencers; p2 = 0.4 for 5), as the static theory says.
+- As inertia grows the best phantoms move toward the edges: for 3 influencers p = 0.3 at w0 = 0.45 and
+  0.6, 0.275 at 0.75, and 0 (the median receiver) at 0.9 and 0.95; for 5 influencers p2 = 0.3 at 0.75,
+  0.2 at 0.9 and (0, 0), the median receiver, at 0.95. The best receiver saves 3.4 to 6.1% over
+  averaging at inertia 0.9 to 0.95, and at most 1.2% up to 0.75.
+- Caveats: 105 of 25,200 equilibrium solves stopped at the 300-iteration cap, mostly at inertia 0.9 and
+  0.95; dropping those draws leaves every best shape unchanged except 5 influencers at 0.75 (0.4
+  instead of 0.3, a neighbouring grid point). Only symmetric phantoms were searched, and the 5-player
+  grid is coarse; near the optimum several shapes tie closely.
+
 ## Next steps
 
-1. Prove the tug-of-war dynamics for the mean rule from the target-form equilibrium.
+1. The tug-of-war dynamics now follow from Proposition 7; what is left is the general receiver: with
+   phantoms alpha the drift is alpha_A - x, so the comparison of any two receivers reduces to their
+   phantoms (study `mechanisms_phantoms`).
 2. Finish Candidate Proposition 6.
 3. Compute D(rho) in closed form for three players (the paths are piecewise exponential) and check
    the single crossing.
