@@ -127,6 +127,13 @@ def deviation_gain(rule, policy, houses, weights, w0, discount=0.9, states=21, g
     return best
 
 
+def limit_coefficients(n):
+    """c_k = E[(x - mean house) 1{k houses above x}] for n houses and a start x, all uniform on [0, 1]:
+    (n - 2k) / (2n(n + 2)), k = 0..n. As inertia tends to 1 a generalized median receiver's loss is, to first
+    order, a positive multiple of sum_k c_k alpha_k (Proposition 8)."""
+    return np.array([(n - 2 * k) / (2 * n * (n + 2)) for k in range(n + 1)])
+
+
 def planner_step(x, houses, w0):
     """The planner moves the outcome as close to the mean house as it can this round (optimal without shocks)."""
     x = np.asarray(x, dtype=float)

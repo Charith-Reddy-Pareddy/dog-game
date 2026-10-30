@@ -291,6 +291,48 @@ Puppe and Varloot, 2021). With three influencers and phantoms (p, 1 - p) the exp
 minimizer on [0, 1/2] (5/27 against 1/5 for the median receiver). So in the static game BIG's
 averaging receiver, for all its exaggeration, is the best strategy-proof receiver.
 
+**Proposition 8 (slow receivers should use the median).** Take N odd, equal weights, targets drawn
+independently and uniformly on [0, 1], the start x uniform on [0, 1], and a fixed discount g. For a
+generalized median receiver with phantoms alpha (any monotone alpha, not only symmetric ones), the
+expected discounted summed loss is
+
+  L(alpha; w0) = L_0(w0) + (1 - w0) (2N / (1 - g)^2) (sum_{k=1}^{N-1} c_k alpha_k + c_N) + O((1 - w0)^2),
+
+where L_0(w0) does not depend on alpha and c_k = (N - 2k) / (2N(N + 2)). The first-order term is uniquely
+minimized by alpha_k = 0 for k < N/2 and alpha_k = 1 for k > N/2, the median receiver. So as w0 tends
+to 1 the welfare-best generalized median receiver tends to the median receiver, whereas at w0 = 0 it
+is BIG's averaging receiver (above).
+
+*Proof (first-order argument).*
+1. *Influencers sit at edges.* As w0 -> 1 the position barely moves within the discount horizon, so an
+   influencer's one-round objective tends uniformly to -(z - h_i)^2 / (1 - g) and its target T_i to h_i.
+   The aggregate it would need, u_i = (T_i - w0 x)/(1 - w0), then diverges unless x = T_i, so every
+   influencer reports 0 or 1 and, by the corollary, the aggregate is alpha_{A(x)} with A(x) the number of
+   targets above x. Starts within O(1 - w0) of a target change this on a set of probability O(1 - w0),
+   which only affects the O((1 - w0)^2) term.
+2. *Expansion.* With e = 1 - w0, x_{k+1} = x_k + e (alpha_{A(x_k)} - x_k), so x_k = x + k e (alpha_{A(x)} - x)
+   + O(k^2 e^2), and with l(x) = sum_i (x - h_i)^2,
+   sum_k g^k l(x_{k+1}) = l(x) / (1 - g) + e l'(x) (alpha_{A(x)} - x) / (1 - g)^2 + O(e^2),
+   using sum_k (k + 1) g^k = 1 / (1 - g)^2. Since l'(x) = 2N (x - hbar), the part that depends on alpha is
+   e (2N / (1 - g)^2) E[(x - hbar) alpha_{A(x)}] = e (2N / (1 - g)^2) sum_k c_k alpha_k, with
+   c_k = E[(x - hbar) 1{A(x) = k}].
+3. *The coefficients.* Given x and A = k, the k targets above are uniform on (x, 1) and the others on
+   (0, x), so E[hbar | x, A = k] = x/2 + k/(2N). Given A = k, x has the Beta(N - k + 1, k + 1) density
+   with mean (N - k + 1)/(N + 2), and P(A = k) = 1/(N + 1). So
+   c_k = (1/(N + 1)) ((N - k + 1)/(2(N + 2)) - k/(2N)) = (N - 2k) / (2N(N + 2)).
+4. *The minimizer.* The objective is linear in alpha over the monotone set 0 <= alpha_1 <= ... <=
+   alpha_{N-1} <= 1, whose extreme points are the thresholds alpha_k = 1{k >= m}, with value
+   sum_{k >= m} c_k. Since c_k > 0 for k < N/2 and c_k < 0 for k > N/2 (never 0 for N odd), the tail sum is
+   smallest exactly at m = (N + 1)/2. ∎
+
+The remainder in step 2 is bounded for each fixed alpha but the argument does not make it uniform over
+alpha, and the regime needs 1 - w0 small against 1 - g, not just small. Numerically (study
+`mechanisms_limit`, three influencers, discount 0.9), at w0 = 0.99 and 0.995 the loss rises with p from
+the median receiver p = 0, with slopes close to the first-order prediction (table `mechanisms limit`).
+Together with the static result, the welfare-best strategy-proof receiver runs from BIG's averaging
+receiver without inertia to the median receiver with slow adjustment; the study `mechanisms_phantoms`
+traces the path in between.
+
 ## What the propositions do not cover
 
 - **Interior one-shot actions.** If a player's one-shot action is strictly inside the box, its hold region is the

@@ -107,3 +107,14 @@ def test_without_inertia_the_three_player_loss_of_phantoms_p_and_1_minus_p_match
         z = np.median(both, axis=1)
         exact = (1 - 10 * p ** 3 + 30 * p ** 4 - 18 * p ** 5) / 5
         assert abs(((z[:, None] - houses) ** 2).sum(1).mean() - exact) < 2e-3
+
+
+def test_the_high_inertia_coefficients_match_simulation_and_pick_the_median_receiver():
+    rng = np.random.default_rng(1)
+    houses, x = rng.random((400_000, 5)), rng.random(400_000)
+    above, gap = (houses > x[:, None]).sum(1), x - houses.mean(1)
+    assert np.allclose([np.mean(gap * (above == k)) for k in range(6)], M.limit_coefficients(5), atol=2e-3)
+    for n in (3, 5, 7):
+        c = M.limit_coefficients(n)[1:n]  # the free phantoms alpha_1 .. alpha_{n-1}
+        thresholds = [sum(c[m:]) for m in range(n)]  # alpha_k = 1 from k = m + 1 on: the extreme points
+        assert int(np.argmin(thresholds)) == (n - 1) // 2  # the first (n - 1) / 2 phantoms at 0, the rest at 1
