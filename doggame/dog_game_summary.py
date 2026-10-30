@@ -559,6 +559,24 @@ def mechanisms_phantoms_table(rows):
     return table
 
 
+def mechanisms_limit_table(rows, discount=0.9):
+    """Proposition 8 at high inertia: mean loss of phantoms (p, 1 - p) for 3 players, the best p, the slope of the
+    loss in p (from p = 0 to 0.5) against the first-order prediction (1 - w0) / (1 - g)^2 * 2N (c_1 - c_2), and the
+    solves that stopped at the iteration cap."""
+    runs = study(rows, "mechanisms_limit")
+    ps = sorted({r["key"]["p"] for r in runs})
+    c = [(3 - 2 * k) / (2 * 3 * 5) for k in range(4)]
+    table = [["Inertia"] + [f"p = {p:g}" for p in ps] + ["Best p", "Slope: observed / first order", "At the cap"]]
+    for w0 in sorted({r["key"]["w0"] for r in runs}):
+        mean = {p: np.mean([r["loss"] for r in runs if (r["key"]["w0"], r["key"]["p"]) == (w0, p)]) for p in ps}
+        slope = (mean[ps[-1]] - mean[ps[0]]) / (ps[-1] - ps[0])
+        predicted = (1 - w0) / (1 - discount) ** 2 * 2 * 3 * (c[1] - c[2])
+        capped = sum(r["iterations"] >= 600 for r in runs if r["key"]["w0"] == w0)
+        table.append([str(w0)] + [f"{mean[p]:.4f}" for p in ps] + [f"{min(mean, key=mean.get):g}", f"{slope:.3f} / {predicted:.3f}",
+                                                                     f"{capped} of {sum(r['key']['w0'] == w0 for r in runs)}"])
+    return table
+
+
 def mechanisms_noise_table(rows):
     """Cooling off: with a shock on each next outcome, the mean discounted summed loss (over draws) of the
     optimal planner and of each rule's equilibrium at each inertia, the inertia where each is lowest,
@@ -854,7 +872,7 @@ if __name__ == "__main__":
                         ("walking hard long", walking_hard_long_table(studies)), ("inertia equilibrium", inertia_equilibrium_table(studies)),
                         ("selection noise", selection_noise_table(studies)), ("inertia dp", inertia_dp_table(studies)),
                         ("markov potential", markov_potential_table(studies)), ("selection clip", selection_clip_table(studies)),
-                        ("inertia explicit", inertia_explicit_table(studies)), ("inertia random", inertia_random_table(studies)), ("many houses", many_houses_table(studies)), ("feedback learning", feedback_learning_table(studies)), ("exact play", exact_play_table(studies)), ("noisy inertia", noisy_inertia_table(studies)), ("pretraining mechanism", pretraining_mechanism_table(studies)), ("walking entropy", walking_entropy_table(studies)), ("walking clip", walking_clip_table(studies)), ("vertex selection", vertex_selection_table(studies)), ("cross play", cross_play_table(studies)), ("target random", target_random_table(studies)), ("many targets", many_targets_table(studies)), ("exact play many", exact_play_many_table(studies)), ("soccer exact play", soccer_exact_play_table(studies)), ("mechanisms", mechanisms_table(studies)), ("mechanisms wide", mechanisms_wide_table(studies)), ("mechanisms robust", mechanisms_robust_table(studies)), ("mechanisms phantoms", mechanisms_phantoms_table(studies)), ("mechanisms noise", mechanisms_noise_table(studies)), ("learning fix", learning_fix_table(studies)), ("learning checks", learning_checks_table(studies)), ("continuous q", continuous_q_table(studies)),
+                        ("inertia explicit", inertia_explicit_table(studies)), ("inertia random", inertia_random_table(studies)), ("many houses", many_houses_table(studies)), ("feedback learning", feedback_learning_table(studies)), ("exact play", exact_play_table(studies)), ("noisy inertia", noisy_inertia_table(studies)), ("pretraining mechanism", pretraining_mechanism_table(studies)), ("walking entropy", walking_entropy_table(studies)), ("walking clip", walking_clip_table(studies)), ("vertex selection", vertex_selection_table(studies)), ("cross play", cross_play_table(studies)), ("target random", target_random_table(studies)), ("many targets", many_targets_table(studies)), ("exact play many", exact_play_many_table(studies)), ("soccer exact play", soccer_exact_play_table(studies)), ("mechanisms", mechanisms_table(studies)), ("mechanisms wide", mechanisms_wide_table(studies)), ("mechanisms robust", mechanisms_robust_table(studies)), ("mechanisms phantoms", mechanisms_phantoms_table(studies)), ("mechanisms limit", mechanisms_limit_table(studies)), ("mechanisms noise", mechanisms_noise_table(studies)), ("learning fix", learning_fix_table(studies)), ("learning checks", learning_checks_table(studies)), ("continuous q", continuous_q_table(studies)),
                         ("continuous best responses", continuous_br_table(studies)), ("continuous convergence", continuous_convergence_table(studies))):
         print(f"\n### {name}\n\n{markdown(table)}")
     print("\nconvergence counts:", convergence_counts(runs))

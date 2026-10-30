@@ -329,6 +329,8 @@ The remainder in step 2 is bounded for each fixed alpha but the argument does no
 alpha, and the regime needs 1 - w0 small against 1 - g, not just small. Numerically (study
 `mechanisms_limit`, three influencers, discount 0.9), at w0 = 0.99 and 0.995 the loss rises with p from
 the median receiver p = 0, with slopes close to the first-order prediction (table `mechanisms limit`).
+Some of these solves stop at the 600-iteration cap (23 and 48 of 280); on the draws without any capped
+solve (27 and 22 of 40) p = 0 is still best and the loss still rises with p throughout.
 Together with the static result, the welfare-best strategy-proof receiver runs from BIG's averaging
 receiver without inertia to the median receiver with slow adjustment; the study `mechanisms_phantoms`
 traces the path in between.
