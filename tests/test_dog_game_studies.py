@@ -60,6 +60,18 @@ def test_run_skips_finished_runs_and_appends_the_rest(tmp_path, monkeypatch):
     assert [r["key"]["seed"] for r in rows] == [0, 1, 2] and rows[2]["value"] == 20
 
 
+def test_run_reads_the_finished_runs_once_not_before_every_run(tmp_path, monkeypatch):
+    def tiny_study(seeds):
+        for seed in seeds:
+            yield dict(seed=seed), lambda seed=seed: dict(value=seed)
+
+    reads, finished = [], studies.finished
+    monkeypatch.setitem(studies.STUDIES, "tiny", tiny_study)
+    monkeypatch.setattr(studies, "finished", lambda path: (reads.append(path), finished(path))[1])
+    studies.run(["tiny"], seeds=range(20), path=str(tmp_path / "studies.jsonl"))
+    assert len(reads) == 1
+
+
 def test_shards_split_the_runs_between_processes_without_overlap(tmp_path, monkeypatch):
     def tiny_study(seeds):
         for seed in seeds:

@@ -927,9 +927,10 @@ def run(names=tuple(STUDIES), seeds=range(5), path=RESULTS, shard=(0, 1)):
     """Run the named studies, skipping runs already in `path`, and append each result as it finishes.
     With shard=(i, n), only every n-th run (starting at i) is done, so n processes can split the work."""
     index, count = shard
+    done = finished(path)  # read once: shards split the runs, so no other process adds one of ours
     for name in names:
         for position, (key, execute) in enumerate(STUDIES[name](seeds)):
-            if position % count != index or json.dumps([name, key], sort_keys=True) in finished(path):
+            if position % count != index or json.dumps([name, key], sort_keys=True) in done:
                 continue
             row = dict(study=name, key=key, **execute())
             with open(path, "a") as f:
