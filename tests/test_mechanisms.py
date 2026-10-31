@@ -23,6 +23,20 @@ def test_truthful_median_reporting_survives_without_inertia_but_not_with_it():
     assert M.deviation_gain("median", truthful, HOUSES, WEIGHTS, 0.6, **SMALL) > 0.01
 
 
+def test_truthful_reporting_is_an_equilibrium_once_the_receiver_compensates_for_inertia():
+    truthful = lambda x: HOUSES.copy()
+    for phantoms in ((0.0, 1.0), (1 / 3, 2 / 3), (0.2, 0.9)):
+        for w0 in (0.3, 0.6, 0.9):
+            assert M.deviation_gain(phantoms, truthful, HOUSES, WEIGHTS, w0, compensate=True, **SMALL) < 1e-12
+        assert M.deviation_gain(phantoms, truthful, HOUSES, WEIGHTS, 0.6, **SMALL) > 0.01
+
+
+def test_the_compensated_median_with_truthful_reports_follows_the_median_rule_equilibrium():
+    x = np.linspace(0, 1, 11)
+    path = M.compensated(x, np.tile(HOUSES, (len(x), 1)), (0.0, 1.0), 0.6)
+    assert np.allclose(path, np.clip(0.45, 0.6 * x, 0.6 * x + 0.4))
+
+
 def test_the_target_form_is_an_equilibrium_under_both_rules_and_the_planner_loses_least():
     planner = M.social_loss(lambda x: M.planner_step(x, HOUSES, 0.6), HOUSES)
     for rule in M.RULES:

@@ -46,6 +46,14 @@ def next_median(x, targets, w0):
     return np.clip(np.median(targets), w0 * x, w0 * x + 1 - w0)
 
 
+def compensated(x, reports, phantoms, w0):
+    """The inertia-compensated receiver: the next outcome is as close to the generalized median of the reports
+    and ``phantoms`` as the inertia allows, instead of w0 x + (1 - w0) times that median."""
+    r = np.asarray(reports, dtype=float)
+    m = np.median(np.concatenate([r, np.broadcast_to(np.asarray(phantoms, dtype=float), r.shape[:-1] + (len(phantoms),))], -1), axis=-1)
+    return np.clip(m, w0 * np.asarray(x, dtype=float), w0 * np.asarray(x, dtype=float) + 1 - w0)
+
+
 def step(rule, x, targets, weights, w0):
     if isinstance(rule, tuple):
         return next_phantom(x, targets, rule, w0)
@@ -105,23 +113,25 @@ def _shock_losses(move, z, houses, discount, shock, grid=401, sweeps=200):
     return ((y[None] - houses) ** 2 + discount * np.stack([np.interp(y, ys, t) for t in total])) @ probs
 
 
-def deviation_gain(rule, policy, houses, weights, w0, discount=0.9, states=21, grid=201, rounds=200):
+def deviation_gain(rule, policy, houses, weights, w0, discount=0.9, states=21, grid=201, rounds=200, compensate=False):
     """The most any player gains, at any of ``states`` outcomes, by changing its report for one round and
-    then following ``policy`` again; ``policy(x)`` gives everyone's reports at outcome x."""
+    then following ``policy`` again; ``policy(x)`` gives everyone's reports at outcome x. With ``compensate``
+    the receiver is the inertia-compensated one (``rule`` a tuple of phantoms)."""
     houses, weights, best = np.asarray(houses, dtype=float), np.asarray(weights, dtype=float), 0.0
     if isinstance(rule, tuple):
         agg = lambda r: np.median(np.concatenate([r, np.broadcast_to(rule, r.shape[:-1] + (len(rule),))], -1), axis=-1)  # noqa: E731
     else:
         agg = (lambda r: r @ weights) if rule == "mean" else (lambda r: np.median(r, axis=-1))
+    move = (lambda x, r: compensated(x, r, rule, w0)) if compensate else (lambda x, r: w0 * x + (1 - w0) * agg(r))  # noqa: E731
     for x in np.linspace(0, 1, states):
         now = policy(x)
         for i in range(len(houses)):
             trial = np.tile(now, (grid + 1, 1))
             trial[:-1, i] = np.linspace(0, 1, grid)  # every deviation, and the policy's own report last
-            z = w0 * x + (1 - w0) * agg(trial)
+            z = move(x, trial)
             total = -(z - houses[i]) ** 2
             for k in range(1, rounds):
-                z = w0 * z + (1 - w0) * np.array([agg(policy(v)) for v in z])
+                z = move(z, np.array([policy(v) for v in z]))
                 total -= discount ** k * (z - houses[i]) ** 2
             best = max(best, float(total[:-1].max() - total[-1]))
     return best
