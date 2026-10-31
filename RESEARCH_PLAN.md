@@ -43,8 +43,10 @@ Next: a sampled (model-free) version of the fix; item 6; and the three items tow
   or without inertia; the phantoms set both where the receiver settles and how fast it moves.
 - Without inertia the uniform-phantom (averaging) receiver is welfare-best among strategy-proof
   receivers (known: Jennings, Laraki, Puppe and Varloot, 2021).
-- Proposition 8 (first-order proof): as inertia tends to 1 the welfare-best receiver is the median
-  receiver; checked at inertia 0.99 and 0.995 (study `mechanisms_limit`).
+- Proposition 8 (first-order proof): as inertia tends to 1 the welfare-best receiver is the order
+  statistic of the targets closest to the mean target in mean square: the median for uniform targets
+  (checked at inertia 0.99 and 0.995, study `mechanisms_limit`), a higher order statistic for strongly
+  skewed ones (confirmed in direction with 7 players, studies `mechanisms_skewed`, `mechanisms_skewed_seven`).
 - In between (studies `mechanisms_phantoms`, `mechanisms_asymmetric`): the best phantoms move from
   averaging toward the edges as inertia grows.
 - Open: make Proposition 8's remainder uniform; unequal weights; a finer 5-player search.

@@ -338,6 +338,13 @@ alpha, and the regime needs 1 - w0 small against 1 - g, not just small. Numerica
 the median receiver p = 0, with slopes close to the first-order prediction (table `mechanisms limit`).
 Some of these solves stop at the 600-iteration cap (23 and 48 of 280); on the draws without any capped
 solve (27 and 22 of 40) p = 0 is still best and the loss still rises with p throughout.
+With skewed targets the full dynamic game agrees in direction (table `skewed paired`, paired by draw):
+with 7 influencers and Beta(0.1, 1) targets at w0 = 0.99 the predicted receiver, the 5th smallest
+target, loses less than the median receiver in 46 of 60 draws, by 0.0080 on average (standard error
+0.0025; 0.0095 with s.e. 0.0034 on the 43 draws without a capped solve), about a third of the
+first-order prediction 0.026, as expected when 1 - w0 is not yet small against 1 - g. With 5
+influencers and Beta(0.2, 5) targets the predicted advantage is only 0.001 and the 40-draw test cannot
+resolve it (the median is marginally ahead, within one to two standard errors).
 Together with the static result, the welfare-best strategy-proof receiver runs from BIG's averaging
 receiver without inertia to the median receiver with slow adjustment; the study `mechanisms_phantoms`
 traces the path in between.

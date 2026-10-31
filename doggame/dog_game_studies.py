@@ -19,6 +19,8 @@ to do only the second of four shards.
 - mechanisms_phantoms: the welfare-best generalized median (phantom positions) at each inertia
 - mechanisms_limit: Proposition 8 at inertia 0.99 and 0.995, where the median receiver should be best
 - mechanisms_asymmetric: whether the welfare-best phantoms are symmetric (3 players, all pairs on a grid)
+- mechanisms_skewed: with skewed targets the best slow receiver is an order statistic other than the median
+- mechanisms_skewed_seven: the same with 7 players and Beta(0.1, 1) targets, where the predicted gap is larger
 - mechanisms_noise: the same with shocks on the outcome, to look for a welfare-maximizing inertia
 - mechanisms_noise_planner: the optimal planner for those games
 - continuous_q_tools: best-response methods, simultaneous gradient play and paths on those networks
@@ -327,6 +329,38 @@ def study_mechanisms_asymmetric(seeds):
                     targets, it = M.target_equilibrium(phantoms, houses, weights, w0, grid=401)
                     return dict(loss=M.social_loss(lambda x: M.step(phantoms, x, targets, weights, w0), houses), iterations=it)
                 yield dict(phantoms=list(phantoms), w0=w0, draw=draw), run
+
+
+def study_mechanisms_skewed(seeds):
+    """Proposition 8 with skewed targets: 5 players with targets from Beta(0.2, 5), where the order statistic that
+    best predicts the mean target is the 4th smallest, not the median. At inertia 0.99 and 0.995, 40 draws: the
+    order-statistic receivers (phantoms (0, 0, 0, 1), (0, 0, 1, 1) = median, (0, 1, 1, 1)) and averaging."""
+    from doggame import mechanisms as M
+
+    receivers = [(0.0, 0.0, 0.0, 1.0), (0.0, 0.0, 1.0, 1.0), (0.0, 1.0, 1.0, 1.0), (0.2, 0.4, 0.6, 0.8)]
+    for w0 in (0.99, 0.995):
+        for phantoms in receivers:
+            for draw in range(40):
+                def run(w0=w0, phantoms=phantoms, draw=draw):
+                    houses, weights = np.random.default_rng(5000 + draw).beta(0.2, 5, 5), np.full(5, 0.2)
+                    targets, it = M.target_equilibrium(phantoms, houses, weights, w0, grid=401, rounds=300, max_iter=600)
+                    return dict(loss=M.social_loss(lambda x: M.step(phantoms, x, targets, weights, w0), houses, rounds=300), iterations=it)
+                yield dict(w0=w0, phantoms=list(phantoms), draw=draw), run
+
+
+def study_mechanisms_skewed_seven(seeds):
+    """A stronger test of Proposition 8 with skewed targets: 7 players with targets from Beta(0.1, 1), where the
+    predicted best slow receiver (the 5th smallest target) beats the median by about 0.026 at first order, much
+    more than in mechanisms_skewed. Inertia 0.99, 60 draws, the median and the 5th-smallest receiver."""
+    from doggame import mechanisms as M
+
+    for phantoms in (M.order_statistic_phantoms(7, 4), M.order_statistic_phantoms(7, 5)):
+        for draw in range(60):
+            def run(phantoms=phantoms, draw=draw):
+                houses, weights = np.random.default_rng(7000 + draw).beta(0.1, 1, 7), np.full(7, 1 / 7)
+                targets, it = M.target_equilibrium(phantoms, houses, weights, 0.99, grid=401, rounds=300, max_iter=1500)
+                return dict(loss=M.social_loss(lambda x: M.step(phantoms, x, targets, weights, 0.99), houses, rounds=300), iterations=it)
+            yield dict(phantoms=list(phantoms), draw=draw), run
 
 
 def study_mechanisms_limit(seeds):
@@ -966,7 +1000,7 @@ def study_noise(seeds, resolution=9):
     yield dict(iterations="exact", seed=0), lambda: dict(spread=float(spread), gap=float(gap), support=int((exact_red > 1e-3).sum()), top=float(exact_red.max()))
 
 
-STUDIES = dict(mechanisms_asymmetric=study_mechanisms_asymmetric, mechanisms_limit=study_mechanisms_limit, mechanisms_phantoms=study_mechanisms_phantoms, mechanisms_robust=study_mechanisms_robust, learning_checks=study_learning_checks, learning_fix=study_learning_fix, mechanisms_noise_planner=study_mechanisms_noise_planner, mechanisms_noise=study_mechanisms_noise, mechanisms_wide=study_mechanisms_wide, mechanisms=study_mechanisms, continuous_q=study_continuous_q, continuous_q_tools=study_continuous_q_tools, soccer_exact_play=study_soccer_exact_play, exact_play_many=study_exact_play_many, many_targets=study_many_targets, target_random=study_target_random, cross_play=study_cross_play, vertex_selection=study_vertex_selection, walking_clip=study_walking_clip, walking_entropy=study_walking_entropy, pretraining_mechanism=study_pretraining_mechanism, noisy_inertia=study_noisy_inertia, exact_play=study_exact_play, feedback_learning=study_feedback_learning, many_houses=study_many_houses, selection_linear=study_selection_linear, selection_clip=study_selection_clip, inertia_explicit=study_inertia_explicit, inertia_random=study_inertia_random, selection_noise=study_selection_noise, inertia_dp=study_inertia_dp, markov_potential=study_markov_potential, algorithms=study_algorithms, walking=study_walking, ppo_variants=study_ppo_variants, ppo_long=study_ppo_long,
+STUDIES = dict(mechanisms_skewed_seven=study_mechanisms_skewed_seven, mechanisms_skewed=study_mechanisms_skewed, mechanisms_asymmetric=study_mechanisms_asymmetric, mechanisms_limit=study_mechanisms_limit, mechanisms_phantoms=study_mechanisms_phantoms, mechanisms_robust=study_mechanisms_robust, learning_checks=study_learning_checks, learning_fix=study_learning_fix, mechanisms_noise_planner=study_mechanisms_noise_planner, mechanisms_noise=study_mechanisms_noise, mechanisms_wide=study_mechanisms_wide, mechanisms=study_mechanisms, continuous_q=study_continuous_q, continuous_q_tools=study_continuous_q_tools, soccer_exact_play=study_soccer_exact_play, exact_play_many=study_exact_play_many, many_targets=study_many_targets, target_random=study_target_random, cross_play=study_cross_play, vertex_selection=study_vertex_selection, walking_clip=study_walking_clip, walking_entropy=study_walking_entropy, pretraining_mechanism=study_pretraining_mechanism, noisy_inertia=study_noisy_inertia, exact_play=study_exact_play, feedback_learning=study_feedback_learning, many_houses=study_many_houses, selection_linear=study_selection_linear, selection_clip=study_selection_clip, inertia_explicit=study_inertia_explicit, inertia_random=study_inertia_random, selection_noise=study_selection_noise, inertia_dp=study_inertia_dp, markov_potential=study_markov_potential, algorithms=study_algorithms, walking=study_walking, ppo_variants=study_ppo_variants, ppo_long=study_ppo_long,
                walking_settings=study_walking_settings, walking_houses=study_walking_houses, walking_inertia=study_walking_inertia,
                walking_equilibrium=study_walking_equilibrium, walking_capacity=study_walking_capacity, walking_ppo_inertia=study_walking_ppo_inertia,
                walking_hard_long=study_walking_hard_long, inertia_equilibrium=study_inertia_equilibrium, selection=study_selection, inertia=study_inertia, pretraining=study_pretraining,

@@ -595,6 +595,48 @@ def mechanisms_asymmetric_table(rows):
     return table
 
 
+def mechanisms_skewed_table(rows):
+    """Proposition 8 with skewed targets (Beta(0.2, 5), 5 players): mean loss of the order-statistic receivers and
+    averaging at high inertia, the best of them, and the one the first-order theory predicts (the order statistic
+    closest to the mean target in mean square, from a large sample of the same distribution)."""
+    from doggame.mechanisms import best_order_statistic
+
+    runs = study(rows, "mechanisms_skewed")
+    names = {(0.0, 0.0, 0.0, 1.0): "2nd smallest", (0.0, 0.0, 1.0, 1.0): "median", (0.0, 1.0, 1.0, 1.0): "4th smallest",
+             (0.2, 0.4, 0.6, 0.8): "averaging"}
+    predicted = best_order_statistic(np.random.default_rng(0).beta(0.2, 5, (200_000, 5)))
+    table = [["Inertia"] + list(names.values()) + ["Best", "Predicted"]]
+    for w0 in sorted({r["key"]["w0"] for r in runs}):
+        mean = {ph: np.mean([r["loss"] for r in runs if r["key"]["w0"] == w0 and tuple(r["key"]["phantoms"]) == ph]) for ph in names}
+        table.append([str(w0)] + [f"{mean[ph]:.4f}" for ph in names] + [names[min(mean, key=mean.get)], f"{predicted}th smallest"])
+    return table
+
+
+def skewed_paired_table(rows):
+    """The paired test of Proposition 8 with skewed targets: per case, the loss of the predicted best order-statistic
+    receiver minus the median receiver's, draw by draw (mean and standard error), how often the predicted one wins,
+    the first-order prediction of that difference, and the solves that stopped at the iteration cap."""
+    from doggame.mechanisms import order_statistic_phantoms
+
+    rng = np.random.default_rng(0)
+    cases = [("Beta(0.2, 5), 5 players", "mechanisms_skewed", 5, 4, lambda r: r["key"]["w0"], 600, lambda size: rng.beta(0.2, 5, size)),
+             ("Beta(0.1, 1), 7 players", "mechanisms_skewed_seven", 7, 5, lambda r: 0.99, 1500, lambda size: rng.beta(0.1, 1, size))]
+    table = [["Targets", "Inertia", "Predicted minus median: mean (s.e.)", "Predicted wins", "First-order prediction", "At the cap"]]
+    for name, key, n, j, inertia, cap, draw in cases:
+        runs = study(rows, key)
+        best, med = order_statistic_phantoms(n, j), order_statistic_phantoms(n, (n + 1) // 2)
+        sample = draw((400_000, n))
+        mse = ((np.sort(sample, 1) - sample.mean(1, keepdims=True)) ** 2).mean(0)
+        for w0 in sorted({inertia(r) for r in runs}):
+            loss = {(tuple(r["key"]["phantoms"]), r["key"]["draw"]): r["loss"] for r in runs if inertia(r) == w0}
+            diff = np.array([loss[best, d] - loss[med, d] for (ph, d) in loss if ph == best and (med, d) in loss])
+            predicted = (1 - w0) * 2 * n / (1 - 0.9) ** 2 * (mse[j - 1] - mse[(n - 1) // 2]) / 2
+            capped = sum(r["iterations"] >= cap for r in runs if inertia(r) == w0)
+            table.append([name, str(w0), f"{diff.mean():.4f} ({diff.std(ddof=1) / np.sqrt(len(diff)):.4f})",
+                          f"{(diff < 0).sum()} of {len(diff)}", f"{predicted:.4f}", f"{capped} of {sum(inertia(r) == w0 for r in runs)}"])
+    return table
+
+
 def mechanisms_noise_table(rows):
     """Cooling off: with a shock on each next outcome, the mean discounted summed loss (over draws) of the
     optimal planner and of each rule's equilibrium at each inertia, the inertia where each is lowest,
@@ -890,7 +932,7 @@ if __name__ == "__main__":
                         ("walking hard long", walking_hard_long_table(studies)), ("inertia equilibrium", inertia_equilibrium_table(studies)),
                         ("selection noise", selection_noise_table(studies)), ("inertia dp", inertia_dp_table(studies)),
                         ("markov potential", markov_potential_table(studies)), ("selection clip", selection_clip_table(studies)),
-                        ("inertia explicit", inertia_explicit_table(studies)), ("inertia random", inertia_random_table(studies)), ("many houses", many_houses_table(studies)), ("feedback learning", feedback_learning_table(studies)), ("exact play", exact_play_table(studies)), ("noisy inertia", noisy_inertia_table(studies)), ("pretraining mechanism", pretraining_mechanism_table(studies)), ("walking entropy", walking_entropy_table(studies)), ("walking clip", walking_clip_table(studies)), ("vertex selection", vertex_selection_table(studies)), ("cross play", cross_play_table(studies)), ("target random", target_random_table(studies)), ("many targets", many_targets_table(studies)), ("exact play many", exact_play_many_table(studies)), ("soccer exact play", soccer_exact_play_table(studies)), ("mechanisms", mechanisms_table(studies)), ("mechanisms wide", mechanisms_wide_table(studies)), ("mechanisms robust", mechanisms_robust_table(studies)), ("mechanisms phantoms", mechanisms_phantoms_table(studies)), ("mechanisms limit", mechanisms_limit_table(studies)), ("mechanisms asymmetric", mechanisms_asymmetric_table(studies)), ("mechanisms noise", mechanisms_noise_table(studies)), ("learning fix", learning_fix_table(studies)), ("learning checks", learning_checks_table(studies)), ("continuous q", continuous_q_table(studies)),
+                        ("inertia explicit", inertia_explicit_table(studies)), ("inertia random", inertia_random_table(studies)), ("many houses", many_houses_table(studies)), ("feedback learning", feedback_learning_table(studies)), ("exact play", exact_play_table(studies)), ("noisy inertia", noisy_inertia_table(studies)), ("pretraining mechanism", pretraining_mechanism_table(studies)), ("walking entropy", walking_entropy_table(studies)), ("walking clip", walking_clip_table(studies)), ("vertex selection", vertex_selection_table(studies)), ("cross play", cross_play_table(studies)), ("target random", target_random_table(studies)), ("many targets", many_targets_table(studies)), ("exact play many", exact_play_many_table(studies)), ("soccer exact play", soccer_exact_play_table(studies)), ("mechanisms", mechanisms_table(studies)), ("mechanisms wide", mechanisms_wide_table(studies)), ("mechanisms robust", mechanisms_robust_table(studies)), ("mechanisms phantoms", mechanisms_phantoms_table(studies)), ("mechanisms limit", mechanisms_limit_table(studies)), ("mechanisms asymmetric", mechanisms_asymmetric_table(studies)), ("mechanisms skewed", mechanisms_skewed_table(studies)), ("skewed paired", skewed_paired_table(studies)), ("mechanisms noise", mechanisms_noise_table(studies)), ("learning fix", learning_fix_table(studies)), ("learning checks", learning_checks_table(studies)), ("continuous q", continuous_q_table(studies)),
                         ("continuous best responses", continuous_br_table(studies)), ("continuous convergence", continuous_convergence_table(studies))):
         print(f"\n### {name}\n\n{markdown(table)}")
     print("\nconvergence counts:", convergence_counts(runs))
