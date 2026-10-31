@@ -528,6 +528,18 @@ At round 800, per seed:
 - "Exaggeration" is the mean distance between a player's report and its house at the long-run
   outcome.
 
+## Receivers that compensate for inertia
+
+- The compensated receiver knows its own inertia w0 and current position x, and moves to the reachable
+  point [w0 x, w0 x + 1 - w0] closest to the generalized median of the reports and phantoms. Players
+  report truthfully; Proposition 9 shows this is an equilibrium, but other equilibria are not ruled out.
+- Study `mechanisms_compensated` uses the draws, starts, horizon and discount of `mechanisms_wide` and
+  compares with that study's plain equilibria, draw by draw. Differences of at most 0.015 are treated as
+  ties: that is the largest gap between the compensated median receiver and the plain median rule's
+  equilibrium, which Proposition 9 says follow the same path, so it measures the plain solver's grid error.
+- The truthful-reporting check uses one-round deviations on a 101-point report grid at 11 outcomes, on the
+  first 3 draws of each cell.
+
 ## Cooling off
 
 - The shock is normal, added to each next outcome and then clipped to [0, 1]; "with the

@@ -92,6 +92,15 @@ starts, table `mechanisms phantoms` in `doggame/dog_game_summary.py`:
   neighbours next. Dropping the draws with any of the 47 solves that stopped at the iteration cap leaves
   the best pair unchanged.
 
+## Compensated receivers remove the reversal (study `mechanisms_compensated`)
+
+A receiver that moves as close to the generalized median of the reports as its inertia allows makes truthful
+reporting an equilibrium (Proposition 9) and moves at full speed whatever its phantoms. On the draws of
+`mechanisms_wide` the compensated averaging receiver then loses less on average than the equilibria of both
+plain receivers at every positive inertia, and for 3 players the best compensated phantoms stay at the grid
+point nearest averaging (p = 0.325) at every inertia. The reversal is therefore about speed, as the
+continuous-time limit suggests: once speed is equalized, the static ranking returns.
+
 ## Next steps
 
 1. The tug-of-war dynamics now follow from Proposition 7; what is left is the general receiver: with

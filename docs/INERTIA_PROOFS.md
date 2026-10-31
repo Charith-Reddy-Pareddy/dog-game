@@ -186,6 +186,8 @@ outcome over an interval that contains w0 x + (1 - w0) h_m strictly inside, and 
 whenever x is close enough to h_m. At such an x other than h_m, reporting (h_m - w0 x) / (1 - w0), not
 h_m, puts the outcome on its peak, a strict gain. ∎
 
+Proposition 9 below restores truthful reporting with a receiver that compensates for its inertia.
+
 **Proposition 4.** For every w0 in [0, 1) the following profile is a feedback equilibrium: the median
 player reports clip((h_m - w0 x) / (1 - w0), 0, 1), players with houses above h_m report 1 and players
 below report 0. Under it the outcome moves to G(x) = clip(h_m, w0 x, w0 x + 1 - w0) each round: as close
@@ -348,6 +350,65 @@ resolve it (the median is marginally ahead, within one to two standard errors).
 Together with the static result, the welfare-best strategy-proof receiver runs from BIG's averaging
 receiver without inertia to the median receiver with slow adjustment; the study `mechanisms_phantoms`
 traces the path in between.
+
+## Compensating for inertia
+
+Proposition 3 shows that persistence breaks the median receiver's strategy-proofness: the receiver moves only
+part of the way toward the median report, so the median player exaggerates to make up for it. A receiver that
+compensates for its own inertia restores it. The *compensated* receiver with phantoms alpha moves to
+
+  z = clip(m(r), w0 x, w0 x + 1 - w0),   m(r) = the median of r_1, ..., r_N, alpha_1, ..., alpha_{N-1},
+
+the reachable outcome closest to the generalized median of the reports (`mechanisms.compensated`). With
+w0 = 0 it is the generalized median itself.
+
+**Proposition 9 (compensated receivers are strategy-proof under inertia).** For any phantoms alpha, any
+number of players, every w0 in [0, 1) and every discount g, truthful reporting (r_i = h_i at every outcome) is
+a feedback equilibrium of the compensated receiver. Along it the outcome moves each round as close as it can
+to s = m(h); for the median receiver this is the outcome path of the equilibrium in Proposition 4.
+
+*Proof.*
+1. Under truthful reporting the outcome follows G(x) = clip(s, w0 x, w0 x + 1 - w0). G is nondecreasing in x,
+   moves x toward s without crossing it, and fixes s. So paths from two starting points keep their order in
+   every round, and a path that starts at or below s stays at or below s (and likewise above).
+2. Take a player with h_i > s at outcome x, and let [a, b] = [w0 x, w0 x + 1 - w0]. Its truthful report is
+   above s; moving it anywhere in [s, 1] leaves the generalized median at s, and moving it to r < s gives a
+   median m' in [r, s]. So any deviation gives z' = clip(m', a, b) <= z = clip(s, a, b).
+   - If z > s, then a > s >= m', so z' = a = z and nothing changes.
+   - If z <= s, then z' <= z <= s, and by step 1 the path from z' lies weakly below the path from z in every
+     round, both at or below s < h_i. Every round's loss is weakly larger after the deviation.
+3. A player with h_i < s is the mirror image. For a player with h_i = s a deviation either leaves z unchanged
+   or moves it away from s, and by step 1 every later outcome is then at least as far from s.
+4. No one-round deviation gains at any outcome, so by the one-shot deviation principle (discounting, bounded
+   losses) truthful reporting is a feedback equilibrium. ∎
+
+The proof never uses the squared loss: any per-round loss that increases with the distance to h_i will do.
+Compensation changes the outcome for receivers other than the median one. Every compensated receiver moves at
+full speed, so the speed advantage that makes the median receiver best at high inertia (Proposition 4 and
+the study `mechanisms_phantoms`) disappears, and only the endpoint s matters.
+
+Numerically (study `mechanisms_compensated`, table `mechanisms compensated`, on the 100 draws of
+`mechanisms_wide` for 3, 5 and 7 players at seven inertias from 0 to 0.9, discount 0.9):
+- No one-round deviation from truthful reporting gains anything, for the compensated averaging (phantoms
+  k/N) and median receivers, on the first 3 draws of every cell (largest gain 0 on a 101-point report grid;
+  tests `test_truthful_reporting_is_an_equilibrium_once_the_receiver_compensates_for_inertia` and
+  `test_the_compensated_median_with_truthful_reports_follows_the_median_rule_equilibrium`). Without
+  compensation the same profile loses to a deviation (Proposition 3).
+- The compensated median receiver's loss equals the plain median rule's equilibrium loss to within the grid
+  error of the equilibrium solver (at most 0.015).
+- With truthful reports the compensated averaging receiver has a lower mean loss than the equilibria of both
+  plain receivers at every positive inertia. At w0 = 0.9 it is below plain averaging by 0.20, 0.33 and 0.52
+  (3, 5 and 7 players; lower by more than 0.015 in 86, 96 and 100 of 100 draws), and below the median
+  receiver by 0.08, 0.17 and 0.18 (standard errors 0.02 to 0.05). Against the median receiver this holds on
+  average, not draw by draw: at each inertia it is lower in 27 to 53 draws and higher in 14 to 18.
+- Among compensated receivers with phantoms (p, 1 - p) for 3 players, the best on a 0.025 grid is p = 0.325,
+  the grid point nearest averaging, at every inertia (numerical; not proved). So the reversal between
+  averaging and the median receiver comes from receivers that do not compensate for their inertia.
+
+The one-round step of the proof is the static fact that moving to the feasible point nearest a median keeps
+the rule strategy-proof (Walsh 2021, Theorem 3, for facilities at limited locations); what is added here is
+the dynamic step, the ordering of paths. Proposition 9 gives one equilibrium of the compensated receiver; it
+does not rule out others.
 
 ## What the propositions do not cover
 

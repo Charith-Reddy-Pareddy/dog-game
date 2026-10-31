@@ -49,7 +49,12 @@ Next: a sampled (model-free) version of the fix; item 6; and the three items tow
   skewed ones (confirmed in direction with 7 players, studies `mechanisms_skewed`, `mechanisms_skewed_seven`).
 - In between (studies `mechanisms_phantoms`, `mechanisms_asymmetric`): the best phantoms move from
   averaging toward the edges as inertia grows.
-- Open: make Proposition 8's remainder uniform; unequal weights; a finer 5-player search.
+- Proposition 9 (proved): a receiver that compensates for its inertia (moves as close to the generalized
+  median of the reports as it can) makes truthful reporting a feedback equilibrium for any phantoms and
+  inertia. With truthful reports the compensated averaging receiver beats both plain receivers' equilibria on
+  average at every positive inertia (study `mechanisms_compensated`).
+- Open: make Proposition 8's remainder uniform; unequal weights; a finer 5-player search; whether truthful reporting is the only
+  equilibrium of the compensated receiver; the best compensated phantoms for 5 and 7 players.
 
 ## Economics
 

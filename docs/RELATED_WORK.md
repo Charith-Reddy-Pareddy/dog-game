@@ -34,6 +34,12 @@ and main claim were confirmed from the publisher's page or abstract, not that th
   rule, the unique anonymous, continuous and proportional one. *Ours:* the uniform phantom rule is
   BIG's averaging receiver (Proposition 7). Verified (abstract).
 
+- **Walsh (2021)**, [Strategy proof mechanisms for facility location at limited
+  locations](https://arxiv.org/abs/2009.07982), arXiv 2009.07982. Placing the facility at the feasible
+  location nearest the median agent is strategy-proof (Theorem 3). *Ours:* the one-round step of
+  Proposition 9 is this fact with the feasible set [w0 x, w0 x + 1 - w0]; the dynamic step is new as far as
+  checked. Verified (abstract and Theorem 3).
+
 ## Welfare-optimal strategy-proof rules (static)
 
 - **Jennings, Laraki, Puppe and Varloot (2021)**, [New characterizations of strategy-proofness under
