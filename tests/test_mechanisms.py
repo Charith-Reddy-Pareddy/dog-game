@@ -31,6 +31,34 @@ def test_truthful_reporting_is_an_equilibrium_once_the_receiver_compensates_for_
         assert M.deviation_gain(phantoms, truthful, HOUSES, WEIGHTS, 0.6, **SMALL) > 0.01
 
 
+def test_compensation_keeps_every_strategy_proof_rule_truthful_but_not_averaging():
+    truthful = lambda x: HOUSES.copy()
+    dictator = lambda r: r[..., 0]
+    lattice = lambda r: np.maximum(np.minimum(r[..., 0], 0.7), np.minimum(r[..., 1], r[..., 2]))  # not anonymous
+    for rule in (dictator, lattice):
+        assert M.deviation_gain(rule, truthful, HOUSES, WEIGHTS, 0.6, compensate=True, **SMALL) < 1e-12
+    assert M.deviation_gain(lambda r: r.mean(-1), truthful, HOUSES, WEIGHTS, 0.6, compensate=True, **SMALL) > 0.01
+
+
+def test_a_slow_compensated_receiver_is_ranked_by_the_static_criterion():
+    rng = np.random.default_rng(2)
+    houses, x = rng.random((400_000, 3)), rng.random(400_000)
+    s = np.median(np.concatenate([houses, np.full((len(x), 1), 0.2), np.full((len(x), 1), 0.8)], 1), 1)
+    assert abs(np.mean((x - houses.mean(1)) * (s > x)) - M.compensated_criterion(houses, (0.2, 0.8))) < 2e-3
+    static = lambda p: (1 - 10 * p ** 3 + 30 * p ** 4 - 18 * p ** 5) / 5  # E sum_i (s - h_i)^2 = 3 E (s - hbar)^2 + const
+    draws = rng.random((300, 3))
+    loss = lambda p, w0: np.mean([M.social_loss(lambda v: M.compensated(v, np.tile(h, (len(v), 1)), (p, 1 - p), w0), h) for h in draws])
+    gap = loss(0.0, 0.995) - loss(1 / 3, 0.995)
+    assert abs(gap / (0.005 / 0.01 * (static(0.0) - static(1 / 3))) - 1) < 0.15
+
+
+def test_the_batched_compensated_losses_match_the_social_loss():
+    shapes = [(0.0, 1.0), (1 / 3, 2 / 3), (0.2, 0.9)]
+    for w0 in (0.0, 0.6, 0.95):
+        each = [M.social_loss(lambda x, ph=ph: M.compensated(x, np.tile(HOUSES, (len(x), 1)), ph, w0), HOUSES) for ph in shapes]
+        assert np.allclose(M.compensated_losses(HOUSES, shapes, w0), each)
+
+
 def test_the_compensated_median_with_truthful_reports_follows_the_median_rule_equilibrium():
     x = np.linspace(0, 1, 11)
     path = M.compensated(x, np.tile(HOUSES, (len(x), 1)), (0.0, 1.0), 0.6)

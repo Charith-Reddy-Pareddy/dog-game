@@ -116,13 +116,15 @@ def _shock_losses(move, z, houses, discount, shock, grid=401, sweeps=200):
 def deviation_gain(rule, policy, houses, weights, w0, discount=0.9, states=21, grid=201, rounds=200, compensate=False):
     """The most any player gains, at any of ``states`` outcomes, by changing its report for one round and
     then following ``policy`` again; ``policy(x)`` gives everyone's reports at outcome x. With ``compensate``
-    the receiver is the inertia-compensated one (``rule`` a tuple of phantoms)."""
+    the receiver is the inertia-compensated one. ``rule`` can also be any function of the reports (last axis)."""
     houses, weights, best = np.asarray(houses, dtype=float), np.asarray(weights, dtype=float), 0.0
-    if isinstance(rule, tuple):
+    if callable(rule):
+        agg = rule
+    elif isinstance(rule, tuple):
         agg = lambda r: np.median(np.concatenate([r, np.broadcast_to(rule, r.shape[:-1] + (len(rule),))], -1), axis=-1)  # noqa: E731
     else:
         agg = (lambda r: r @ weights) if rule == "mean" else (lambda r: np.median(r, axis=-1))
-    move = (lambda x, r: compensated(x, r, rule, w0)) if compensate else (lambda x, r: w0 * x + (1 - w0) * agg(r))  # noqa: E731
+    move = (lambda x, r: np.clip(agg(r), w0 * x, w0 * x + 1 - w0)) if compensate else (lambda x, r: w0 * x + (1 - w0) * agg(r))  # noqa: E731
     for x in np.linspace(0, 1, states):
         now = policy(x)
         for i in range(len(houses)):
@@ -156,6 +158,14 @@ def best_order_statistic(samples):
     return int(np.argmin(((ordered - mean) ** 2).mean(axis=0))) + 1
 
 
+def compensated_criterion(samples, phantoms):
+    """The first-order term of a slow compensated receiver, up to the factor 2N (1 - w0) / (1 - g)^2:
+    E[s^2 / 2 - s hbar], with s the generalized median of the targets and phantoms. It ranks receivers as
+    E[(s - hbar)^2] does, the static criterion."""
+    s = np.median(np.concatenate([samples, np.broadcast_to(np.asarray(phantoms, dtype=float), (len(samples), len(phantoms)))], 1), axis=1)
+    return float(np.mean(s ** 2 / 2 - s * samples.mean(1)))
+
+
 def planner_step(x, houses, w0):
     """The planner moves the outcome as close to the mean house as it can this round (optimal without shocks)."""
     x = np.asarray(x, dtype=float)
@@ -179,6 +189,18 @@ def social_loss(next_fn, houses, discount=0.9, starts=101, rounds=200, shock=Non
         x = next_fn(x)
         total += discount ** k * ((x[:, None] - houses[None, :]) ** 2).sum(1)
     return float(total.mean())
+
+
+def compensated_losses(houses, shapes, w0, discount=0.9, starts=101, rounds=200):
+    """social_loss of the compensated receiver under truthful reports, for many phantom shapes at once: the
+    outcome moves as close as it can to s = the generalized median of the houses and the shape's phantoms."""
+    houses = np.asarray(houses, dtype=float)
+    s = np.array([np.median(np.concatenate([houses, np.asarray(ph, dtype=float)])) for ph in shapes])[:, None]
+    x, total = np.tile(np.linspace(0, 1, starts), (len(s), 1)), np.zeros((len(s), starts))
+    for k in range(rounds):
+        x = np.clip(s, w0 * x, w0 * x + 1 - w0)
+        total += discount ** k * ((x[..., None] - houses) ** 2).sum(-1)
+    return total.mean(1)
 
 
 def steady_state(next_fn, start=0.5, rounds=2000):
