@@ -1,4 +1,4 @@
-from doggame.dog_game_summary import (mechanisms_table, mechanisms_wide_table, mechanisms_noise_table, mechanisms_robust_table, mechanisms_phantoms_table, mechanisms_limit_table, mechanisms_asymmetric_table, skewed_paired_table, mechanisms_compensated_table, learning_fix_table, learning_checks_table, continuous_br_table, continuous_convergence_table, continuous_q_table, soccer_exact_play_table, exact_play_many_table, many_targets_table, target_random_table, cross_play_table, vertex_selection_table, walking_clip_table, walking_entropy_table, pretraining_mechanism_table, noisy_inertia_table, exact_play_table, feedback_learning_table, many_houses_table, inertia_dp_table, inertia_explicit_table, inertia_random_table, mirror_p, selection_clip_table, markov_potential_table, selection_noise_table, algorithms_table, convergence_counts, markdown, noise_table, resolution_table,
+from doggame.dog_game_summary import (mechanisms_table, mechanisms_wide_table, mechanisms_noise_table, mechanisms_robust_table, mechanisms_phantoms_table, mechanisms_limit_table, mechanisms_asymmetric_table, skewed_paired_table, mechanisms_compensated_table, mechanisms_compensated_design_table, learning_fix_table, learning_checks_table, continuous_br_table, continuous_convergence_table, continuous_q_table, soccer_exact_play_table, exact_play_many_table, many_targets_table, target_random_table, cross_play_table, vertex_selection_table, walking_clip_table, walking_entropy_table, pretraining_mechanism_table, noisy_inertia_table, exact_play_table, feedback_learning_table, many_houses_table, inertia_dp_table, inertia_explicit_table, inertia_random_table, mirror_p, selection_clip_table, markov_potential_table, selection_noise_table, algorithms_table, convergence_counts, markdown, noise_table, resolution_table,
                                       selection_outcome, selection_table, walking_algorithms_table, walking_share_series, walking_table,
                                       ppo_epochs_table, ppo_long_table, ppo_walking_table, walking_equilibrium_table, walking_houses_table, walking_inertia_table,
                                       walking_settings_table)
@@ -391,3 +391,9 @@ def test_the_compensated_table_pairs_each_draw_with_the_plain_receivers():
     assert row[:3] == ["3", "0.9", "1.3500 / 1.3000 / 1.2500 / 1.3000 / 0.5000"]
     assert row[3].startswith("-0.1000 (0.0000), 2 / 0") and row[4].startswith("-0.0500") and row[4].endswith("1 / 1")
     assert row[5:] == ["0.325", "0.0e+00"]
+
+
+def test_the_compensated_design_table_reports_the_best_shape_against_averaging_and_the_median():
+    shapes = [[0.0, 1.0], [0.3, 0.7], [1 / 3, 2 / 3]]
+    rows = [run("mechanisms_compensated_design", dict(n=3, discount=0.9, w0=0.9, draws=10), shapes=shapes, mean=[2.0, 1.9, 1.95], se=[0.01, 0.002, 0.0])]
+    assert mechanisms_compensated_design_table(rows)[1] == ["3", "0.9", "0.9", "0.3", "1.9000 / 1.9500 / 2.0000", "-0.05000 (0.00200)", "+0.0500 (0.0100)"]

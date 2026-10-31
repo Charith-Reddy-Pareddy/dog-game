@@ -666,6 +666,24 @@ def mechanisms_compensated_table(rows, tol=0.015):
     return table
 
 
+def mechanisms_compensated_design_table(rows):
+    """The welfare-best compensated receiver (truthful reports) on fine symmetric phantom grids: the best shape (its
+    first half of the phantoms), the mean loss of the best shape, of averaging (phantoms k/N) and of the median
+    receiver, and the best and the median receiver minus averaging, paired by draw (standard error)."""
+    table = [["Players", "Discount", "Inertia", "Best phantoms", "Loss: best / averaging / median", "Best minus averaging (s.e.)",
+              "Median minus averaging (s.e.)"]]
+    runs = sorted(study(rows, "mechanisms_compensated_design"), key=lambda r: (r["key"]["n"], r["key"]["discount"], r["key"]["w0"]))
+    for r in runs:
+        n, mean, se = r["key"]["n"], np.array(r["mean"]), np.array(r["se"])
+        best = int(mean.argmin())
+        median = next(i for i, ph in enumerate(r["shapes"]) if max(ph[: (n - 1) // 2]) == 0)
+        half = lambda i: ", ".join(f"{v:.3g}" for v in r["shapes"][i][: (n - 1) // 2])  # noqa: E731
+        table.append([str(n), str(r["key"]["discount"]), str(r["key"]["w0"]), "averaging" if best == len(mean) - 1 else half(best),
+                      f"{mean[best]:.4f} / {mean[-1]:.4f} / {mean[median]:.4f}", f"{mean[best] - mean[-1]:+.5f} ({se[best]:.5f})",
+                      f"{mean[median] - mean[-1]:+.4f} ({se[median]:.4f})"])
+    return table
+
+
 def mechanisms_noise_table(rows):
     """Cooling off: with a shock on each next outcome, the mean discounted summed loss (over draws) of the
     optimal planner and of each rule's equilibrium at each inertia, the inertia where each is lowest,
@@ -961,7 +979,7 @@ if __name__ == "__main__":
                         ("walking hard long", walking_hard_long_table(studies)), ("inertia equilibrium", inertia_equilibrium_table(studies)),
                         ("selection noise", selection_noise_table(studies)), ("inertia dp", inertia_dp_table(studies)),
                         ("markov potential", markov_potential_table(studies)), ("selection clip", selection_clip_table(studies)),
-                        ("inertia explicit", inertia_explicit_table(studies)), ("inertia random", inertia_random_table(studies)), ("many houses", many_houses_table(studies)), ("feedback learning", feedback_learning_table(studies)), ("exact play", exact_play_table(studies)), ("noisy inertia", noisy_inertia_table(studies)), ("pretraining mechanism", pretraining_mechanism_table(studies)), ("walking entropy", walking_entropy_table(studies)), ("walking clip", walking_clip_table(studies)), ("vertex selection", vertex_selection_table(studies)), ("cross play", cross_play_table(studies)), ("target random", target_random_table(studies)), ("many targets", many_targets_table(studies)), ("exact play many", exact_play_many_table(studies)), ("soccer exact play", soccer_exact_play_table(studies)), ("mechanisms", mechanisms_table(studies)), ("mechanisms wide", mechanisms_wide_table(studies)), ("mechanisms robust", mechanisms_robust_table(studies)), ("mechanisms phantoms", mechanisms_phantoms_table(studies)), ("mechanisms limit", mechanisms_limit_table(studies)), ("mechanisms asymmetric", mechanisms_asymmetric_table(studies)), ("mechanisms skewed", mechanisms_skewed_table(studies)), ("skewed paired", skewed_paired_table(studies)), ("mechanisms compensated", mechanisms_compensated_table(studies)), ("mechanisms noise", mechanisms_noise_table(studies)), ("learning fix", learning_fix_table(studies)), ("learning checks", learning_checks_table(studies)), ("continuous q", continuous_q_table(studies)),
+                        ("inertia explicit", inertia_explicit_table(studies)), ("inertia random", inertia_random_table(studies)), ("many houses", many_houses_table(studies)), ("feedback learning", feedback_learning_table(studies)), ("exact play", exact_play_table(studies)), ("noisy inertia", noisy_inertia_table(studies)), ("pretraining mechanism", pretraining_mechanism_table(studies)), ("walking entropy", walking_entropy_table(studies)), ("walking clip", walking_clip_table(studies)), ("vertex selection", vertex_selection_table(studies)), ("cross play", cross_play_table(studies)), ("target random", target_random_table(studies)), ("many targets", many_targets_table(studies)), ("exact play many", exact_play_many_table(studies)), ("soccer exact play", soccer_exact_play_table(studies)), ("mechanisms", mechanisms_table(studies)), ("mechanisms wide", mechanisms_wide_table(studies)), ("mechanisms robust", mechanisms_robust_table(studies)), ("mechanisms phantoms", mechanisms_phantoms_table(studies)), ("mechanisms limit", mechanisms_limit_table(studies)), ("mechanisms asymmetric", mechanisms_asymmetric_table(studies)), ("mechanisms skewed", mechanisms_skewed_table(studies)), ("skewed paired", skewed_paired_table(studies)), ("mechanisms compensated", mechanisms_compensated_table(studies)), ("mechanisms compensated design", mechanisms_compensated_design_table(studies)), ("mechanisms noise", mechanisms_noise_table(studies)), ("learning fix", learning_fix_table(studies)), ("learning checks", learning_checks_table(studies)), ("continuous q", continuous_q_table(studies)),
                         ("continuous best responses", continuous_br_table(studies)), ("continuous convergence", continuous_convergence_table(studies))):
         print(f"\n### {name}\n\n{markdown(table)}")
     print("\nconvergence counts:", convergence_counts(runs))

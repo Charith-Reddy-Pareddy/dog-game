@@ -219,3 +219,4 @@ def test_the_mechanism_studies_cover_players_inertias_and_draws():
     assert len([k for k, _ in studies.study_mechanisms_skewed(range(5))]) == 2 * 4 * 40
     assert len([k for k, _ in studies.study_mechanisms_skewed_seven(range(5))]) == 2 * 60
     assert len([k for k, _ in studies.study_mechanisms_compensated(range(5))]) == 3 * 7 * 100
+    assert len([k for k, _ in studies.study_mechanisms_compensated_design(range(5))]) == 4 * 8
