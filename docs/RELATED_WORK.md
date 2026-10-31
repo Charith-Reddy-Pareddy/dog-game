@@ -19,6 +19,10 @@ and main claim were confirmed from the publisher's page or abstract, not that th
 - **Moulin (1980)**, On strategy-proofness and single peakedness, *Public Choice* 35, 437-455. The
   median and generalized median rules are strategy-proof for single-peaked preferences. *Ours:*
   persistence breaks this (Proposition 3). Verified.
+- **Border and Jordan (1983)**, Straightforward elections, unanimity and phantom voters, *Review of
+  Economic Studies* 50(1), 153-170. Uncompromising (strategy-proof) choice rules are characterized through
+  phantom voters. *Ours:* the corollary to Proposition 9 needs only this property, so compensating for inertia
+  keeps every such rule truthful. Verified (abstract).
 - **Renault and Trannoy (2005)**, Protecting minorities through the average voting rule, *Journal of
   Public Economic Theory* 7, 169-199. The equilibrium outcome of the average rule is a generalized
   median. *Ours:* the one-shot dog game is this rule; we add inertia. Verified.

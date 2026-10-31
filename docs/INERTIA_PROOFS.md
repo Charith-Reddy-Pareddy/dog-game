@@ -382,6 +382,16 @@ to s = m(h); for the median receiver this is the outcome path of the equilibrium
 4. No one-round deviation gains at any outcome, so by the one-shot deviation principle (discounting, bounded
    losses) truthful reporting is a feedback equilibrium. ∎
 
+**Corollary (any strategy-proof rule).** The proof uses only one property of the generalized median m: a
+player whose target is above m(h) cannot raise it by changing its report (and the mirror image). Every
+generalized median voter scheme has this property, anonymous or not (for instance a dictator, or
+max(min(r_1, 0.7), min(r_2, r_3))); by Moulin (1980) and Border and Jordan (1983) these are the rules that
+depend only on the reports and are strategy-proof for single-peaked preferences. So compensating for inertia
+keeps every such rule truthful at every inertia. It does not make a manipulable rule truthful: with
+compensated averaging of the reports, clip(mean(r), w0 x, w0 x + 1 - w0), truthful reporting is not an
+equilibrium (it is the one-shot averaging game at w0 = 0; numerically also at w0 = 0.6, test
+`test_compensation_keeps_every_strategy_proof_rule_truthful_but_not_averaging`).
+
 The proof never uses the squared loss: any per-round loss that increases with the distance to h_i will do.
 Compensation changes the outcome for receivers other than the median one. Every compensated receiver moves at
 full speed, so the speed advantage that makes the median receiver best at high inertia (Proposition 4 and
@@ -409,6 +419,43 @@ The one-round step of the proof is the static fact that moving to the feasible p
 the rule strategy-proof (Walsh 2021, Theorem 3, for facilities at limited locations); what is added here is
 the dynamic step, the ordering of paths. Proposition 9 gives one equilibrium of the compensated receiver; it
 does not rule out others.
+
+**Proposition 10 (with compensation, slow receivers keep the static optimum).** Take equal weights, targets
+drawn independently from a distribution F on [0, 1], the start x uniform on [0, 1], a fixed discount g and
+truthful reports. For the compensated receiver with phantoms alpha, with s = m(h) the generalized median of
+the targets and phantoms,
+
+  L(alpha; w0) = L_0(w0) + (1 - w0) (N / (1 - g)^2) E[(s - hbar)^2] + O((1 - w0)^2),
+
+where L_0(w0) does not depend on alpha; at w0 = 0 the loss is (N / (1 - g)) E[(s - hbar)^2] plus a constant.
+So without inertia and for a slow receiver alike, the welfare-best compensated receiver minimizes
+E[(s - hbar)^2], the static criterion: for uniform targets, BIG's averaging receiver (Jennings, Laraki, Puppe
+and Varloot, 2021; p = 1/3 for three players by the closed form above). Without compensation the slow
+optimum is the median receiver instead (Proposition 8).
+
+*Proof (first-order argument, as for Proposition 8).* Under truthful reports the compensated receiver moves
+at full speed toward s and stops there: x_{k+1} = x_k + e (1{s > x_k} - x_k) with e = 1 - w0, until it
+reaches s. This is step 2 of the proof of Proposition 8 with the aggregate alpha_{A(x)} replaced by
+1{s > x}; step 1 is not needed, since the reports are truthful and the receiver does the moving. Starts
+within O(e) of s, where the stop matters within the discount horizon, have probability O(e) and only affect
+the O(e^2) term. So L = L_0 + e (2N / (1 - g)^2) E[(x - hbar) 1{s > x}] + O(e^2), and with x uniform,
+E[(x - hbar) 1{s > x}] = E[s^2 / 2 - s hbar] = (E[(s - hbar)^2] - E[hbar^2]) / 2. ∎
+
+The same caveats as for Proposition 8 apply: the remainder is not shown to be uniform in alpha, and the
+regime needs 1 - w0 small against 1 - g. For three players the first-order prediction matches the loss
+gap between the median receiver and averaging to within 15% at w0 = 0.995 (test
+`test_a_slow_compensated_receiver_is_ranked_by_the_static_criterion`; about 4% with 2000 draws).
+
+Across inertias, study `mechanisms_compensated_design` (table `mechanisms compensated design`) searches
+symmetric phantoms on fine grids, plus exact averaging: (p, 1 - p) in steps of 0.005 for 3 players (1000
+draws, discount 0.9 and 0.99), steps of 0.025 for 5 players and 0.05 for 7 (500 draws, discount 0.9), at
+eight inertias from 0 to 0.995. In every one of the 32 cells the best shape is the same as without inertia:
+p = 0.325 for 3 players (the grid point next to 1/3, ahead of exact averaging by at most 0.0033, well within
+one standard error of the paired difference), (0.275, 0.4) for 5 players (within 1.7 standard errors of exact
+averaging (0.2, 0.4), the static optimum), and exact averaging itself for 7 players. The median receiver
+loses more than averaging in every cell, by 8.9 to 10.4 standard errors, and the gap shrinks as inertia grows, as
+the first-order term predicts. So with compensation the welfare-best receiver does not depend on inertia at
+all in these cases, in contrast with the plain receivers (study `mechanisms_phantoms`).
 
 ## What the propositions do not cover
 

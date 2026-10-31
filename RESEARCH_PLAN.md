@@ -53,8 +53,13 @@ Next: a sampled (model-free) version of the fix; item 6; and the three items tow
   median of the reports as it can) makes truthful reporting a feedback equilibrium for any phantoms and
   inertia. With truthful reports the compensated averaging receiver beats both plain receivers' equilibria on
   average at every positive inertia (study `mechanisms_compensated`).
+  The corollary extends it to every strategy-proof rule (not to averaging the reports).
+- Proposition 10 (first-order proof): a slow compensated receiver keeps the static optimum, E[(s - hbar)^2],
+  so averaging for uniform targets; numerically the best compensated shape is the same at every inertia from
+  0 to 0.995 for 3, 5 and 7 players (study `mechanisms_compensated_design`).
 - Open: make Proposition 8's remainder uniform; unequal weights; a finer 5-player search; whether truthful reporting is the only
-  equilibrium of the compensated receiver; the best compensated phantoms for 5 and 7 players.
+  equilibrium of the compensated receiver; whether it survives shocks; an exact (not first-order) proof that
+  the compensated optimum does not move with inertia.
 
 ## Economics
 

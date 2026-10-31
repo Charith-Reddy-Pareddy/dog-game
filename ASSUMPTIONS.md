@@ -539,6 +539,10 @@ At round 800, per seed:
   equilibrium, which Proposition 9 says follow the same path, so it measures the plain solver's grid error.
 - The truthful-reporting check uses one-round deviations on a 101-point report grid at 11 outcomes, on the
   first 3 draws of each cell.
+- Study `mechanisms_compensated_design` searches symmetric phantoms only (asymmetric ones were not better for
+  plain receivers, study `mechanisms_asymmetric`), on grids of 0.005, 0.025 and 0.05 for 3, 5 and 7 players, and
+  draws its targets with its own seeds (100000 N + draw); the loss uses 200 rounds at discount 0.9 and enough
+  rounds for the tail to fall below 1e-6 at discount 0.99.
 
 ## Cooling off
 

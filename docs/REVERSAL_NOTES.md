@@ -100,6 +100,8 @@ reporting an equilibrium (Proposition 9) and moves at full speed whatever its ph
 plain receivers at every positive inertia, and for 3 players the best compensated phantoms stay at the grid
 point nearest averaging (p = 0.325) at every inertia. The reversal is therefore about speed, as the
 continuous-time limit suggests: once speed is equalized, the static ranking returns.
+Proposition 10 makes this exact to first order for slow receivers, and study `mechanisms_compensated_design`
+finds the best compensated shape unchanged at every inertia from 0 to 0.995 (3, 5 and 7 players).
 
 ## Next steps
 
