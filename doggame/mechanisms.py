@@ -134,6 +134,18 @@ def limit_coefficients(n):
     return np.array([(n - 2 * k) / (2 * n * (n + 2)) for k in range(n + 1)])
 
 
+def order_statistic_phantoms(n, j):
+    """Phantoms of the receiver that moves toward the j-th smallest target: (n - j) phantoms at 0, j - 1 at 1."""
+    return tuple([0.0] * (n - j) + [1.0] * (j - 1))
+
+
+def best_order_statistic(samples):
+    """For target draws ``samples`` (draws x n) and a uniform start, the order statistic j (1-based) of the slow
+    receiver with the lowest first-order loss: the one minimizing E[(h_(j) - mean target)^2] (Proposition 8)."""
+    ordered, mean = np.sort(samples, axis=1), samples.mean(axis=1, keepdims=True)
+    return int(np.argmin(((ordered - mean) ** 2).mean(axis=0))) + 1
+
+
 def planner_step(x, houses, w0):
     """The planner moves the outcome as close to the mean house as it can this round (optimal without shocks)."""
     x = np.asarray(x, dtype=float)

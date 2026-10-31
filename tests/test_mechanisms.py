@@ -118,3 +118,15 @@ def test_the_high_inertia_coefficients_match_simulation_and_pick_the_median_rece
         c = M.limit_coefficients(n)[1:n]  # the free phantoms alpha_1 .. alpha_{n-1}
         thresholds = [sum(c[m:]) for m in range(n)]  # alpha_k = 1 from k = m + 1 on: the extreme points
         assert int(np.argmin(thresholds)) == (n - 1) // 2  # the first (n - 1) / 2 phantoms at 0, the rest at 1
+
+
+def test_the_best_slow_receiver_is_the_order_statistic_closest_to_the_mean_target():
+    rng = np.random.default_rng(3)
+    houses, x = rng.beta(0.2, 5, (300_000, 5)), rng.random(300_000)
+    ordered, mean, above = np.sort(houses, 1), houses.mean(1), (houses > x[:, None]).sum(1)
+    for m in range(1, 6):  # the tail sum of the c_k equals E[q (q / 2 - mean)] with q the (6 - m)-th smallest target
+        q = ordered[:, 5 - m]
+        assert abs(np.mean((x - mean) * (above >= m)) - np.mean(q * (q / 2 - mean))) < 2e-3
+    assert M.best_order_statistic(rng.random((300_000, 5))) == 3  # uniform targets: the median
+    assert M.best_order_statistic(houses) == 4  # skewed targets: a higher order statistic
+    assert M.order_statistic_phantoms(5, 3) == (0.0, 0.0, 1.0, 1.0) and M.order_statistic_phantoms(5, 4) == (0.0, 1.0, 1.0, 1.0)

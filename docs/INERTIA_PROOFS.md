@@ -291,17 +291,21 @@ Puppe and Varloot, 2021). With three influencers and phantoms (p, 1 - p) the exp
 minimizer on [0, 1/2] (5/27 against 1/5 for the median receiver). So in the static game BIG's
 averaging receiver, for all its exaggeration, is the best strategy-proof receiver.
 
-**Proposition 8 (slow receivers should use the median).** Take N odd, equal weights, targets drawn
-independently and uniformly on [0, 1], the start x uniform on [0, 1], and a fixed discount g. For a
-generalized median receiver with phantoms alpha (any monotone alpha, not only symmetric ones), the
-expected discounted summed loss is
+**Proposition 8 (slow receivers should use an order statistic).** Take equal weights, targets drawn
+independently from a distribution F on [0, 1], the start x uniform on [0, 1], and a fixed discount g.
+For a generalized median receiver with phantoms alpha (any monotone alpha, not only symmetric ones),
+the expected discounted summed loss is
 
   L(alpha; w0) = L_0(w0) + (1 - w0) (2N / (1 - g)^2) (sum_{k=1}^{N-1} c_k alpha_k + c_N) + O((1 - w0)^2),
 
-where L_0(w0) does not depend on alpha and c_k = (N - 2k) / (2N(N + 2)). The first-order term is uniquely
-minimized by alpha_k = 0 for k < N/2 and alpha_k = 1 for k > N/2, the median receiver. So as w0 tends
-to 1 the welfare-best generalized median receiver tends to the median receiver, whereas at w0 = 0 it
-is BIG's averaging receiver (above).
+where L_0(w0) does not depend on alpha and c_k = E[(x - hbar) 1{k targets lie above x}]. The first-order
+term is minimized by an order-statistic receiver: the one that moves toward the j-th smallest target
+(phantoms: N - j at 0, j - 1 at 1), with j minimizing E[(h_(j) - hbar)^2], the mean squared distance
+between that order statistic and the mean target. For uniform targets c_k = (N - 2k)/(2N(N + 2)) and,
+for N odd, j is the median: as w0 tends to 1 the welfare-best generalized median receiver tends to the
+median receiver, whereas at w0 = 0 it is BIG's averaging receiver (above). For strongly skewed targets j
+can lie above the median (for Beta(0.2, 5) with N = 5, j = 4; test
+`test_the_best_slow_receiver_is_the_order_statistic_closest_to_the_mean_target`).
 
 *Proof (first-order argument).*
 1. *Influencers sit at edges.* As w0 -> 1 the position barely moves within the discount horizon, so an
@@ -314,16 +318,19 @@ is BIG's averaging receiver (above).
    + O(k^2 e^2), and with l(x) = sum_i (x - h_i)^2,
    sum_k g^k l(x_{k+1}) = l(x) / (1 - g) + e l'(x) (alpha_{A(x)} - x) / (1 - g)^2 + O(e^2),
    using sum_k (k + 1) g^k = 1 / (1 - g)^2. Since l'(x) = 2N (x - hbar), the part that depends on alpha is
-   e (2N / (1 - g)^2) E[(x - hbar) alpha_{A(x)}] = e (2N / (1 - g)^2) sum_k c_k alpha_k, with
-   c_k = E[(x - hbar) 1{A(x) = k}].
-3. *The coefficients.* Given x and A = k, the k targets above are uniform on (x, 1) and the others on
+   e (2N / (1 - g)^2) E[(x - hbar) alpha_{A(x)}] = e (2N / (1 - g)^2) sum_k c_k alpha_k.
+3. *The minimizer.* The objective is linear in alpha over the monotone set 0 <= alpha_1 <= ... <=
+   alpha_{N-1} <= 1, whose extreme points are the thresholds alpha_k = 1{k >= m}, with value
+   sum_{k >= m} c_k = E[(x - hbar) 1{A(x) >= m}]. At least m targets lie above x exactly when x is below
+   q = h_(N-m+1), so integrating over the uniform start, the value is
+   E[integral_0^q (x - hbar) dx] = E[q^2/2 - q hbar] = E[(q - hbar)^2]/2 - E[hbar^2]/2.
+   So the best threshold is the order statistic closest to hbar in mean square.
+4. *Uniform targets.* Given x and A = k, the k targets above are uniform on (x, 1) and the others on
    (0, x), so E[hbar | x, A = k] = x/2 + k/(2N). Given A = k, x has the Beta(N - k + 1, k + 1) density
    with mean (N - k + 1)/(N + 2), and P(A = k) = 1/(N + 1). So
-   c_k = (1/(N + 1)) ((N - k + 1)/(2(N + 2)) - k/(2N)) = (N - 2k) / (2N(N + 2)).
-4. *The minimizer.* The objective is linear in alpha over the monotone set 0 <= alpha_1 <= ... <=
-   alpha_{N-1} <= 1, whose extreme points are the thresholds alpha_k = 1{k >= m}, with value
-   sum_{k >= m} c_k. Since c_k > 0 for k < N/2 and c_k < 0 for k > N/2 (never 0 for N odd), the tail sum is
-   smallest exactly at m = (N + 1)/2. ∎
+   c_k = (1/(N + 1)) ((N - k + 1)/(2(N + 2)) - k/(2N)) = (N - 2k) / (2N(N + 2)), positive for k < N/2 and
+   negative for k > N/2 (never 0 for N odd), and the tail sum is smallest exactly at m = (N + 1)/2, the
+   median. ∎
 
 The remainder in step 2 is bounded for each fixed alpha but the argument does not make it uniform over
 alpha, and the regime needs 1 - w0 small against 1 - g, not just small. Numerically (study
