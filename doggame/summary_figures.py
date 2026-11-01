@@ -278,8 +278,11 @@ def fig8(out, w0=0.9, rounds=30):
                 ax.scatter(*t, s=230, marker="*", facecolors="white", edgecolors=COLORS[i], lw=1.8, zorder=6)
             arrows(ax, dog, INK, size=6)
             ends(ax, dog, INK, marker="D")
-        receiver = Line2D([], [], marker="D", ls="", color=INK, ms=7, label="receiver")  # the paper says receiver, not dog
-        fig.legend(handles=players(3)[:-1] + [receiver, Line2D([], [], marker="P", ls="", color=GREY, ms=8, label="mean target (planner)")],
+        influencers = players(3)[:-1]  # the paper says influencer and receiver, not player and dog
+        for h in influencers:
+            h.set_label(h.get_label().replace("player", "influencer"))
+        receiver = Line2D([], [], marker="D", ls="", color=INK, ms=7, label="receiver")
+        fig.legend(handles=influencers + [receiver, Line2D([], [], marker="P", ls="", color=GREY, ms=8, label="mean target (planner)")],
                    loc="upper center", ncol=4, bbox_to_anchor=(0.5, 1.0), frameon=False, fontsize=8.5, columnspacing=1.4, handletextpad=0.4)
         fig.text(0.5, 0.008, f"t1 (0.15, 0.70)  t2 (0.30, 0.20)  t3 (0.90, 0.55)  ·  inertia {w0}  ·  {rounds} rounds  ·  circles: reports (on the targets when truthful)",
                  ha="center", fontsize=7.2, color=INK2)
