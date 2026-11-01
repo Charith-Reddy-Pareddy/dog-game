@@ -116,7 +116,9 @@ def _shock_losses(move, z, houses, discount, shock, grid=401, sweeps=200):
 def deviation_gain(rule, policy, houses, weights, w0, discount=0.9, states=21, grid=201, rounds=200, compensate=False):
     """The most any player gains, at any of ``states`` outcomes, by changing its report for one round and
     then following ``policy`` again; ``policy(x)`` gives everyone's reports at outcome x. With ``compensate``
-    the receiver is the inertia-compensated one. ``rule`` can also be any function of the reports (last axis)."""
+    the receiver is the inertia-compensated one; ``compensate`` can also be a function giving the reachable
+    interval (low, high) from outcome x, for receivers other than proportional inertia (Proposition 11).
+    ``rule`` can also be any function of the reports (last axis)."""
     houses, weights, best = np.asarray(houses, dtype=float), np.asarray(weights, dtype=float), 0.0
     if callable(rule):
         agg = rule
@@ -124,7 +126,8 @@ def deviation_gain(rule, policy, houses, weights, w0, discount=0.9, states=21, g
         agg = lambda r: np.median(np.concatenate([r, np.broadcast_to(rule, r.shape[:-1] + (len(rule),))], -1), axis=-1)  # noqa: E731
     else:
         agg = (lambda r: r @ weights) if rule == "mean" else (lambda r: np.median(r, axis=-1))
-    move = (lambda x, r: np.clip(agg(r), w0 * x, w0 * x + 1 - w0)) if compensate else (lambda x, r: w0 * x + (1 - w0) * agg(r))  # noqa: E731
+    reach = compensate if callable(compensate) else (lambda x: (w0 * x, w0 * x + 1 - w0))  # noqa: E731
+    move = (lambda x, r: np.clip(agg(r), *reach(x))) if compensate else (lambda x, r: w0 * x + (1 - w0) * agg(r))  # noqa: E731
     for x in np.linspace(0, 1, states):
         now = policy(x)
         for i in range(len(houses)):

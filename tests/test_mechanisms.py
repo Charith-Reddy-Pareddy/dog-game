@@ -40,6 +40,26 @@ def test_compensation_keeps_every_strategy_proof_rule_truthful_but_not_averaging
     assert M.deviation_gain(lambda r: r.mean(-1), truthful, HOUSES, WEIGHTS, 0.6, compensate=True, **SMALL) > 0.01
 
 
+def test_compensation_keeps_truthful_reporting_for_any_monotone_reachable_set_that_allows_staying():
+    truthful = lambda x: HOUSES.copy()
+    speed_limit = lambda x: (np.maximum(0, x - 0.15), np.minimum(1, x + 0.15))
+    asymmetric = lambda x: (np.maximum(0, x - 0.3), np.minimum(1, x + 0.1))  # falls fast, rises slowly
+    for reach in (speed_limit, asymmetric):
+        for rule in ((0.0, 1.0), (1 / 3, 2 / 3), lambda r: r[..., 0]):
+            assert M.deviation_gain(rule, truthful, HOUSES, WEIGHTS, 0.0, compensate=reach, **SMALL) < 1e-12
+
+
+def test_truthful_reporting_fails_when_the_receiver_cannot_stay_or_its_reach_falls():
+    dictator, one = (lambda r: r[..., 0]), np.ones(1)
+    forced = lambda x: (np.minimum(1, x + 0.2), np.minimum(1, x + 0.4))  # must move up by at least 0.2
+    falling = lambda x: (x, np.where(x <= 0.45, np.minimum(1, x + 0.6), x))  # the upper end falls from 1 to 0.45 above 0.45
+    gain = lambda reach, target: M.deviation_gain(dictator, lambda x: np.full(1, target), np.full(1, target), one, 0.0,
+                                                  states=11, grid=11, rounds=200, compensate=reach)
+    # from start 0 (one of the states checked), by hand: report 0.3 first and move 0.3, 0.5, 0.7, ... instead of
+    # 0.4, 0.6, 0.8, ... (0.085 less loss); or report 0.4 first and then reach 1 for good instead of being stuck at 0.6
+    assert gain(forced, 0.5) >= 0.085 and gain(falling, 1.0) >= 1.24 - 1e-6  # 200 rounds leave out about 1e-9
+
+
 def test_a_slow_compensated_receiver_is_ranked_by_the_static_criterion():
     rng = np.random.default_rng(2)
     houses, x = rng.random((400_000, 3)), rng.random(400_000)

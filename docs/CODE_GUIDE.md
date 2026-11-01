@@ -119,7 +119,8 @@ All in `doggame/mechanisms.py` unless named otherwise.
   equilibrium. At 21 outcomes, for each player, try every report on a 201-point grid for one round and
   then go back to `policy`, and compare the loss with following `policy` throughout. Returns the largest
   improvement. By the one-shot deviation principle, 0 at every state means the policy is an equilibrium,
-  up to the grid.
+  up to the grid. `compensate` can also be a function giving the reachable interval from each outcome, for
+  receivers other than proportional inertia (Proposition 11).
 - **`planner_step`**. Moves as close to the mean target as it can each round. Without shocks this is
   optimal.
 - **`limit_coefficients`, `order_statistic_phantoms`, `best_order_statistic`, `compensated_criterion`**.
@@ -138,6 +139,7 @@ All in `doggame/mechanisms.py` unless named otherwise.
 | Some inertia helps with noise | numerical | `mechanisms_noise`, `mechanisms_noise_planner` | `mechanisms_noise_table` | `test_the_greedy_planner_loss_falls_with_inertia_while_the_mean_house_stays_reachable` (the mechanism, not the best inertia) |
 | Compensation restores truthful reporting (Fig. 6) | Prop. 9 and corollary | `mechanisms_compensated` | `mechanisms_compensated_table` | `test_truthful_reporting_is_an_equilibrium_once_the_receiver_compensates_for_inertia`, `test_compensation_keeps_every_strategy_proof_rule_truthful_but_not_averaging` |
 | With compensation the best receiver does not depend on inertia (Fig. 4 right) | Prop. 10 (first order) plus numerical | `mechanisms_compensated_design` | `mechanisms_compensated_design_table` | `test_a_slow_compensated_receiver_is_ranked_by_the_static_criterion` |
+| Compensation keeps every strategy-proof rule truthful for any reachable set that allows staying and has nondecreasing ends; neither condition can be dropped | Prop. 11 | | | `test_compensation_keeps_truthful_reporting_for_any_monotone_reachable_set_that_allows_staying`, `test_truthful_reporting_fails_when_the_receiver_cannot_stay_or_its_reach_falls` |
 | PG learns the one-shot equilibrium | numerical | `algorithms`, `walking` | `algorithms_table`, `walking_table` | `test_training_moves_policy_closer_to_nash` (`tests/test_train.py`) |
 | PG learns the static, not the dynamic, answer; the fix | numerical | `feedback_learning`, `learning_fix` | `feedback_learning_table`, `learning_fix_table` | `test_the_explicit_equilibrium_has_no_feedback_gain_and_holding_does`, `test_a_table_of_actions_moves_toward_the_feedback_equilibrium` |
 
