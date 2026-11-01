@@ -57,9 +57,16 @@ Next: a sampled (model-free) version of the fix; item 6; and the three items tow
 - Proposition 10 (first-order proof): a slow compensated receiver keeps the static optimum, E[(s - hbar)^2],
   so averaging for uniform targets; numerically the best compensated shape is the same at every inertia from
   0 to 0.995 for 3, 5 and 7 players (study `mechanisms_compensated_design`).
-- Open: make Proposition 8's remainder uniform; unequal weights; a finer 5-player search; whether truthful reporting is the only
-  equilibrium of the compensated receiver; whether it survives shocks; an exact (not first-order) proof that
-  the compensated optimum does not move with inertia.
+- Proposition 11 (proved): Proposition 9 holds for every receiver whose reachable set contains the current
+  position and has nondecreasing endpoints (speed limits, asymmetric adjustment); neither condition can be dropped.
+- Proposition 12 (proved): with truthful reports a compensated receiver's loss is the planner's plus
+  2N integral (u - hbar) W(u) du, with W the discounted time a point is reachable; the planner is the compensated
+  receiver aimed at the mean target.
+- Proposition 13 (proved): the loss is a sum of one term per phantom with the static sign pattern, so the optimal
+  compensated phantoms do not depend on inertia; for uniform targets they are k/N exactly.
+- Paper draft: `paper/paper.tex`.
+- Open: make Proposition 8's remainder uniform; unequal weights; whether truthful reporting is the only
+  equilibrium of the compensated receiver; shocks (a small gain from shading, see the proof notes).
 
 ## Economics
 

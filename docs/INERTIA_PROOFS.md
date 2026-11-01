@@ -455,7 +455,120 @@ one standard error of the paired difference), (0.275, 0.4) for 5 players (within
 averaging (0.2, 0.4), the static optimum), and exact averaging itself for 7 players. The median receiver
 loses more than averaging in every cell, by 8.9 to 10.4 standard errors, and the gap shrinks as inertia grows, as
 the first-order term predicts. So with compensation the welfare-best receiver does not depend on inertia at
-all in these cases, in contrast with the plain receivers (study `mechanisms_phantoms`).
+all in these cases, in contrast with the plain receivers (study `mechanisms_phantoms`). Proposition 13 below shows
+that this is exact: for uniform targets the optimum is averaging at every inertia, and the grid points that came out
+ahead of it did so within sampling error.
+
+## Receivers that move within a reachable set
+
+Propositions 9 and 10 are about proportional inertia, where the outcome can reach [w0 x, w0 x + 1 - w0] in one
+round. The arguments only use two properties of that interval, so they hold for a wide class of receivers. Let
+the receiver's *reachable set* from x be an interval R(x) = [a(x), b(x)] in [0, 1] with
+
+  (R1) a(x) <= x <= b(x): the receiver can always stay where it is;
+  (R2) a and b are nondecreasing: starting higher never shrinks what can be reached upward or extends it downward.
+
+Proportional inertia (a = w0 x, b = w0 x + 1 - w0), a speed limit (a = max(0, x - c), b = min(1, x + c)) and
+asymmetric adjustment (different limits up and down) all satisfy (R1) and (R2). The *compensated* receiver with
+rule m moves to clip(m(r), a(x), b(x)), the reachable point closest to m(r).
+
+**Proposition 11 (compensation keeps every strategy-proof rule truthful).** Under (R1) and (R2), for every
+generalized median voter scheme m, any number of players, any discount and any per-round loss that increases
+with the distance to the player's target, truthful reporting is a feedback equilibrium of the compensated
+receiver. Along it the outcome after t rounds is clip(s, A_t, B_t), where s = m(h), A_0 = B_0 = x_0,
+A_{t+1} = a(A_t) and B_{t+1} = b(B_t), and [A_t, B_t] is the set of outcomes reachable in t rounds.
+
+*Proof.* The proof of Proposition 9 goes through word for word with G(x) = clip(s, a(x), b(x)). G is
+nondecreasing (a composition of nondecreasing maps, by R2), moves x toward s without crossing it, and fixes s
+(both by R1). These are the only facts step 1 used; steps 2 to 4 used only that a deviation by a player with
+target above s can only lower m (the uncompromising property of Border and Jordan, 1983) and that the clipped
+outcome then weakly falls. For the path: the set reachable in t + 1 rounds is the union of [a(y), b(y)] over y in
+[A_t, B_t]; each of these intervals contains its y (R1) and their endpoints are monotone in y (R2), so the union is
+[a(A_t), b(B_t)]. If s is in [A_t, B_t], the truthful outcome is s and stays there (R1). If s > B_t, the truthful
+outcome is B_t by induction, and the next one is min(s, b(B_t)) because a(B_t) <= B_t < s. The case s < A_t is the
+mirror image. ∎
+
+Tests `test_compensation_keeps_truthful_reporting_for_any_monotone_reachable_set_that_allows_staying`
+(a speed limit and asymmetric limits, for the median, averaging and dictator rules) and
+`test_truthful_reporting_fails_when_the_receiver_cannot_stay_or_its_reach_falls` (the two examples below)
+check this numerically. Neither condition can be dropped. In both examples there is one player (the rule is a dictator, which is
+strategy-proof), the loss is squared and the discount is 0.9.
+- *Without (R1).* R(x) = [min(1, x + 0.2), min(1, x + 0.4)]: the receiver must move up by at least 0.2. With target
+  0.5 and start 0, truthful reporting goes 0.4, 0.6, 0.8, 1, ...; reporting 0.3 first goes 0.3, 0.5, 0.7, 0.9, 1, ...
+  and loses 0.085 less in total.
+- *Without (R2).* a(x) = x, b(x) = min(1, x + 0.6) for x <= 0.45 and b(x) = x above 0.45. With target 1 and start 0, truthful
+  reporting moves to 0.6 and is stuck there (loss 0.16 per round, 1.6 in total); reporting 0.4 first loses 0.36
+  once and then reaches 1 for good, a gain of 1.24.
+
+## The welfare of a compensated receiver, exactly
+
+**Proposition 12 (welfare is a weighted static criterion).** Take a receiver satisfying (R1) and (R2), any
+distribution of the start x_0, truthful reports, and a social loss per round Lambda(x) = sum_i l(x - h_i) with l
+convex and differentiable; Lambda is minimized at s*. Let
+
+  W(u) = E sum_{t >= 1} g^(t-1) 1{A_t <= u <= B_t},
+
+the expected discounted number of rounds in which u is reachable. Then:
+1. The planner (any feasible path, minimizing the discounted social loss) follows clip(s*, A_t, B_t): the
+   compensated receiver with end point s*.
+2. The discounted social loss of the compensated receiver with end point s is
+
+     L(s) = L(s*) + integral from s* to s of Lambda'(u) W(u) du.
+
+   For squared loss, s* is the mean target hbar and L(s) - L(s*) = 2N integral_hbar^s (u - hbar) W(u) du, a
+   Bregman divergence of the convex function with second derivative W.
+
+So L is single-dipped in s with its minimum at the planner's end point. Two compensated receivers whose end points
+lie on the same side of s* are ranked the same way at every inertia, discount and start distribution: the one
+closer to s* is better. Without inertia W is the constant 1 / (1 - g), and L(s) - L(s*) = N (s - hbar)^2 / (1 - g), the
+static criterion. The plain median receiver's equilibrium follows the compensated median's path (Proposition 4),
+so its loss is also L(h_m).
+
+*Proof.* (1) By Proposition 11 the outcomes reachable at round t are [A_t, B_t] whatever path was taken, and
+clip(s*, A_t, B_t) minimizes the convex Lambda over that interval; the path clip(s*, A_t, B_t) is itself feasible,
+so it minimizes the loss in every round at once. (2) L(s) = E sum_t g^(t-1) Lambda(clip(s, A_t, B_t)). The map
+s -> clip(s, A, B) is Lipschitz with derivative 1{A < s < B}, so dL/ds = Lambda'(s) W(s) for almost every s
+(dominated convergence: Lambda' is bounded on [0, 1]); integrate from s*. ∎
+
+`mechanisms.reach_weight` computes W for proportional inertia and the evenly spread starts of `social_loss`;
+test `test_a_compensated_receiver_loses_the_planners_loss_plus_a_weighted_static_criterion` checks the
+formula against simulated losses (to quadrature error, about 1e-6 relative) at inertia 0, 0.6 and 0.95.
+
+## Choosing the receiver: persistence does not move the optimum
+
+**Proposition 13 (the optimal compensated receiver does not depend on inertia).** Let the targets be independent
+with a continuous distribution F, the loss squared, and the phantoms ordered, alpha_1 < ... < alpha_{N-1}. Under the
+assumptions of Proposition 12, with W > 0 on (0, 1),
+
+  dL/d alpha_k = 2N W(alpha_k) E[(alpha_k - hbar) 1{exactly N - k targets lie below alpha_k}].
+
+The expectation depends on alpha_k alone, so L is a sum of one function of each phantom plus a constant, and each
+derivative has the sign it has without inertia. Hence the welfare-best ordered phantoms are the same for every
+reachable-set receiver, discount and start distribution, including no inertia: each alpha_k minimizes the
+static criterion on its own. For uniform targets,
+
+  dL/d alpha_k = N W(alpha_k) C(N, k) alpha_k^(N-k) (1 - alpha_k)^k (alpha_k - k/N),
+
+so the unique optimum is alpha_k = k/N, BIG's averaging receiver, at every inertia.
+
+*Proof.* With ordered phantoms, alpha_k is the median of the 2N - 1 points exactly when N - 1 points lie below it,
+k - 1 of them phantoms, so exactly N - k targets. On that event moving alpha_k moves s one for one; otherwise s does
+not move. By Proposition 12, L depends on alpha only through s, and dL/ds = 2N (s - hbar) W(s); on the event s =
+alpha_k, so dL/d alpha_k is as stated (differentiation under E is justified because s is Lipschitz in alpha). For
+uniform targets, with j = N - k targets below a, the targets below have mean a / 2 and those above (1 + a) / 2, so
+E[(a - hbar) 1{j below}] = C(N, j) a^j (1 - a)^(N-j) (a - (j a / 2 + k (1 + a) / 2) / N) = C(N, k) a^(N-k) (1 - a)^k (a - k/N) / 2.
+∎
+
+Tests `test_moving_a_phantom_changes_the_loss_at_the_static_rate_times_the_weight` (finite differences of the
+simulated loss, to 0.1%, at inertia 0, 0.6 and 0.9) and
+`test_for_uniform_targets_the_phantom_condition_has_its_closed_form_and_vanishes_at_k_over_n` check the formulas.
+The separability needs ordered, distinct phantoms; when the minimizers of the separate terms are not ordered the
+ordering constraint binds, which uniform targets never meet.
+
+So with compensation the reversal disappears completely: the averaging receiver is optimal at every inertia, and
+inertia changes only how much is lost, not which receiver is best. Without compensation the slow-receiver optimum
+is the median receiver (Proposition 8). Proposition 13 also explains the numerical design study
+(`mechanisms_compensated_design`): its best grid shapes differ from k/N only within sampling error.
 
 ## What the propositions do not cover
 
@@ -468,5 +581,11 @@ all in these cases, in contrast with the plain receivers (study `mechanisms_phan
   targets from a two-dimensional fixed point (`target_equilibrium`), this holds numerically in 122 of the 123
   games. A proof is open.
 - **Uniqueness.** The propositions give one feedback equilibrium; they do not rule out others.
+- **Shocks.** Propositions 9 to 13 assume a deterministic receiver. With a normal shock on each next outcome,
+  clipped to [0, 1], truthful reporting under the compensated median is no longer exactly an equilibrium. With
+  targets 0.15, 0.3 and 0.8, shocks of standard deviation 0.15 and discount 0.9, the median influencer gains
+  0.0024 by shading its report from 0.3 to 0.255 at outcome 0.125 with inertia 0.8, against 0.0003 without inertia
+  (from clipping alone); with targets 0.2, 0.5 and 0.8 no gain was found (test
+  `test_with_clipped_shocks_the_median_influencer_gains_a_little_by_shading`).
 - **Shared coordinates.** When the houses coincide, both one-shot actions can be interior and the one-shot game has a
   continuum of equilibria.

@@ -544,6 +544,18 @@ At round 800, per seed:
   draws its targets with its own seeds (100000 N + draw); the loss uses 200 rounds at discount 0.9 and enough
   rounds for the tail to fall below 1e-6 at discount 0.99.
 
+## Reachable-set receivers and exact welfare (Propositions 11 to 13)
+
+- Reachable sets are intervals [a(x), b(x)] chosen by the receiver's designer and known to it; the receiver is
+  deterministic. Propositions 11 to 13 need (R1) staying put is always possible and (R2) both endpoints
+  nondecreasing.
+- Proposition 13 assumes independent targets with a continuous distribution (so ties have probability 0), ordered
+  distinct phantoms, and W > 0 on (0, 1), which holds for proportional inertia below 1 and any speed limit.
+- `reach_weight` uses the 101 evenly spread starts and 200 rounds of `social_loss`, so it matches simulated
+  losses exactly; the uniform-start formula is its limit.
+- The shock example uses the shock model of the cooling-off study (normal, on the outcome, clipped to [0, 1], 9
+  Gauss-Hermite nodes, 401-point value grid) and a 201-point report grid.
+
 ## Cooling off
 
 - The shock is normal, added to each next outcome and then clipped to [0, 1]; "with the

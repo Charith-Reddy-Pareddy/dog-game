@@ -20,7 +20,7 @@ files. The receiver (mechanism) results need only a small part of that:
 | `tests/test_mechanisms.py` | 18 tests of the claims below | |
 | `doggame/summary_figures.py` | The seven figures of the key-results summary PDF | one function per figure |
 | `doggame/summary_pdf.py` | The key-results summary PDF itself: text, figures, captions | |
-| `docs/INERTIA_PROOFS.md` | The proofs (Propositions 3, 4 and 7 to 10) | |
+| `docs/INERTIA_PROOFS.md` | The proofs (Propositions 3, 4 and 7 to 13) | |
 
 The policy-gradient results use a second, separate set: `env.py` (the game), `agents.py` and `networks.py`
 (the policies), `train.py` and `train_ac.py` (REINFORCE, A2C, PPO), `verify.py` (exploitability),

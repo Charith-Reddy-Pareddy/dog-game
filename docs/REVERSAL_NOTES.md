@@ -102,6 +102,8 @@ point nearest averaging (p = 0.325) at every inertia. The reversal is therefore 
 continuous-time limit suggests: once speed is equalized, the static ranking returns.
 Proposition 10 makes this exact to first order for slow receivers, and study `mechanisms_compensated_design`
 finds the best compensated shape unchanged at every inertia from 0 to 0.995 (3, 5 and 7 players).
+Proposition 13 proves it exactly, for any reachable-set receiver: the compensated loss separates into one term
+per phantom with the static sign pattern, so for uniform targets the optimum is averaging at every inertia.
 
 ## Next steps
 

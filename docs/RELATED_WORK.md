@@ -44,6 +44,15 @@ and main claim were confirmed from the publisher's page or abstract, not that th
   Proposition 9 is this fact with the feasible set [w0 x, w0 x + 1 - w0]; the dynamic step is new as far as
   checked. Verified (abstract and Theorem 3).
 
+- **Barberà, Massó and Neme (1997)**, [Voting under constraints](https://ideas.repec.org/a/eee/jetheo/v76y1997i2p298-321.html),
+  *Journal of Economic Theory* 76(2), 298-321. Strategy-proof rules on a constrained feasible set. *Ours:* the
+  feasible set of Proposition 11 changes with the state; the one-round step is the fixed-set fact. Verified
+  (citation page; no abstract available).
+- **Chandrasekher (2015)**, [Dynamically consistent voting rules](https://ideas.repec.org/a/eee/jetheo/v160y2015icp175-187.html),
+  *Journal of Economic Theory* 160, 175-187. Strategy-proof and dynamically consistent voting rules when menus
+  shrink over stages, on single-peaked domains. *Ours:* a persistent outcome and Markov equilibrium instead of
+  shrinking menus. Verified (abstract).
+
 ## Welfare-optimal strategy-proof rules (static)
 
 - **Jennings, Laraki, Puppe and Varloot (2021)**, [New characterizations of strategy-proofness under
@@ -56,6 +65,12 @@ and main claim were confirmed from the publisher's page or abstract, not that th
 - **Caragiannis, Procaccia and Shah (2016)**, [Truthful univariate
   estimators](https://proceedings.mlr.press/v48/caragiannis16.html), ICML. Truthful estimators of a
   population mean are generalized medians; worst-case optimal ones beat the median. Verified (abstract).
+
+- **Gershkov, Moldovanu and Shi (2017)**, [Optimal voting rules](https://ideas.repec.org/a/oup/restud/v84y2017i2p688-717..html),
+  *Review of Economic Studies* 84(2), 688-717. The utilitarian-optimal dominant-strategy mechanism with
+  single-peaked or single-crossing preferences, implemented by sequential voting with alternative-specific
+  thresholds. *Ours:* Proposition 13 shows the static optimum stays optimal for compensated receivers at every
+  inertia. Verified (abstract).
 
 ## Dynamic collective choice and the status quo
 
@@ -75,7 +90,10 @@ and main claim were confirmed from the publisher's page or abstract, not that th
   line](https://www.ijcai.org/proceedings/2018/26), IJCAI. A facility relocated each stage at a moving
   cost; optimal mechanisms are not strategy-proof. *Ours:* inertia instead of a moving cost, strategic
   play in a Markov game. Verified.
-
+  The full version (arXiv 2103.12894) shows that the optimal offline and online mechanisms, which depend on the
+  previous location, are not strategy-proof (Corollary 4), and offers the median agent in every stage, which ignores
+  history, as the strategy-proof mechanism (Theorem 4). *Ours:* Proposition 11 gives history-dependent receivers
+  that keep truthful reporting an equilibrium. Verified (full text, Section 6).
 ## Repeated strategic reporting and convergence
 
 - **Meir, Polukarov, Rosenschein and Jennings (2010)**, [Convergence to equilibria in plurality
@@ -100,5 +118,6 @@ and main claim were confirmed from the publisher's page or abstract, not that th
    period, for instance in partial-adjustment or gradualism models of committees.
 2. Differential games in the style of Fershtman and Kamien, for the continuous-time framing in
    [REVERSAL_NOTES.md](REVERSAL_NOTES.md).
-3. Strategy-proofness in dynamic or repeated settings, in case an existing result already implies
-   Proposition 3.
+3. Strategy-proofness in dynamic or repeated settings: checked for Proposition 11 (Chandrasekher 2015, de Keijzer
+   and Wojtczak 2018 and its full version, Barberà, Massó and Neme 1997); none implies it, as far as checked.
+   Google Scholar blocked automated searches, so the search used publisher pages, IDEAS/RePEc and arXiv.
