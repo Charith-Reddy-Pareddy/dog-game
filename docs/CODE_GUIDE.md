@@ -37,10 +37,13 @@ Everything else belongs to threads the current results do not use. You can ignor
 | PDF and report builders | `research_report_pdf`, `pdf_kit`, `dog_game_report`, `figures`, `working_paper`, `soccer_report`, `walking_figures` |
 
 Two things worth knowing about these:
-- The four inertia modules overlap: all ask whether holding the one-shot actions is an equilibrium, by
-  closed form (`inertia_mpe`, `inertia_theory`), dynamic programming (`inertia_dp`) and optimal control
-  (`inertia_equilibrium`). `tests/test_inertia_dp.py` checks the dynamic program against `inertia_mpe`'s
-  closed form.
+- The four inertia modules overlap, but they do not all answer the same question. `inertia_theory` (closed
+  form) and `inertia_mpe` (exact one-round gain at every dog position) ask whether holding the one-shot
+  actions is a feedback equilibrium. `inertia_dp` computes the feedback equilibrium itself by dynamic
+  programming. `inertia_equilibrium` asks a weaker question: can a player gain against a fixed opponent,
+  starting from where the game starts? It finds no gain in all five setups, even where the other three find
+  one off the path. `tests/test_inertia_agreement.py` checks each module against the others, using
+  implications that must hold in every game.
 - Four modules have no test of their own: `continuous_q_figure`, `pdf_kit`, `polar_action_report` and
   `soccer_experiments`. All four only draw figures or run batches.
 
