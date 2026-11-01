@@ -1,4 +1,4 @@
-"""The key-results summary PDF (four pages): the main results in plain words, with the seven figures of
+"""The key-results summary PDF (five pages): the main results in plain words, with eight figures of
 doggame.summary_figures. The numbers in the text come from the tables of doggame.dog_game_summary and the
 propositions in docs/INERTIA_PROOFS.md; see docs/CODE_GUIDE.md for where each one is computed.
 
@@ -65,18 +65,27 @@ points = [
     "its fixed points) as its inertia allows, instead of only part of the way, then reporting your true target is an "
     "equilibrium at every inertia and for any fixed points (our proof; no profitable deviation in any game checked). The "
     "same holds for every strategy-proof rule, including ones that treat influencers differently, such as a dictator; "
-    "compensation cannot rescue a manipulable rule such as plain averaging of the reports. With truthful reports the "
-    "compensated averaging receiver loses less on average than both plain receivers at every positive inertia, for 3, 5 "
-    "and 7 influencers (Fig. 6).",
-    "<b>With compensation the best receiver no longer depends on inertia.</b> We prove that a slowly adjusting compensated "
-    "receiver should use the same fixed points as a receiver without inertia: for evenly spread targets BIG's averaging "
-    "receiver, where without compensation it would be the median receiver. On fine grids of fixed points (1,000 random "
+    "compensation cannot rescue a manipulable rule such as plain averaging of the reports. Truthful reporting also stays an "
+    "equilibrium for any receiver that can always stay where it is and whose reachable range never moves down when its "
+    "position moves up, such as a speed limit or different limits for moving up and down; we show by example that neither "
+    "condition can be dropped. With truthful reports the compensated averaging receiver loses less on average than both "
+    "plain receivers at every positive inertia, for 3, 5 and 7 influencers (Fig. 6); in the example of Fig. 2 it also "
+    "settles sooner than either.",
+    "<b>With compensation the best receiver no longer depends on inertia.</b> We prove this exactly, at every inertia: a "
+    "compensated receiver's loss is the planner's loss plus a weighted version of the no-inertia criterion, where the weight "
+    "of a point is the discounted time during which the receiver can still reach it (Fig. 7). So the best fixed points are "
+    "those without inertia: for evenly spread targets exactly BIG's averaging receiver, where without compensation a slow "
+    "receiver should be the median receiver. On fine grids of fixed points (1,000 random "
     "games for 3 influencers, 500 for 5 and 7) the best compensated receiver is the same at every inertia from 0 to 0.995 "
     "and within sampling error of averaging, while the median receiver stays clearly worse (Fig. 4, right).",
+    "<b>Random shocks break exact truthfulness, slightly.</b> The results above assume the receiver moves exactly as "
+    "told. If its position is also hit by random shocks (standard deviation 0.15, clipped to [0, 1]), the median influencer "
+    "gains a little by shading its report: 0.0024 at inertia 0.8 against 0.0003 without inertia, for targets 0.15, 0.30 and "
+    "0.80. This is a numerical check, not a theorem; with targets 0.2, 0.5 and 0.8 we found no gain.",
 ]
 pg = [
     "<b>PG self-play finds the one-shot equilibrium.</b> 74 of 75 REINFORCE runs and 25 of 25 PPO runs reached exploitability below "
-    "0.004 within 1,500 episodes; in the walking game every REINFORCE seed walks to the one-shot Nash corners (Fig. 7).",
+    "0.004 within 1,500 episodes; in the walking game every REINFORCE seed walks to the one-shot Nash corners (Fig. 8).",
     "<b>With a persistent dog, PG learns the static answer, not the dynamic one.</b> Even starting every episode from a random dog "
     "position, A2C and PPO learn to hold the one-shot actions everywhere (19 of 20 runs), which can be exploited away from the "
     "equilibrium path. Fitting the policy network to exact per-state targets fixes this in three games, 5 of 5 seeds each.",
@@ -88,7 +97,7 @@ def build(out=OUTPUT):
     folder = summary_figures.build(out.parent)
     story = [
         Paragraph("Dog game with a persistent receiver: key results", title), Spacer(1, 4),
-        Paragraph("Charith Reddy Pareddy &middot; October 31, 2026 &middot; draft, please do not circulate", sub),
+        Paragraph("Charith Reddy Pareddy &middot; November 1, 2026 &middot; draft, please do not circulate", sub),
         Spacer(1, 10),
         Paragraph("Setting", h),
         Paragraph("The dog game is the Battling Influencers Game (Wu, Zhu, Cai and Zhu, 2025) in the unit square, solved coordinate by "
@@ -102,9 +111,11 @@ def build(out=OUTPUT):
         side(folder, "fig1.png", 2.4 * inch, "<b>Fig. 1.</b> Two players in BIG with a persistent dog (inertia 0.8), the dog starting near the "
             "corner (0.05, 0.05). The players' actions (circles) jump to the edges and corners of the square instead of their targets "
             "(stars), while the dog drifts round by round to the middle. Grey cross: the mean target, where a planner would put the dog."),
-        fig(folder, "fig2.png", 7.0 * inch * 946 / 1628, "<b>Fig. 2.</b> Three influencers with the same targets and start under BIG's averaging "
-            "receiver (left) and the median receiver (right), inertia 0.9; each coordinate is aggregated separately. The median receiver "
-            "is within 0.01 of where it ends after 11 rounds, averaging after 27."),
+        fig(folder, "fig8.png", 4.7 * inch * 1826 / 1628, "<b>Fig. 2.</b> Three influencers with the same targets and start, inertia 0.9; "
+            "each coordinate is aggregated separately. Top: BIG's averaging receiver and the median receiver at their equilibria; the "
+            "influencers exaggerate to the edges (circles), and the median receiver is within 0.01 of where it ends after 11 rounds, "
+            "averaging after 27. Bottom: the compensated averaging receiver with truthful reports (on the targets), after 10 rounds, "
+            "and the planner, after 7.", width=4.7 * inch),
         fig(folder, "fig3.png", 6.2 * inch * 572 / 1584, "<b>Fig. 3.</b> Share of 100 random games (targets uniform on [0, 1]) in which the "
             "median receiver has the lower total discounted loss, by inertia. Dashed line: 50%.", width=6.2 * inch),
         fig(folder, "fig4.png", 6.6 * inch * 638 / 1672, "<b>Fig. 4.</b> Choosing the receiver, three influencers: extra loss of the "
@@ -120,10 +131,15 @@ def build(out=OUTPUT):
             "planner in 100 random games per point (targets uniform on [0, 1]), for BIG's averaging receiver and the median receiver "
             "at their equilibria, and for the compensated averaging receiver with truthful reports. The compensated median receiver "
             "(not shown) follows the same path as the median receiver's equilibrium."),
+        fig(folder, "fig9.png", 7.0 * inch * 638 / 1672, "<b>Fig. 7.</b> Why compensation removes the dependence on inertia "
+            "(discount 0.9). Left: the weight of each point u, the discounted share of rounds in which a compensated receiver can still "
+            "reach it; inertia lowers it most near the edges. Right: extra loss over the planner of a compensated receiver by where it "
+            "ends, for targets 0.15, 0.30 and 0.90; the averaging receiver ends closer to the mean target than the median receiver, "
+            "so it loses less at every inertia."),
         Paragraph("Policy gradient (PG)", h),
         ListFlowable([ListItem(Paragraph(p, body), leftIndent=12, value="circle") for p in pg], bulletType="bullet", start="\u2022", leftIndent=12, bulletFontSize=8),
         Spacer(1, 8),
-        fig(folder, "fig7.png", 7.0 * inch * 946 / 1628, "<b>Fig. 7.</b> REINFORCE self-play in the walking game: each player starts at its target and moves "
+        fig(folder, "fig7.png", 7.0 * inch * 946 / 1628, "<b>Fig. 8.</b> REINFORCE self-play in the walking game: each player starts at its target and moves "
             "at most 0.2 per step. Before training the players wander; after 300 training episodes both walk straight to the one-shot "
             "Nash corners, exaggerating as BIG predicts, and the dog ends in the middle. All 5 seeds end at the same corners."),
     ]

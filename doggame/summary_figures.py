@@ -1,4 +1,5 @@
-"""The seven figures of the key-results summary (doggame.summary_pdf), as fig1.png ... fig7.png, and two more
+"""The eight figures of the key-results summary (doggame.summary_pdf), as fig1.png and fig3.png ... fig9.png (fig8.png
+is the summary's Fig. 2 and fig9.png its Fig. 7), and two more
 for the paper: fig8 (paths of the plain and compensated receivers) and fig9 (the welfare weight of Proposition 12).
 
 Figures 1 and 2 solve small games directly (doggame.mechanisms); the others read the saved runs:
@@ -100,25 +101,6 @@ def fig1(out):
         fig.text(0.5, 0.012, "hollow = start   ·   filled = end   ·   arrows: one per round that moved", ha="center", fontsize=7.5, color=INK2)
         fig.tight_layout(rect=(0, 0.05, 1, 0.9))
         fig.savefig(out, dpi=220), plt.close(fig)
-
-
-def fig2(out):
-    """Three influencers under the averaging and the median receiver, same start and inertia. Returns the rounds each
-    takes to come within 0.01 of where it ends (quoted in the caption)."""
-    with plt.rc_context(SQUARE):
-        targets = np.array([[0.15, 0.7], [0.3, 0.2], [0.9, 0.55]])
-        fig, axes, rounds = *plt.subplots(1, 2, figsize=(7.4, 4.3)), []
-        for ax, rule, name in zip(axes, ("mean", "median"), ("Averaging receiver (BIG)", "Median receiver")):
-            dog, actions = simulate(rule, targets, (0.95, 0.95), 0.9, 30)
-            rounds.append(next((k for k in range(1, len(dog)) if np.abs(dog[k] - dog[-1]).max() < 0.01), len(dog) - 1))
-            panel(ax, targets, dog, actions, f"{name}\nwithin 0.01 of its end point after {rounds[-1]} rounds")
-        fig.legend(handles=players(3) + [Line2D([], [], marker="P", ls="", color=GREY, ms=8, label="mean target (planner)")],
-                   loc="upper center", ncol=4, bbox_to_anchor=(0.5, 1.0), frameon=False, fontsize=8.5, columnspacing=1.4, handletextpad=0.4)
-        fig.text(0.5, 0.012, "t1 (0.15, 0.70)  t2 (0.30, 0.20)  t3 (0.90, 0.55)  ·  inertia 0.9  ·  30 rounds  ·  hollow = start, filled = end, arrows: one per round that moved",
-                 ha="center", fontsize=7.2, color=INK2)
-        fig.tight_layout(rect=(0, 0.06, 1, 0.83))
-        fig.savefig(out, dpi=220), plt.close(fig)
-    return rounds
 
 
 def fig3(out, rows):
@@ -251,7 +233,7 @@ def fig7(out, path="results/dog_game_trajectories.json"):
 
 
 def fig8(out, w0=0.9, rounds=30):
-    """The three influencers of Fig. 2 under BIG's averaging and the median receiver at their equilibria, the
+    """Three influencers under BIG's averaging and the median receiver at their equilibria, the
     compensated averaging receiver with truthful reports, and the planner. Returns each one's rounds to come within
     0.01 of where it ends."""
     targets, start = np.array([[0.15, 0.7], [0.3, 0.2], [0.9, 0.55]]), (0.95, 0.95)
@@ -293,7 +275,7 @@ def fig8(out, w0=0.9, rounds=30):
 
 def fig9(out, discount=0.9):
     """Left: the weight W(u) (1 - g) of Proposition 12 for evenly spread starts. Right: the extra loss over the planner
-    of a compensated receiver with end point s, for the x-coordinates of Fig. 2's targets."""
+    of a compensated receiver with end point s, for the x-coordinates of fig8's targets."""
     u, houses = np.linspace(0, 1, 401), np.array([0.15, 0.3, 0.9])
     mean = houses.mean()
     with plt.rc_context(CHART):
@@ -334,10 +316,11 @@ def build(out=OUTPUT, results=S.STUDIES):
     out.mkdir(parents=True, exist_ok=True)
     rows = S.load(results)
     fig1(out / "fig1.png")
-    fig2(out / "fig2.png")
+    fig8(out / "fig8.png")
     for name, draw in (("fig3", fig3), ("fig4", fig4), ("fig5", fig5), ("fig6", fig6)):
         draw(out / f"{name}.png", rows)
     fig7(out / "fig7.png")
+    fig9(out / "fig9.png")
     return out
 
 
