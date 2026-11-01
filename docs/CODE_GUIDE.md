@@ -21,7 +21,7 @@ files. The receiver (mechanism) results need only a small part of that:
 | `doggame/summary_figures.py` | The seven figures of the key-results summary PDF, two more for the paper (`fig8`, `fig9`), and `paper()`, which writes the paper's figures | one function per figure |
 | `doggame/summary_pdf.py` | The key-results summary PDF itself: text, figures, captions | |
 | `docs/INERTIA_PROOFS.md` | The proofs (Propositions 3, 4 and 7 to 13) | |
-| `paper/paper.tex` | The paper draft (LaTeX); its figures in `paper/figures/` come from `summary_figures.paper()` | |
+| `paper/paper.tex` | The paper draft (LaTeX); its figures in `paper/figures/` come from `summary_figures.paper()`; `tectonic paper/paper.tex` compiles it to `paper/paper.pdf` | |
 
 The policy-gradient results use a second, separate set: `env.py` (the game), `agents.py` and `networks.py`
 (the policies), `train.py` and `train_ac.py` (REINFORCE, A2C, PPO), `verify.py` (exploitability),
