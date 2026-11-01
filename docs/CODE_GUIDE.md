@@ -44,8 +44,8 @@ Two things worth knowing about these:
   starting from where the game starts? It finds no gain in all five setups, even where the other three find
   one off the path. `tests/test_inertia_agreement.py` checks each module against the others, using
   implications that must hold in every game.
-- Four modules have no test of their own: `continuous_q_figure`, `pdf_kit`, `polar_action_report` and
-  `soccer_experiments`. All four only draw figures or run batches.
+- Every module has a test. For `polar_action_report` the test rebuilds `PG_RESEARCH_UPDATE.md` from the saved
+  runs and checks that its tables match the committed document line for line.
 
 ## 2. The model in one paragraph
 
