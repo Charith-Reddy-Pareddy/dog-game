@@ -62,19 +62,14 @@ to do only the second of four shards.
 import json
 import os
 import sys
-import time
 
 import numpy as np
 import torch
 
 from doggame.agents import TwoPlayerPolicy
 from doggame.dog_game_study import WALK_HOUSES, walk_distance
-from doggame.discretize import action_grid, payoff_matrices
-from doggame.dqn import solve_discretized_nash_q
-from doggame.env import DogGameEnv, Square, make_inertial_transition, negative_squared_distance_reward, weighted_average_transition
-from doggame.exact_nash import lemke_howson_nash
+from doggame.env import DogGameEnv, Square, make_inertial_transition
 from doggame.experiments import DEFAULT_CONFIGS
-from doggame.fictitious_play import expected_value, fictitious_play
 from doggame.nash import solve_stage_nash
 from doggame.polar import PolarDogGameEnv
 from doggame.inertia_dp import policy as dp_policy, solve as solve_dp
@@ -83,14 +78,13 @@ from doggame.walking_equilibrium import check_profile
 from doggame.polar_agent import PolarPolicy, final_positions, train_polar, train_polar_actor_critic
 from doggame.train import train_self_play
 from doggame.train_ac import train_actor_critic
-from doggame.verify import exploitability, mixed_strategy_indifference_gap
+from doggame.verify import exploitability
 
 RESULTS = "results/dog_game_studies.jsonl"
 EPISODES = 1500
 CONVERGED = 0.004  # exploitability below this counts as converged
 DEGENERATE = 3  # the configuration whose houses share a y-coordinate
 SLOW = 1  # the configuration where one run needed more than 1500 episodes
-STAGE_CONFIG = DEFAULT_CONFIGS[0]
 
 
 def make_env(config, w0=0.0):
@@ -465,36 +459,6 @@ def study_mechanisms_noise_planner(seeds):
             target = M.planner_target(houses, w0, shock=shock)
             return dict(target=target, loss=M.social_loss(lambda x: M.next_median(x, [target], w0), houses, shock=shock))
         yield key, run
-
-
-def study_continuous_q(seeds):
-    """Nash-Q with continuous moves on the walking game (doggame.continuous_q), for each move encoding:
-    the corner distance from the houses and from eight fixed random starts, every 25 of 300 episodes."""
-    from doggame.continuous_q import ENCODINGS, corner_distance, random_start_distance, train
-
-    for encoding in ENCODINGS:
-        for seed in seeds:
-            def run(encoding=encoding, seed=seed):
-                env, curve = _continuous_env(), {}
-                def record(episode, net):
-                    curve[episode] = [corner_distance(env, net), random_start_distance(env, net)]
-                train(env, encoding, episodes=300, seed=seed, on_checkpoint=record)
-                return dict(curve=curve)
-            yield dict(encoding=encoding, seed=seed), run
-
-
-def study_continuous_q_tools(seeds):
-    """On the seed-0 network of each encoding: the best-response methods against a grid (50 states),
-    simultaneous gradient play by step size (30 states) and greedy paths from four starts."""
-    from doggame.continuous_q import ENCODINGS, benchmark, convergence, train, trajectories
-
-    for encoding in ENCODINGS:
-        def run(encoding=encoding):
-            env = _continuous_env()
-            net = train(env, encoding, episodes=300, seed=0)
-            return dict(best_response=benchmark(net, env), convergence={str(k): v for k, v in convergence(net).items()},
-                        trajectories=trajectories(env, net))
-        yield dict(encoding=encoding), run
 
 
 def study_walking_settings(seeds):
@@ -996,69 +960,10 @@ def study_pretraining_mechanism(seeds):
             yield dict(variant=variant, seed=seed), run
 
 
-def stage_game(resolution, config=STAGE_CONFIG):
-    domain = Square(0.0, 1.0)
-    grid = action_grid(domain, resolution)
-    payoff_red, payoff_blue = payoff_matrices(grid, config["house_red"], config["house_blue"], config["w"], domain,
-                                              weighted_average_transition, negative_squared_distance_reward)
-    return grid, payoff_red, payoff_blue
-
-
-def nash_gap(payoff_red, payoff_blue, strategy_red, strategy_blue):
-    """The most either player could gain by switching to a single best action."""
-    value_red = expected_value(payoff_red, strategy_red, strategy_blue)
-    value_blue = expected_value(payoff_blue, strategy_red, strategy_blue)
-    return float(max((payoff_red @ strategy_blue).max() - value_red, (strategy_red @ payoff_blue).max() - value_blue))
-
-
-def study_stage_solver(seeds, resolution=9):
-    _, payoff_red, payoff_blue = stage_game(resolution)
-    exact_q = solve_discretized_nash_q(payoff_red, payoff_blue, 0.9, solver="exact")[0]
-    for iterations in (10, 30, 100, 300, 1000, 3000):
-        for resync_every in (1, 5, 25):
-            for seed in seeds:
-                def run(iterations=iterations, resync_every=resync_every, seed=seed):
-                    start = time.time()
-                    q_red, _, strategy_red, strategy_blue = solve_discretized_nash_q(
-                        payoff_red, payoff_blue, 0.9, fictitious_play_iterations=iterations, resync_every=resync_every, seed=seed)
-                    return dict(q_error=float(np.abs(q_red - exact_q).max()), gap=nash_gap(payoff_red, payoff_blue, strategy_red, strategy_blue),
-                                seconds=time.time() - start)
-                yield dict(iterations=iterations, resync_every=resync_every, seed=seed), run
-
-
-def study_resolution(seeds):
-    for config_index, config in enumerate(DEFAULT_CONFIGS):
-        nash_red, nash_blue, _ = solve_stage_nash(config["house_red"], config["house_blue"], config["w"], Square(0.0, 1.0))
-        for resolution in (3, 5, 9, 13, 17):
-            def run(config=config, resolution=resolution, nash_red=nash_red, nash_blue=nash_blue):
-                start = time.time()
-                grid, payoff_red, payoff_blue = stage_game(resolution, config)
-                strategy_red, strategy_blue = lemke_howson_nash(payoff_red, payoff_blue)
-                red, blue = grid[strategy_red.argmax()], grid[strategy_blue.argmax()]
-                return dict(actions=len(grid), support=[int((strategy_red > 1e-6).sum()), int((strategy_blue > 1e-6).sum())],
-                            distance=float(np.linalg.norm(red - nash_red) + np.linalg.norm(blue - nash_blue)), seconds=time.time() - start)
-            yield dict(config=config_index, resolution=resolution), run
-
-
-def study_noise(seeds, resolution=9):
-    _, payoff_red, payoff_blue = stage_game(resolution)
-    for iterations in (30, 100, 300, 1000, 3000, 10000):
-        for seed in seeds:
-            def run(iterations=iterations, seed=seed):
-                strategy_red, strategy_blue = fictitious_play(payoff_red, payoff_blue, iterations=iterations, seed=seed)
-                spread, gap = mixed_strategy_indifference_gap(payoff_red, strategy_red, strategy_blue)
-                return dict(spread=float(spread), gap=float(gap), support=int((strategy_red > 1e-3).sum()), top=float(strategy_red.max()))
-            yield dict(iterations=iterations, seed=seed), run
-    exact_red, exact_blue = lemke_howson_nash(payoff_red, payoff_blue)
-    spread, gap = mixed_strategy_indifference_gap(payoff_red, exact_red, exact_blue)
-    yield dict(iterations="exact", seed=0), lambda: dict(spread=float(spread), gap=float(gap), support=int((exact_red > 1e-3).sum()), top=float(exact_red.max()))
-
-
-STUDIES = dict(mechanisms_compensated_design=study_mechanisms_compensated_design, mechanisms_compensated=study_mechanisms_compensated, mechanisms_skewed_seven=study_mechanisms_skewed_seven, mechanisms_skewed=study_mechanisms_skewed, mechanisms_asymmetric=study_mechanisms_asymmetric, mechanisms_limit=study_mechanisms_limit, mechanisms_phantoms=study_mechanisms_phantoms, mechanisms_robust=study_mechanisms_robust, learning_checks=study_learning_checks, learning_fix=study_learning_fix, mechanisms_noise_planner=study_mechanisms_noise_planner, mechanisms_noise=study_mechanisms_noise, mechanisms_wide=study_mechanisms_wide, mechanisms=study_mechanisms, continuous_q=study_continuous_q, continuous_q_tools=study_continuous_q_tools, soccer_exact_play=study_soccer_exact_play, exact_play_many=study_exact_play_many, many_targets=study_many_targets, target_random=study_target_random, cross_play=study_cross_play, vertex_selection=study_vertex_selection, walking_clip=study_walking_clip, walking_entropy=study_walking_entropy, pretraining_mechanism=study_pretraining_mechanism, noisy_inertia=study_noisy_inertia, exact_play=study_exact_play, feedback_learning=study_feedback_learning, many_houses=study_many_houses, selection_linear=study_selection_linear, selection_clip=study_selection_clip, inertia_explicit=study_inertia_explicit, inertia_random=study_inertia_random, selection_noise=study_selection_noise, inertia_dp=study_inertia_dp, markov_potential=study_markov_potential, algorithms=study_algorithms, walking=study_walking, ppo_variants=study_ppo_variants, ppo_long=study_ppo_long,
+STUDIES = dict(mechanisms_compensated_design=study_mechanisms_compensated_design, mechanisms_compensated=study_mechanisms_compensated, mechanisms_skewed_seven=study_mechanisms_skewed_seven, mechanisms_skewed=study_mechanisms_skewed, mechanisms_asymmetric=study_mechanisms_asymmetric, mechanisms_limit=study_mechanisms_limit, mechanisms_phantoms=study_mechanisms_phantoms, mechanisms_robust=study_mechanisms_robust, learning_checks=study_learning_checks, learning_fix=study_learning_fix, mechanisms_noise_planner=study_mechanisms_noise_planner, mechanisms_noise=study_mechanisms_noise, mechanisms_wide=study_mechanisms_wide, mechanisms=study_mechanisms, soccer_exact_play=study_soccer_exact_play, exact_play_many=study_exact_play_many, many_targets=study_many_targets, target_random=study_target_random, cross_play=study_cross_play, vertex_selection=study_vertex_selection, walking_clip=study_walking_clip, walking_entropy=study_walking_entropy, pretraining_mechanism=study_pretraining_mechanism, noisy_inertia=study_noisy_inertia, exact_play=study_exact_play, feedback_learning=study_feedback_learning, many_houses=study_many_houses, selection_linear=study_selection_linear, selection_clip=study_selection_clip, inertia_explicit=study_inertia_explicit, inertia_random=study_inertia_random, selection_noise=study_selection_noise, inertia_dp=study_inertia_dp, markov_potential=study_markov_potential, algorithms=study_algorithms, walking=study_walking, ppo_variants=study_ppo_variants, ppo_long=study_ppo_long,
                walking_settings=study_walking_settings, walking_houses=study_walking_houses, walking_inertia=study_walking_inertia,
                walking_equilibrium=study_walking_equilibrium, walking_capacity=study_walking_capacity, walking_ppo_inertia=study_walking_ppo_inertia,
-               walking_hard_long=study_walking_hard_long, inertia_equilibrium=study_inertia_equilibrium, selection=study_selection, inertia=study_inertia, pretraining=study_pretraining,
-               stage_solver=study_stage_solver, resolution=study_resolution, noise=study_noise)
+               walking_hard_long=study_walking_hard_long, inertia_equilibrium=study_inertia_equilibrium, selection=study_selection, inertia=study_inertia, pretraining=study_pretraining)
 
 
 def finished(path):
