@@ -278,7 +278,8 @@ def fig8(out, w0=0.9, rounds=30):
                 ax.scatter(*t, s=230, marker="*", facecolors="white", edgecolors=COLORS[i], lw=1.8, zorder=6)
             arrows(ax, dog, INK, size=6)
             ends(ax, dog, INK, marker="D")
-        fig.legend(handles=players(3) + [Line2D([], [], marker="P", ls="", color=GREY, ms=8, label="mean target (planner)")],
+        receiver = Line2D([], [], marker="D", ls="", color=INK, ms=7, label="receiver")  # the paper says receiver, not dog
+        fig.legend(handles=players(3)[:-1] + [receiver, Line2D([], [], marker="P", ls="", color=GREY, ms=8, label="mean target (planner)")],
                    loc="upper center", ncol=4, bbox_to_anchor=(0.5, 1.0), frameon=False, fontsize=8.5, columnspacing=1.4, handletextpad=0.4)
         fig.text(0.5, 0.008, f"t1 (0.15, 0.70)  t2 (0.30, 0.20)  t3 (0.90, 0.55)  ·  inertia {w0}  ·  {rounds} rounds  ·  circles: reports (on the targets when truthful)",
                  ha="center", fontsize=7.2, color=INK2)
@@ -304,7 +305,7 @@ def fig9(out, discount=0.9):
             b.axvline(x, color=INK2, lw=0.8, ls="--")
             b.text(x + 0.012 * side, b.get_ylim()[1] * 0.95, name, fontsize=7, color=INK2, va="top", ha="left" if side > 0 else "right",
                    rotation=90 if side > 0 else 0)
-        a.set(xlabel="Point u", ylabel="W(u) (1 - g)", ylim=(0, 1.05))
+        a.set(xlabel="Point u", ylabel=r"W(u) (1 - $\delta$)", ylim=(0, 1.05))
         a.set_title("Discounted share of rounds in which u is reachable", fontsize=9, loc="left", color=INK)
         a.legend(loc="lower center", fontsize=7.5)
         b.set(xlabel="End point s", ylabel="Extra loss over the planner")
