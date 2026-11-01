@@ -103,14 +103,6 @@ def test_the_explicit_equilibrium_studies_cover_every_setup_and_200_random_games
     assert len([k for k, _ in studies.study_inertia_random(range(5))]) == 200
 
 
-def test_the_dp_and_markov_potential_studies_define_their_checks():
-    dp = [k for k, _ in studies.study_inertia_dp(range(5))]
-    cycles = [k for k, _ in studies.study_markov_potential(range(5))]
-
-    assert len(dp) == 15 and {k["w0"] for k in dp} == {0.3, 0.6, 0.9}
-    assert len(cycles) == 8 and {k["policies"] for k in cycles} == {"fixed", "reacting"}
-
-
 def test_the_many_houses_study_covers_two_to_1024_houses():
     assert [k["n"] for k, _ in studies.study_many_houses(range(5))] == [2 ** k for k in range(1, 11)]
 
@@ -183,3 +175,9 @@ def test_the_mechanism_studies_cover_players_inertias_and_draws():
     assert len([k for k, _ in studies.study_mechanisms_skewed_seven(range(5))]) == 2 * 60
     assert len([k for k, _ in studies.study_mechanisms_compensated(range(5))]) == 3 * 7 * 100
     assert len([k for k, _ in studies.study_mechanisms_compensated_design(range(5))]) == 4 * 8
+
+
+def test_the_dp_study_defines_its_checks():
+    dp = [k for k, _ in studies.study_inertia_dp(range(5))]
+
+    assert len(dp) == 15 and {k["w0"] for k in dp} == {0.3, 0.6, 0.9}

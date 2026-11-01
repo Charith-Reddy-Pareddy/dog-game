@@ -6,9 +6,8 @@ import numpy as np
 from doggame.env import Square
 from doggame.experiments import DEFAULT_CONFIGS
 from doggame.inertia_dp import solve_1d
-from doggame.inertia_equilibrium import check_profile
-from doggame.inertia_mpe import check_mpe, value
-from doggame.inertia_theory import hold_share, holds_everywhere
+from doggame.inertia_mpe import value
+from doggame.inertia_theory import hold_share
 from doggame.nash import solve_stage_nash
 
 
@@ -16,21 +15,6 @@ def setup(index):
     c = DEFAULT_CONFIGS[index]
     houses = (np.array(c["house_red"]), np.array(c["house_blue"]))
     return houses, c["w"], tuple(solve_stage_nash(houses[0], houses[1], c["w"], Square(0.0, 1.0))[:2])
-
-
-def test_where_holding_is_an_equilibrium_no_check_finds_a_gain():
-    houses, w, nash = setup(0)
-    for w0 in (0.3, 0.6):
-        assert holds_everywhere(houses, w, w0, nash)
-        mpe, start = check_mpe(houses, w, w0, nash, grid=21), check_profile(houses, w, w0, nash, steps=150)
-        assert max(mpe[p]["max_gain"] for p in mpe) < 1e-12 and max(start[p]["gain"] for p in start) < 1e-9
-
-
-def test_the_fixed_opponent_check_gains_at_least_the_one_round_deviation_from_the_start():
-    houses, w, nash = setup(0)
-    profile = ((0.5, 0.5), nash[1])  # red does not play its one-shot action
-    mpe, start = check_mpe(houses, w, 0.6, profile, grid=11), check_profile(houses, w, 0.6, profile, steps=150)
-    assert mpe["red"]["start_gain"] > 1e-3 and start["red"]["gain"] >= mpe["red"]["start_gain"] - 1e-9
 
 
 def test_the_dynamic_program_leaves_the_one_shot_actions_where_the_closed_form_says_someone_gains():

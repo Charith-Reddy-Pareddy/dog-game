@@ -73,7 +73,6 @@ from doggame.experiments import DEFAULT_CONFIGS
 from doggame.nash import solve_stage_nash
 from doggame.polar import PolarDogGameEnv
 from doggame.inertia_dp import policy as dp_policy, solve as solve_dp
-from doggame.inertia_equilibrium import check_profile as check_inertia_profile
 from doggame.polar_agent import PolarPolicy, final_positions, train_polar, train_polar_actor_critic
 from doggame.train import train_self_play
 from doggame.train_ac import train_actor_critic
@@ -509,17 +508,6 @@ def study_walking_hard_long(seeds):
                    lambda algorithm=algorithm, seed=seed: walking_run(algorithm, seed, episodes=900, houses=(config["house_red"], config["house_blue"]), w=config["w"]))
 
 
-def study_inertia_equilibrium(seeds):
-    """Is the one-shot Nash profile an equilibrium of the main game with dog inertia? Deterministic, so `seeds` is unused."""
-    for setup, config in enumerate(DEFAULT_CONFIGS):
-        for w0 in (0.3, 0.6, 0.9):
-            def run(config=config, w0=w0):
-                nash_red, nash_blue, _ = solve_stage_nash(config["house_red"], config["house_blue"], config["w"], Square(0.0, 1.0))
-                result = check_inertia_profile((config["house_red"], config["house_blue"]), config["w"], w0, (nash_red, nash_blue))
-                return {player: {k: float(v) for k, v in values.items()} for player, values in result.items()}
-            yield dict(setup=setup, w0=w0), run
-
-
 def study_selection_noise(seeds):
     """Does the initial exploration noise decide which equilibrium self-play finds when the houses share a y-coordinate?
     50 seeds per noise level; the default (log-std -0.5) seeds 0-9 repeat the `selection` study's separate layout."""
@@ -569,24 +557,6 @@ def study_inertia_dp(seeds):
                 differs = [float(np.mean((np.abs(p["red"] - nash_red[c]) > 1e-9) | (np.abs(p["blue"] - nash_blue[c]) > 1e-9))) for c, p in enumerate(solution)]
                 return dict(path_gap=path_gap, differs=differs, unresolved=[p["unresolved"] for p in solution], sweeps=[p["sweeps"] for p in solution])
             yield dict(setup=setup, w0=w0), run
-
-
-def study_markov_potential(seeds):
-    """4-cycle sums of value changes (zero in every Markov potential game), with policies that ignore the dog and with
-    policies that react to it, at four inertias. Deterministic, so `seeds` is unused."""
-    from doggame.markov_potential import cycle_sum
-
-    c = DEFAULT_CONFIGS[0]
-    houses, w = (c["house_red"], c["house_blue"]), c["w"]
-    start = w * np.asarray(houses[0]) + (1 - w) * np.asarray(houses[1])
-    const = lambda a: (lambda x: np.asarray(a, dtype=float))
-    red, blue = const((1.0, 0.0)), const((0.0, 1.0))
-    alternatives = dict(fixed=(const((0.6, 0.4)), const((0.3, 0.7))),
-                        reacting=(lambda x: np.clip(1.0 - x, 0, 1), lambda x: np.clip(x, 0, 1)))
-    for w0 in (0.0, 0.3, 0.6, 0.9):
-        for kind, (red_alt, blue_alt) in alternatives.items():
-            yield (dict(w0=w0, policies=kind),
-                   lambda w0=w0, red_alt=red_alt, blue_alt=blue_alt: dict(cycle=cycle_sum(red, red_alt, blue, blue_alt, houses, w, w0, start)))
 
 
 def study_noisy_inertia(seeds):
@@ -947,10 +917,10 @@ def study_pretraining_mechanism(seeds):
             yield dict(variant=variant, seed=seed), run
 
 
-STUDIES = dict(mechanisms_compensated_design=study_mechanisms_compensated_design, mechanisms_compensated=study_mechanisms_compensated, mechanisms_skewed_seven=study_mechanisms_skewed_seven, mechanisms_skewed=study_mechanisms_skewed, mechanisms_asymmetric=study_mechanisms_asymmetric, mechanisms_limit=study_mechanisms_limit, mechanisms_phantoms=study_mechanisms_phantoms, mechanisms_robust=study_mechanisms_robust, learning_checks=study_learning_checks, learning_fix=study_learning_fix, mechanisms_noise_planner=study_mechanisms_noise_planner, mechanisms_noise=study_mechanisms_noise, mechanisms_wide=study_mechanisms_wide, mechanisms=study_mechanisms, soccer_exact_play=study_soccer_exact_play, exact_play_many=study_exact_play_many, many_targets=study_many_targets, target_random=study_target_random, cross_play=study_cross_play, vertex_selection=study_vertex_selection, walking_clip=study_walking_clip, walking_entropy=study_walking_entropy, pretraining_mechanism=study_pretraining_mechanism, noisy_inertia=study_noisy_inertia, exact_play=study_exact_play, feedback_learning=study_feedback_learning, many_houses=study_many_houses, selection_linear=study_selection_linear, selection_clip=study_selection_clip, inertia_explicit=study_inertia_explicit, inertia_random=study_inertia_random, selection_noise=study_selection_noise, inertia_dp=study_inertia_dp, markov_potential=study_markov_potential, algorithms=study_algorithms, walking=study_walking, ppo_variants=study_ppo_variants, ppo_long=study_ppo_long,
+STUDIES = dict(mechanisms_compensated_design=study_mechanisms_compensated_design, mechanisms_compensated=study_mechanisms_compensated, mechanisms_skewed_seven=study_mechanisms_skewed_seven, mechanisms_skewed=study_mechanisms_skewed, mechanisms_asymmetric=study_mechanisms_asymmetric, mechanisms_limit=study_mechanisms_limit, mechanisms_phantoms=study_mechanisms_phantoms, mechanisms_robust=study_mechanisms_robust, learning_checks=study_learning_checks, learning_fix=study_learning_fix, mechanisms_noise_planner=study_mechanisms_noise_planner, mechanisms_noise=study_mechanisms_noise, mechanisms_wide=study_mechanisms_wide, mechanisms=study_mechanisms, soccer_exact_play=study_soccer_exact_play, exact_play_many=study_exact_play_many, many_targets=study_many_targets, target_random=study_target_random, cross_play=study_cross_play, vertex_selection=study_vertex_selection, walking_clip=study_walking_clip, walking_entropy=study_walking_entropy, pretraining_mechanism=study_pretraining_mechanism, noisy_inertia=study_noisy_inertia, exact_play=study_exact_play, feedback_learning=study_feedback_learning, many_houses=study_many_houses, selection_linear=study_selection_linear, selection_clip=study_selection_clip, inertia_explicit=study_inertia_explicit, inertia_random=study_inertia_random, selection_noise=study_selection_noise, inertia_dp=study_inertia_dp, algorithms=study_algorithms, walking=study_walking, ppo_variants=study_ppo_variants, ppo_long=study_ppo_long,
                walking_settings=study_walking_settings, walking_houses=study_walking_houses, walking_inertia=study_walking_inertia,
                walking_capacity=study_walking_capacity, walking_ppo_inertia=study_walking_ppo_inertia,
-               walking_hard_long=study_walking_hard_long, inertia_equilibrium=study_inertia_equilibrium, selection=study_selection, inertia=study_inertia, pretraining=study_pretraining)
+               walking_hard_long=study_walking_hard_long, selection=study_selection, inertia=study_inertia, pretraining=study_pretraining)
 
 
 def finished(path):

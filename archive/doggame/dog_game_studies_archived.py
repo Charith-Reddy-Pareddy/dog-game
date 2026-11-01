@@ -103,3 +103,32 @@ def study_walking_equilibrium(seeds):
                 result = check_profile(houses, w, (nash_red, nash_blue), starts=(nash_red, nash_blue) if start == "corners" else None)
                 return {player: {k: float(v) for k, v in values.items()} for player, values in result.items()}
             yield dict(setup=setup, start=start), run
+
+
+def study_inertia_equilibrium(seeds):
+    """Is the one-shot Nash profile an equilibrium of the main game with dog inertia? Deterministic, so `seeds` is unused."""
+    for setup, config in enumerate(DEFAULT_CONFIGS):
+        for w0 in (0.3, 0.6, 0.9):
+            def run(config=config, w0=w0):
+                nash_red, nash_blue, _ = solve_stage_nash(config["house_red"], config["house_blue"], config["w"], Square(0.0, 1.0))
+                result = check_inertia_profile((config["house_red"], config["house_blue"]), config["w"], w0, (nash_red, nash_blue))
+                return {player: {k: float(v) for k, v in values.items()} for player, values in result.items()}
+            yield dict(setup=setup, w0=w0), run
+
+
+def study_markov_potential(seeds):
+    """4-cycle sums of value changes (zero in every Markov potential game), with policies that ignore the dog and with
+    policies that react to it, at four inertias. Deterministic, so `seeds` is unused."""
+    from doggame.markov_potential import cycle_sum
+
+    c = DEFAULT_CONFIGS[0]
+    houses, w = (c["house_red"], c["house_blue"]), c["w"]
+    start = w * np.asarray(houses[0]) + (1 - w) * np.asarray(houses[1])
+    const = lambda a: (lambda x: np.asarray(a, dtype=float))
+    red, blue = const((1.0, 0.0)), const((0.0, 1.0))
+    alternatives = dict(fixed=(const((0.6, 0.4)), const((0.3, 0.7))),
+                        reacting=(lambda x: np.clip(1.0 - x, 0, 1), lambda x: np.clip(x, 0, 1)))
+    for w0 in (0.0, 0.3, 0.6, 0.9):
+        for kind, (red_alt, blue_alt) in alternatives.items():
+            yield (dict(w0=w0, policies=kind),
+                   lambda w0=w0, red_alt=red_alt, blue_alt=blue_alt: dict(cycle=cycle_sum(red, red_alt, blue, blue_alt, houses, w, w0, start)))
