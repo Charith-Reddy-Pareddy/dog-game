@@ -19,6 +19,7 @@ several research threads. The receiver (mechanism) results need only a small par
 | `results/dog_game_studies.jsonl` | The saved runs, one JSON row per run | data |
 | `tests/test_mechanisms.py` | 18 tests of the claims below | |
 | `doggame/summary_figures.py` | The seven figures of the key-results summary PDF | one function per figure |
+| `doggame/summary_pdf.py` | The key-results summary PDF itself: text, figures, captions | |
 | `docs/INERTIA_PROOFS.md` | The proofs (Propositions 3, 4 and 7 to 10) | |
 
 The policy-gradient results use a second, separate set: `env.py` (the game), `agents.py` and `networks.py`
@@ -182,7 +183,8 @@ print('gain compensated median', M.deviation_gain((0., 1.), lambda x: h, h, w, w
 The figures of the key-results summary PDF are drawn by `doggame/summary_figures.py`
 (`python3 -m doggame.summary_figures`, written to `build/summary/`). Figures 1 and 2 solve small games
 directly; Figures 3 to 7 read the saved runs. `tests/test_summary_figures.py` checks that the numbers quoted
-for Figures 2 and 5 come out of the data.
+for Figures 2 and 5 come out of the data. `python3 -m doggame.summary_pdf` rebuilds the whole PDF, figures
+included, as `build/summary/Dog_Game.pdf`.
 
 ## 7. Problems found and fixed so far
 
