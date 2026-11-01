@@ -89,7 +89,8 @@ def test_a_compensated_receiver_loses_the_planners_loss_plus_a_weighted_static_c
         assert np.isclose(losses[1], M.social_loss(lambda x: M.planner_step(x, HOUSES, w0), HOUSES))
         for e, loss in zip(ends[[0, 2]], losses[[0, 2]]):
             u = np.linspace(mean, e, 20001)
-            integral = np.trapz(6 * (u - mean) * M.reach_weight(u, w0), u)  # W is a step function: quadrature error ~ 1e-6
+            f = 6 * (u - mean) * M.reach_weight(u, w0)
+            integral = ((f[1:] + f[:-1]) / 2 * np.diff(u)).sum()  # trapezoid rule; W is a step function: error ~ 1e-6
             assert np.isclose(loss - losses[1], integral, rtol=1e-4)
     assert np.allclose(M.reach_weight(np.linspace(0, 1, 5), 0.0), (1 - 0.9 ** 200) / 0.1)  # no inertia: always reachable
 
