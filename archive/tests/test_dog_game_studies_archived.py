@@ -30,3 +30,9 @@ def test_the_resolution_study_finds_the_continuous_equilibrium_on_every_grid():
 def test_the_continuous_q_studies_cover_every_encoding():
     assert {k["encoding"] for k, _ in studies.study_continuous_q(range(5))} == {"cartesian", "polar", "square"}
     assert len([k for k, _ in studies.study_continuous_q_tools(range(5))]) == 3
+
+
+def test_the_walking_equilibrium_study_checks_four_setups_resting_and_walking():
+    keys = [k for k, _ in studies.study_walking_equilibrium(range(5))]
+
+    assert len(keys) == 8 and {k["start"] for k in keys} == {"houses", "corners"} and {k["setup"] for k in keys} == {"default", 0, 1, 2}

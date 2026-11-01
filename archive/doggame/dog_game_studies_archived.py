@@ -91,3 +91,15 @@ def study_noise(seeds, resolution=9):
     exact_red, exact_blue = lemke_howson_nash(payoff_red, payoff_blue)
     spread, gap = mixed_strategy_indifference_gap(payoff_red, exact_red, exact_blue)
     yield dict(iterations="exact", seed=0), lambda: dict(spread=float(spread), gap=float(gap), support=int((exact_red > 1e-3).sum()), top=float(exact_red.max()))
+
+
+def study_walking_equilibrium(seeds):
+    """Is walking to the one-shot corners an equilibrium of the walking game? Deterministic, so `seeds` is unused."""
+    setups = [("default", WALK_HOUSES, 0.5)] + [(i, (c["house_red"], c["house_blue"]), c["w"]) for i, c in enumerate(DEFAULT_CONFIGS[:3])]
+    for setup, houses, w in setups:
+        for start in ("houses", "corners"):
+            def run(houses=houses, w=w, start=start):
+                nash_red, nash_blue, _ = solve_stage_nash(houses[0], houses[1], w, Square())
+                result = check_profile(houses, w, (nash_red, nash_blue), starts=(nash_red, nash_blue) if start == "corners" else None)
+                return {player: {k: float(v) for k, v in values.items()} for player, values in result.items()}
+            yield dict(setup=setup, start=start), run
