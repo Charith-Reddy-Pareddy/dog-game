@@ -5,3 +5,4 @@ scipy>=1.10
 nashpy>=0.0.35
 reportlab>=4.0
 matplotlib>=3.7
+pypdf>=4.0
