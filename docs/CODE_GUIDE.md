@@ -7,14 +7,14 @@ checks it. Every number in the worked example below can be reproduced with the c
 
 ## 1. What you need, and what you can ignore
 
-The repository has 55 modules (about 8,300 lines), 51 test files and 56 registered studies, built up over
-several research threads. The receiver (mechanism) results need only a small part of that:
+After the archive (Section 8) the active code is 31 modules (about 5,100 lines) with 32 test
+files. The receiver (mechanism) results need only a small part of that:
 
 | File | What it is | Size |
 |---|---|---|
 | `doggame/mechanisms.py` | All the math for receivers: next outcome, equilibrium, losses, deviations | 210 lines |
 | `doggame/many_houses.py` | Two helpers: `one_shot` (BIG's static equilibrium) and `next_dog` (the averaging receiver) | 2 functions |
-| `doggame/dog_game_studies.py` | Only the `study_mechanisms*` functions (lines 215 to 469) run the experiments | about 250 lines |
+| `doggame/dog_game_studies.py` | Only the `study_mechanisms*` functions run the experiments | about 250 lines |
 | `doggame/dog_game_summary.py` | Only the `mechanisms*_table` functions turn saved runs into the numbers in the docs | about 250 lines |
 | `results/dog_game_studies.jsonl` | The saved runs, one JSON row per run | data |
 | `tests/test_mechanisms.py` | 18 tests of the claims below | |
@@ -27,27 +27,17 @@ The policy-gradient results use a second, separate set: `env.py` (the game), `ag
 `experiments.py`, `feedback_learning.py`, `exact_play.py`, and `dog_game_trajectories.py` (the walking-game
 paths).
 
-Everything else belongs to threads the current results do not use. You can ignore it when explaining them:
+The other active modules support these two sets or check them: `inertia_theory` (Propositions 1 and 2, used by
+the learning results) with `inertia_mpe` and `inertia_dp` as independent checks of it; `nash`, `exact_nash` and
+`discretize` (one-shot equilibria); `polar`, `polar_agent`, `polar_dqn` and `dog_game_study` (the walking game
+and its runs); `soccer`, `soccer_solver`, `soccer_exact_play`, `sticky_duopoly` and `duopoly_learning` (the other
+two games of the learning fix).
 
-| Thread | Modules |
-|---|---|
-| Nash-Q on a grid | `dqn`, `nash`, `exact_nash`, `fictitious_play`, `discretize`, `continuous_q`, `continuous_br`, `continuous_q_figure`, `polar_dqn` |
-| Polar (angle-radius) actions | `polar`, `polar_agent`, `polar_action_study`, `polar_action_robustness`, `polar_action_report` |
-| Soccer | the ten `soccer*` modules |
-| Two-player inertia theory (Propositions 1 and 2) | `inertia_theory`, `inertia_dp`, `inertia_equilibrium`, `inertia_mpe`, `potential`, `markov_potential` |
-| Duopoly | `sticky_duopoly`, `duopoly_learning` |
-| PDF and report builders | `research_report_pdf`, `pdf_kit`, `dog_game_report`, `figures`, `working_paper`, `soccer_report`, `walking_figures` |
-
-Two things worth knowing about these:
-- The four inertia modules overlap, but they do not all answer the same question. `inertia_theory` (closed
-  form) and `inertia_mpe` (exact one-round gain at every dog position) ask whether holding the one-shot
-  actions is a feedback equilibrium. `inertia_dp` computes the feedback equilibrium itself by dynamic
-  programming. `inertia_equilibrium` asks a weaker question: can a player gain against a fixed opponent,
-  starting from where the game starts? It finds no gain in all five setups, even where the other three find
-  one off the path. `tests/test_inertia_agreement.py` checks each module against the others, using
-  implications that must hold in every game.
-- Every module has a test. For `polar_action_report` the test rebuilds `PG_RESEARCH_UPDATE.md` from the saved
-  runs and checks that its tables match the committed document line for line.
+Worth knowing:
+- `inertia_theory` (closed form) and `inertia_mpe` (exact one-round gain at every dog position) both ask whether
+  holding the one-shot actions is a feedback equilibrium, and `inertia_dp` computes the feedback equilibrium
+  itself by dynamic programming; `tests/test_inertia_agreement.py` checks them against each other.
+- Every module has a test.
 
 ## 2. The model in one paragraph
 
@@ -199,7 +189,20 @@ Results that were corrected:
 - The equilibrium-selection result (`5d11283`).
 - A 10-seed learning result that did not replicate at 50 seeds.
 
-## 8. Known limits of the numbers
+## 8. The archive
+
+Threads the current results do not use are in `archive/` (see `archive/README.md`): the report builders,
+Nash-Q on a grid, the polar-action and walking-equilibrium studies, the soccer extras and the extra inertia
+checks. They are frozen at the git tag `pre-archive`, where they still run; their saved results stay in
+`results/` and their reports in the repository. The PDFs of the Markdown notes (for example
+`docs/ASSUMPTIONS.pdf`) are built with the archived `research_report_pdf`, run from that tag:
+
+```bash
+git worktree add ../dog-game-pre-archive pre-archive
+cd ../dog-game-pre-archive && python3 -m doggame.research_report_pdf ../dog-game/ASSUMPTIONS.md ../dog-game/docs/ASSUMPTIONS.pdf
+```
+
+## 9. Known limits of the numbers
 
 - Equilibria of the plain receivers come from `target_equilibrium` on an 801-point grid, accurate to about
   0.015 in loss. Differences smaller than that are treated as ties.

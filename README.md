@@ -12,6 +12,7 @@
 **Professor-facing update:** [PG_RESEARCH_UPDATE.md](PG_RESEARCH_UPDATE.md) ([PDF](docs/PG_RESEARCH_UPDATE.pdf))
 **Assumptions:** [ASSUMPTIONS.md](ASSUMPTIONS.md) ([PDF](docs/ASSUMPTIONS.pdf))
 **Code guide:** [docs/CODE_GUIDE.md](docs/CODE_GUIDE.md), what each result depends on, with a worked example
+**Archive:** [archive/README.md](archive/README.md), code from threads the current results do not use (frozen at the tag `pre-archive`)
 **License:** [MIT](LICENSE)
 
 A two-player, general-sum game: a red house and a blue house each want a
