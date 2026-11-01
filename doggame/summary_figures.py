@@ -1,0 +1,265 @@
+"""The seven figures of the key-results summary (doggame.summary_pdf), as fig1.png ... fig7.png.
+
+Figures 1 and 2 solve small games directly (doggame.mechanisms); the others read the saved runs:
+Fig. 3 study mechanisms_wide, Fig. 4 mechanisms_phantoms and mechanisms_compensated_design, Fig. 5
+mechanisms_skewed_seven, Fig. 6 mechanisms_wide and mechanisms_compensated, Fig. 7
+results/dog_game_trajectories.json (doggame.dog_game_trajectories).
+
+Run with `python3 -m doggame.summary_figures [output directory]`.
+"""
+
+import json
+import sys
+from pathlib import Path
+
+import matplotlib
+
+matplotlib.use("Agg")
+import matplotlib.pyplot as plt
+import numpy as np
+from matplotlib.lines import Line2D
+
+from doggame import dog_game_summary as S
+from doggame import mechanisms as M
+
+OUTPUT = "build/summary"
+COLORS = ["#2a78d6", "#eb6834", "#1baf7a", "#eda100"]
+INK, INK2, FRAME, GRID, GREY = "#0b0b0b", "#52514e", "#a9a8a3", "#e4e3df", "#8a8984"
+CHART = {"font.size": 9, "axes.edgecolor": INK2, "axes.labelcolor": INK, "xtick.color": INK2, "ytick.color": INK2,
+         "axes.spines.top": False, "axes.spines.right": False, "axes.grid": True, "grid.color": GRID, "grid.linewidth": 0.6,
+         "legend.frameon": False, "font.family": "DejaVu Sans"}
+SQUARE = {"font.family": "DejaVu Sans", "font.size": 9, "axes.edgecolor": FRAME}
+
+
+def simulate(rule, targets, start, w0, rounds):
+    """Dog path and every player's actions per round in the square, each coordinate solved on its own."""
+    weights = np.full(len(targets), 1 / len(targets))
+    aims = [M.target_equilibrium(rule, targets[:, c], weights, w0)[0] for c in range(2)]
+    dog, actions = [np.array(start, float)], []
+    for _ in range(rounds):
+        a = np.stack([M.reports(rule, dog[-1][c], aims[c], weights, w0) for c in range(2)], 1)
+        actions.append(a)
+        dog.append(w0 * dog[-1] + (1 - w0) * (a.mean(0) if rule == "mean" else np.median(a, 0)))
+    return np.array(dog), np.array(actions)
+
+
+def arrows(ax, path, color, alpha=1.0, size=7):
+    ax.plot(path[:, 0], path[:, 1], color=color, lw=0.9, alpha=0.45 * alpha, zorder=2)
+    for p, q in zip(path[:-1], path[1:]):
+        if np.hypot(*(q - p)) > 1e-4:
+            ax.annotate("", xy=q, xytext=p, arrowprops=dict(arrowstyle="-|>", color=color, lw=0.9, alpha=alpha, mutation_scale=size,
+                                                           shrinkA=0, shrinkB=0), zorder=3)
+
+
+def square(ax, title):
+    ax.add_patch(plt.Rectangle((0, 0), 1, 1, fill=False, ec=FRAME, lw=1.5, zorder=1))
+    ax.set_xlim(-0.06, 1.06), ax.set_ylim(-0.06, 1.06), ax.set_aspect("equal")
+    ax.set_xticks([0, 0.5, 1]), ax.set_yticks([0, 0.5, 1])
+    for s in ax.spines.values():
+        s.set_visible(False)
+    ax.tick_params(colors=INK2, length=3)
+    ax.set_title(title, fontsize=9, color=INK)
+
+
+def ends(ax, path, color, marker="o", size=70):
+    """Hollow marker at the start of a path, filled at the end."""
+    ax.scatter(*path[0], s=size, marker=marker, facecolors="white", edgecolors=color, lw=1.8 if marker == "o" else 1.6, zorder=7 if marker == "D" else 5)
+    ax.scatter(*path[-1], s=size, marker=marker, color=color, zorder=7 if marker == "D" else 5)
+
+
+def panel(ax, targets, dog, actions, title):
+    square(ax, title)
+    for i, t in enumerate(targets):
+        a = actions[:, i] + (i - (len(targets) - 1) / 2) * 0.012  # players sharing a corner stay visible
+        arrows(ax, a, COLORS[i], alpha=0.8)
+        ends(ax, a, COLORS[i])
+        ax.scatter(*t, s=230, marker="*", facecolors="white", edgecolors=COLORS[i], lw=1.8, zorder=6)
+    arrows(ax, dog, INK, size=6)
+    ends(ax, dog, INK, marker="D")
+    ax.scatter(*targets.mean(0), s=60, marker="P", color=GREY, zorder=4)
+
+
+def players(n):
+    items = []
+    for i in range(n):  # filled column by column: each player above its target
+        items += [Line2D([], [], marker="o", ls="", color=COLORS[i], ms=8, label=f"player {i + 1}"),
+                  Line2D([], [], marker="*", ls="", mfc="white", mec=COLORS[i], mew=1.5, ms=12, label=f"target {i + 1}")]
+    return items + [Line2D([], [], marker="D", ls="", color=INK, ms=7, label="dog")]
+
+
+def fig1(out):
+    """Two players in BIG with a persistent dog."""
+    with plt.rc_context(SQUARE):
+        targets = np.array([[0.35, 0.65], [0.7, 0.3]])
+        dog, actions = simulate("mean", targets, (0.05, 0.05), 0.8, 25)
+        fig, ax = plt.subplots(figsize=(4.6, 5.0))
+        panel(ax, targets, dog, actions, "t1 (0.35, 0.65)   t2 (0.70, 0.30)   ·   inertia 0.8   ·   25 rounds")
+        fig.legend(handles=players(2) + [Line2D([], [], marker="P", ls="", color=GREY, ms=8, label="mean target (planner)")],
+                   loc="upper center", ncol=3, bbox_to_anchor=(0.5, 0.995), frameon=False, fontsize=8.5, columnspacing=1.4, handletextpad=0.4)
+        fig.text(0.5, 0.012, "hollow = start   ·   filled = end   ·   arrows: one per round that moved", ha="center", fontsize=7.5, color=INK2)
+        fig.tight_layout(rect=(0, 0.05, 1, 0.9))
+        fig.savefig(out, dpi=220), plt.close(fig)
+
+
+def fig2(out):
+    """Three influencers under the averaging and the median receiver, same start and inertia. Returns the rounds each
+    takes to come within 0.01 of where it ends (quoted in the caption)."""
+    with plt.rc_context(SQUARE):
+        targets = np.array([[0.15, 0.7], [0.3, 0.2], [0.9, 0.55]])
+        fig, axes, rounds = *plt.subplots(1, 2, figsize=(7.4, 4.3)), []
+        for ax, rule, name in zip(axes, ("mean", "median"), ("Averaging receiver (BIG)", "Median receiver")):
+            dog, actions = simulate(rule, targets, (0.95, 0.95), 0.9, 30)
+            rounds.append(next((k for k in range(1, len(dog)) if np.abs(dog[k] - dog[-1]).max() < 0.01), len(dog) - 1))
+            panel(ax, targets, dog, actions, f"{name}\nwithin 0.01 of its end point after {rounds[-1]} rounds")
+        fig.legend(handles=players(3) + [Line2D([], [], marker="P", ls="", color=GREY, ms=8, label="mean target (planner)")],
+                   loc="upper center", ncol=4, bbox_to_anchor=(0.5, 1.0), frameon=False, fontsize=8.5, columnspacing=1.4, handletextpad=0.4)
+        fig.text(0.5, 0.012, "t1 (0.15, 0.70)  t2 (0.30, 0.20)  t3 (0.90, 0.55)  ·  inertia 0.9  ·  30 rounds  ·  hollow = start, filled = end, arrows: one per round that moved",
+                 ha="center", fontsize=7.2, color=INK2)
+        fig.tight_layout(rect=(0, 0.06, 1, 0.83))
+        fig.savefig(out, dpi=220), plt.close(fig)
+    return rounds
+
+
+def fig3(out, rows):
+    """Share of games in which the median receiver loses less, by inertia (study mechanisms_wide)."""
+    wide = S.study(rows, "mechanisms_wide")
+    with plt.rc_context(CHART):
+        fig, ax = plt.subplots(figsize=(7.2, 2.6))
+        for n, color in zip((3, 5, 7), COLORS):
+            w0s = sorted({r["key"]["w0"] for r in wide if r["key"]["n"] == n})
+            share = [100 * np.mean([r["median"]["loss"] < r["mean"]["loss"] for r in wide if r["key"]["n"] == n and r["key"]["w0"] == w]) for w in w0s]
+            ax.plot(w0s, share, color=color, lw=2, marker="o", ms=4, label=f"{n} influencers")
+        ax.axhline(50, color=INK2, lw=0.8, ls="--")
+        ax.set(xlabel="Inertia w$_0$", ylabel="Games where median\nreceiver loses less (%)", ylim=(0, 100))
+        ax.legend(loc="upper left")
+        fig.tight_layout()
+        fig.savefig(out, dpi=220), plt.close(fig)
+
+
+def fig4(out, rows):
+    """Extra loss of phantoms (p, 1 - p) over the best at each inertia, three players: plain receivers at their
+    equilibria (mechanisms_phantoms) and compensated ones with truthful reports (mechanisms_compensated_design)."""
+    plain = [r for r in S.study(rows, "mechanisms_phantoms") if r["key"]["n"] == 3]
+    comp = {r["key"]["w0"]: r for r in S.study(rows, "mechanisms_compensated_design") if r["key"]["n"] == 3 and r["key"]["discount"] == 0.9}
+    with plt.rc_context(CHART):
+        fig, (a, b) = plt.subplots(1, 2, figsize=(7.6, 2.9), sharey=True)
+        ps = sorted({r["key"]["phantoms"][0] for r in plain})
+        for w0, color in zip((0.0, 0.6, 0.9, 0.95), COLORS):
+            mean = np.array([np.mean([r["loss"] for r in plain if r["key"]["w0"] == w0 and r["key"]["phantoms"][0] == p]) for p in ps])
+            qs, m = np.array([shape[0] for shape in comp[w0]["shapes"][:-1]]), np.array(comp[w0]["mean"][:-1])  # last shape: exact averaging
+            for ax, x, y in ((a, ps, mean), (b, qs, m)):
+                excess = 100 * (y / y.min() - 1)
+                ax.plot(x, excess, color=color, lw=2, label=f"inertia {w0:g}")
+                i = int(y.argmin())
+                ax.scatter(x[i], excess[i], s=55, color=color, edgecolors="white", linewidths=1.5, zorder=5)
+        for ax, title in ((a, "Plain receiver (equilibrium)"), (b, "Compensated receiver (truthful)")):
+            for x, name in ((0.0, "median"), (1 / 3, "averaging")):
+                ax.axvline(x, color=INK2, lw=0.8, ls="--")
+                ax.text(x + 0.006, 7.7, name, fontsize=7.5, color=INK2, va="top", bbox=dict(facecolor="white", edgecolor="none", pad=1, alpha=0.85))
+            ax.set(xlim=(-0.01, 0.51), ylim=(0, 8), xlabel="Fixed points (p, 1 - p)")
+            ax.set_title(title, fontsize=9, loc="left", color=INK)
+        a.set_ylabel("Extra loss over the best\nreceiver at that inertia (%)")
+        b.legend(loc="center left", bbox_to_anchor=(1.01, 0.5), title="minimum marked", title_fontsize=8)
+        fig.tight_layout()
+        fig.savefig(out, dpi=220), plt.close(fig)
+
+
+def fig5(out, rows, n=7):
+    """Left: the slow-receiver criterion E[(h_(j) - mean target)^2] by order statistic j (Proposition 8), by sampling.
+    Right: 5th-smallest minus median receiver, game by game (mechanisms_skewed_seven). Returns the right panel's
+    differences."""
+    rng, js = np.random.default_rng(0), np.arange(1, n + 1)
+    loss = {(tuple(r["key"]["phantoms"]), r["key"]["draw"]): r["loss"] for r in S.study(rows, "mechanisms_skewed_seven")}
+    best, median = M.order_statistic_phantoms(n, 5), M.order_statistic_phantoms(n, 4)
+    diff = np.array(sorted(loss[best, d] - loss[median, d] for (ph, d) in loss if ph == best and (median, d) in loss))
+    with plt.rc_context(CHART):
+        fig, (a, b) = plt.subplots(1, 2, figsize=(7.6, 2.9), gridspec_kw={"width_ratios": [1, 1.15]})
+        samples = (("uniform targets", rng.uniform(size=(400_000, n))), ("skewed targets, Beta(0.1, 1)", rng.beta(0.1, 1, (400_000, n))))
+        for (name, sample), color in zip(samples, COLORS):
+            mse = ((np.sort(sample, 1) - sample.mean(1, keepdims=True)) ** 2).mean(0)
+            a.plot(js, mse, color=color, lw=2, marker="o", ms=4, label=name)
+            i = int(mse.argmin())
+            a.scatter(js[i], mse[i], s=70, color=color, edgecolors="white", linewidths=1.5, zorder=5)
+        a.set_xticks(js, ["1st", "2nd", "3rd", "4th\n(median)", "5th", "6th", "7th"])
+        a.set(xlabel="Receiver: moves toward the j-th smallest target", ylabel="Mean squared distance\nto the mean target")
+        a.set_title("Theory: best slow receiver (minimum marked)", fontsize=9, loc="left", color=INK)
+        a.legend(loc="upper center", fontsize=7.5)
+        b.bar(np.arange(len(diff)), diff, width=0.8, color=np.where(diff < 0, COLORS[1], "#b9b8b3"))
+        b.axhline(0, color=INK2, lw=0.8)
+        b.axhline(diff.mean(), color=INK, lw=1.2)
+        b.text(len(diff) - 1, diff.mean() - 0.004, f"mean {diff.mean():.4f}", ha="right", va="top", fontsize=7.5, color=INK)
+        b.set_xticks([])
+        b.set(xlabel=f"{len(diff)} random games, sorted ({(diff < 0).sum()} below zero)", ylabel="Loss of 5th smallest\nminus median receiver")
+        b.set_title("Dynamic game: 7 influencers, inertia 0.99", fontsize=9, loc="left", color=INK)
+        fig.tight_layout()
+        fig.savefig(out, dpi=220), plt.close(fig)
+    return diff
+
+
+def fig6(out, rows):
+    """Mean extra loss over the planner: both plain receivers at their equilibria (mechanisms_wide) and the
+    compensated averaging receiver with truthful reports (mechanisms_compensated), on the same draws."""
+    plain = {(r["key"]["n"], r["key"]["w0"], r["key"]["draw"]): r for r in S.study(rows, "mechanisms_wide")}
+    comp = S.study(rows, "mechanisms_compensated")
+    w0s = sorted({r["key"]["w0"] for r in comp})
+    series = [("averaging receiver (BIG)", COLORS[0], lambda c, p: p["mean"]["loss"]),
+              ("median receiver", COLORS[1], lambda c, p: p["median"]["loss"]),
+              ("compensated averaging, truthful", COLORS[2], lambda c, p: c["averaging"])]
+    with plt.rc_context(CHART):
+        fig, axes = plt.subplots(1, 3, figsize=(7.6, 2.7), sharey=True)
+        for ax, n in zip(axes, (3, 5, 7)):
+            for name, color, get in series:
+                y = []
+                for w0 in w0s:
+                    pairs = [(c, plain[n, w0, c["key"]["draw"]]) for c in comp if (c["key"]["n"], c["key"]["w0"]) == (n, w0)]
+                    y.append(100 * (np.mean([get(c, p) for c, p in pairs]) / np.mean([p["planner"] for c, p in pairs]) - 1))
+                ax.plot(w0s, y, color=color, lw=2, marker="o", ms=3.5, label=name)
+            ax.set_title(f"{n} influencers", fontsize=9, loc="left", color=INK)
+            ax.set_xlabel("Inertia w$_0$")
+        axes[0].set_ylabel("Extra loss over\nthe planner (%)")
+        axes[0].set_ylim(0, None)
+        fig.legend(*axes[0].get_legend_handles_labels(), loc="upper center", ncol=3, fontsize=8, bbox_to_anchor=(0.5, 1.02))
+        fig.tight_layout(rect=(0, 0, 1, 0.9))
+        fig.savefig(out, dpi=220), plt.close(fig)
+
+
+def fig7(out, path="results/dog_game_trajectories.json"):
+    """REINFORCE self-play in the walking game, seed 0, before and after training."""
+    d = json.loads(Path(path).read_text())
+    houses, nash = [np.array(d["house_red"]), np.array(d["house_blue"])], [np.array(d["nash_red"]), np.array(d["nash_blue"])]
+    with plt.rc_context(SQUARE):
+        fig, axes = plt.subplots(1, 2, figsize=(7.4, 4.3))
+        for ax, phase, title in zip(axes, ("before", "after"), ("Before training", "After REINFORCE self-play (300 episodes)")):
+            run = d["seeds"][0]["reinforce"][phase]
+            square(ax, title)
+            for i, key in enumerate(("red", "blue")):
+                walk = np.array(run[key])
+                arrows(ax, walk, COLORS[i], size=7)
+                ends(ax, walk, COLORS[i])
+                ax.scatter(*houses[i], s=230, marker="*", facecolors="white", edgecolors=COLORS[i], lw=1.8, zorder=6)
+                ax.scatter(*nash[i], s=170, marker="s", facecolors="none", edgecolors=INK2, lw=1.2, ls="--", zorder=4)
+            dog = np.array(run["dog"])
+            arrows(ax, dog, INK, size=6)
+            ends(ax, dog, INK, marker="D")
+        fig.legend(handles=players(2) + [Line2D([], [], marker="s", ls="", mfc="none", mec=INK2, ms=9, label="one-shot Nash corner")],
+                   loc="upper center", ncol=3, bbox_to_anchor=(0.5, 1.0), frameon=False, fontsize=8.5, columnspacing=1.4, handletextpad=0.4)
+        fig.text(0.5, 0.012, "t1 (0.88, 0.12)  t2 (0.30, 0.65)  ·  step length 0.2  ·  15 steps  ·  seed 0  ·  hollow = start, filled = end, arrows: one per step that moved",
+                 ha="center", fontsize=7.2, color=INK2)
+        fig.tight_layout(rect=(0, 0.06, 1, 0.86))
+        fig.savefig(out, dpi=220), plt.close(fig)
+
+
+def build(out=OUTPUT, results=S.STUDIES):
+    out = Path(out)
+    out.mkdir(parents=True, exist_ok=True)
+    rows = S.load(results)
+    fig1(out / "fig1.png")
+    fig2(out / "fig2.png")
+    for name, draw in (("fig3", fig3), ("fig4", fig4), ("fig5", fig5), ("fig6", fig6)):
+        draw(out / f"{name}.png", rows)
+    fig7(out / "fig7.png")
+    return out
+
+
+if __name__ == "__main__":
+    print(build(*sys.argv[1:]))
