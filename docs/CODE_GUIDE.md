@@ -122,7 +122,10 @@ All in `doggame/mechanisms.py` unless named otherwise.
   up to the grid. `compensate` can also be a function giving the reachable interval from each outcome, for
   receivers other than proportional inertia (Proposition 11).
 - **`planner_step`**. Moves as close to the mean target as it can each round. Without shocks this is
-  optimal.
+  optimal: it is the compensated receiver aimed at the mean target (Proposition 12).
+- **`reach_weight(u, w0)`**. W(u), the discounted number of rounds in which u can be reached, averaged over
+  the starts of `social_loss`. A compensated receiver's extra loss over the planner is
+  2N times the integral of (u - mean target) W(u) from the mean target to its end point (Proposition 12).
 - **`limit_coefficients`, `order_statistic_phantoms`, `best_order_statistic`, `compensated_criterion`**.
   Closed-form criteria from the slow-receiver propositions (8 and 10). They are checked against simulation
   in tests.
@@ -140,6 +143,9 @@ All in `doggame/mechanisms.py` unless named otherwise.
 | Compensation restores truthful reporting (Fig. 6) | Prop. 9 and corollary | `mechanisms_compensated` | `mechanisms_compensated_table` | `test_truthful_reporting_is_an_equilibrium_once_the_receiver_compensates_for_inertia`, `test_compensation_keeps_every_strategy_proof_rule_truthful_but_not_averaging` |
 | With compensation the best receiver does not depend on inertia (Fig. 4 right) | Prop. 10 (first order) plus numerical | `mechanisms_compensated_design` | `mechanisms_compensated_design_table` | `test_a_slow_compensated_receiver_is_ranked_by_the_static_criterion` |
 | Compensation keeps every strategy-proof rule truthful for any reachable set that allows staying and has nondecreasing ends; neither condition can be dropped | Prop. 11 | | | `test_compensation_keeps_truthful_reporting_for_any_monotone_reachable_set_that_allows_staying`, `test_truthful_reporting_fails_when_the_receiver_cannot_stay_or_its_reach_falls` |
+| A compensated receiver loses the planner's loss plus a weighted static criterion | Prop. 12 | | | `test_a_compensated_receiver_loses_the_planners_loss_plus_a_weighted_static_criterion` |
+| With compensation the optimal phantoms do not depend on inertia; for uniform targets they are k/N | Prop. 13 | | | `test_moving_a_phantom_changes_the_loss_at_the_static_rate_times_the_weight`, `test_for_uniform_targets_the_phantom_condition_has_its_closed_form_and_vanishes_at_k_over_n` |
+| With clipped shocks truthful reporting can lose a little | numerical | | | `test_with_clipped_shocks_the_median_influencer_gains_a_little_by_shading` |
 | PG learns the one-shot equilibrium | numerical | `algorithms`, `walking` | `algorithms_table`, `walking_table` | `test_training_moves_policy_closer_to_nash` (`tests/test_train.py`) |
 | PG learns the static, not the dynamic, answer; the fix | numerical | `feedback_learning`, `learning_fix` | `feedback_learning_table`, `learning_fix_table` | `test_the_explicit_equilibrium_has_no_feedback_gain_and_holding_does`, `test_a_table_of_actions_moves_toward_the_feedback_equilibrium` |
 

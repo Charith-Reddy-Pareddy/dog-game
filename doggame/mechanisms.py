@@ -206,6 +206,16 @@ def compensated_losses(houses, shapes, w0, discount=0.9, starts=101, rounds=200)
     return total.mean(1)
 
 
+def reach_weight(u, w0, discount=0.9, starts=101, rounds=200):
+    """W(u), the discounted number of rounds in which u is reachable, averaged over the starts of social_loss: after
+    k + 1 rounds from x the outcome can reach [w0^(k+1) x, 1 - w0^(k+1) (1 - x)]. With truthful reports a compensated
+    receiver's loss changes with its end point s at the rate 2N (s - mean target) W(s) (Proposition 12)."""
+    u, x = np.asarray(u, dtype=float)[..., None, None], np.linspace(0, 1, starts)[:, None]
+    q = w0 ** np.arange(1, rounds + 1)
+    inside = (u >= q * x - 1e-12) & (u <= 1 - q * (1 - x) + 1e-12)
+    return (discount ** np.arange(rounds) * inside).sum(-1).mean(-1)
+
+
 def steady_state(next_fn, start=0.5, rounds=2000):
     x = np.array([start])
     for _ in range(rounds):

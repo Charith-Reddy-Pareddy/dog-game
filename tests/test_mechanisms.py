@@ -1,3 +1,5 @@
+from math import comb
+
 import numpy as np
 
 from doggame import many_houses as H
@@ -77,6 +79,58 @@ def test_the_batched_compensated_losses_match_the_social_loss():
     for w0 in (0.0, 0.6, 0.95):
         each = [M.social_loss(lambda x, ph=ph: M.compensated(x, np.tile(HOUSES, (len(x), 1)), ph, w0), HOUSES) for ph in shapes]
         assert np.allclose(M.compensated_losses(HOUSES, shapes, w0), each)
+
+
+def test_a_compensated_receiver_loses_the_planners_loss_plus_a_weighted_static_criterion():
+    mean = HOUSES.mean()
+    for w0 in (0.0, 0.6, 0.95):
+        ends = np.array([0.1, mean, 0.8])
+        losses = M.compensated_losses(HOUSES, [(e, e) for e in ends], w0)  # two phantoms at e: the end point is e
+        assert np.isclose(losses[1], M.social_loss(lambda x: M.planner_step(x, HOUSES, w0), HOUSES))
+        for e, loss in zip(ends[[0, 2]], losses[[0, 2]]):
+            u = np.linspace(mean, e, 20001)
+            integral = np.trapz(6 * (u - mean) * M.reach_weight(u, w0), u)  # W is a step function: quadrature error ~ 1e-6
+            assert np.isclose(loss - losses[1], integral, rtol=1e-4)
+    assert np.allclose(M.reach_weight(np.linspace(0, 1, 5), 0.0), (1 - 0.9 ** 200) / 0.1)  # no inertia: always reachable
+
+
+def test_moving_a_phantom_changes_the_loss_at_the_static_rate_times_the_weight():
+    rng = np.random.default_rng(3)
+    houses, alpha, step = rng.random((200, 3)), np.array([0.22, 0.71]), 1e-4
+    loss = lambda a, w0: np.mean([M.compensated_losses(h, [tuple(a)], w0)[0] for h in houses])
+    s = np.median(np.concatenate([houses, np.tile(alpha, (len(houses), 1))], 1), 1)
+    for w0 in (0.0, 0.6, 0.9):
+        for k in range(2):
+            shift = step * np.eye(2)[k]
+            numeric = (loss(alpha + shift, w0) - loss(alpha - shift, w0)) / (2 * step)
+            rate = 6 * M.reach_weight(alpha[k], w0) * np.mean((alpha[k] - houses.mean(1)) * np.isclose(s, alpha[k]))
+            assert abs(numeric - rate) < 1e-3 * abs(rate)
+
+
+def test_for_uniform_targets_the_phantom_condition_has_its_closed_form_and_vanishes_at_k_over_n():
+    rng = np.random.default_rng(4)
+    for n in (3, 5):
+        houses = rng.random((2_000_000, n))
+        for k in range(1, n):
+            for a in (k / n, k / n + 0.1):
+                below = (houses < a).sum(1) == n - k  # the phantom is the median exactly when n - k targets lie below it
+                sample = np.mean((a - houses.mean(1)) * below)
+                closed = comb(n, k) * a ** (n - k) * (1 - a) ** k * (a - k / n) / 2
+                assert abs(sample - closed) < 4e-4
+
+
+def test_with_clipped_shocks_the_median_influencer_gains_a_little_by_shading():
+    houses = np.array([0.15, 0.3, 0.8])
+    reports = np.tile(houses, (201, 1))
+    reports[:, 1] = np.linspace(0, 1, 201)  # the median influencer's reports; index 60 is its target 0.3
+
+    def gain(x, w0):
+        move = lambda v: M.compensated(v, np.broadcast_to(houses, (len(v), 3)), (0.0, 1.0), w0)
+        z = M.compensated(np.full(201, x), reports, (0.0, 1.0), w0)
+        losses = M._shock_losses(move, z, houses, 0.9, M.shocks(0.15, w0, filtered=False))[1]
+        return losses[60] - losses.min()
+
+    assert abs(gain(0.125, 0.8) - 0.0024) < 1e-4 and abs(gain(0.0, 0.0) - 0.0003) < 5e-5
 
 
 def test_the_compensated_median_with_truthful_reports_follows_the_median_rule_equilibrium():
