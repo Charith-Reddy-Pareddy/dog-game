@@ -13,3 +13,9 @@ def test_figure_5_gives_the_skewed_target_numbers_quoted_in_the_summary(tmp_path
     diff = F.fig5(tmp_path / "fig5.png", S.load(S.STUDIES))
     assert len(diff) == 60 and (diff < 0).sum() == 46 and round(-diff.mean(), 3) == 0.008
     assert round(diff.std(ddof=1) / np.sqrt(len(diff)), 4) == 0.0025
+
+
+def test_figure_8_times_each_receiver_and_the_paper_figures_are_vector_pdfs(tmp_path):
+    assert F.fig8(tmp_path / "fig8.png") == [27, 11, 10, 7]  # averaging, median, compensated averaging, planner
+    out = F.paper(tmp_path / "paper")
+    assert sorted(p.name for p in out.glob("*.pdf")) == ["compensated_paths.pdf", "design.pdf", "reversal.pdf", "weight.pdf"]

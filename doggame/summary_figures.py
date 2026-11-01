@@ -1,4 +1,5 @@
-"""The seven figures of the key-results summary (doggame.summary_pdf), as fig1.png ... fig7.png.
+"""The seven figures of the key-results summary (doggame.summary_pdf), as fig1.png ... fig7.png, and two more
+for the paper: fig8 (paths of the plain and compensated receivers) and fig9 (the welfare weight of Proposition 12).
 
 Figures 1 and 2 solve small games directly (doggame.mechanisms); the others read the saved runs:
 Fig. 3 study mechanisms_wide, Fig. 4 mechanisms_phantoms and mechanisms_compensated_design, Fig. 5
@@ -247,6 +248,81 @@ def fig7(out, path="results/dog_game_trajectories.json"):
                  ha="center", fontsize=7.2, color=INK2)
         fig.tight_layout(rect=(0, 0.06, 1, 0.86))
         fig.savefig(out, dpi=220), plt.close(fig)
+
+
+def fig8(out, w0=0.9, rounds=30):
+    """The three influencers of Fig. 2 under BIG's averaging and the median receiver at their equilibria, the
+    compensated averaging receiver with truthful reports, and the planner. Returns each one's rounds to come within
+    0.01 of where it ends."""
+    targets, start = np.array([[0.15, 0.7], [0.3, 0.2], [0.9, 0.55]]), (0.95, 0.95)
+    averaging = (1 / 3, 2 / 3)
+    runs = [("BIG's averaging receiver", *simulate("mean", targets, start, w0, rounds)),
+            ("Median receiver", *simulate("median", targets, start, w0, rounds))]
+    for name, step in (("Compensated averaging, truthful reports", lambda x, c: M.compensated(x, targets[None, :, c], averaging, w0)),
+                       ("Planner", lambda x, c: M.planner_step(x, targets[:, c], w0))):
+        dog = [np.array(start, float)]
+        for _ in range(rounds):
+            dog.append(np.array([step(np.array([dog[-1][c]]), c)[0] for c in range(2)]))
+        runs.append((name, np.array(dog), np.repeat(targets[None], rounds, 0) if name != "Planner" else None))
+    found = []
+    with plt.rc_context(SQUARE):
+        fig, axes = plt.subplots(2, 2, figsize=(7.4, 8.3))
+        for ax, (name, dog, actions) in zip(axes.flat, runs):
+            found.append(next((k for k in range(1, len(dog)) if np.abs(dog[k] - dog[-1]).max() < 0.01), len(dog) - 1))
+            title = f"{name}\nwithin 0.01 of its end point after {found[-1]} rounds"
+            if actions is not None:
+                panel(ax, targets, dog, actions, title)
+                continue
+            square(ax, title)  # the planner uses no reports
+            for i, t in enumerate(targets):
+                ax.scatter(*t, s=230, marker="*", facecolors="white", edgecolors=COLORS[i], lw=1.8, zorder=6)
+            arrows(ax, dog, INK, size=6)
+            ends(ax, dog, INK, marker="D")
+        fig.legend(handles=players(3) + [Line2D([], [], marker="P", ls="", color=GREY, ms=8, label="mean target (planner)")],
+                   loc="upper center", ncol=4, bbox_to_anchor=(0.5, 1.0), frameon=False, fontsize=8.5, columnspacing=1.4, handletextpad=0.4)
+        fig.text(0.5, 0.008, f"t1 (0.15, 0.70)  t2 (0.30, 0.20)  t3 (0.90, 0.55)  ·  inertia {w0}  ·  {rounds} rounds  ·  circles: reports (on the targets when truthful)",
+                 ha="center", fontsize=7.2, color=INK2)
+        fig.tight_layout(rect=(0, 0.02, 1, 0.92), h_pad=2.5)
+        fig.savefig(out, dpi=220), plt.close(fig)
+    return found
+
+
+def fig9(out, discount=0.9):
+    """Left: the weight W(u) (1 - g) of Proposition 12 for evenly spread starts. Right: the extra loss over the planner
+    of a compensated receiver with end point s, for the x-coordinates of Fig. 2's targets."""
+    u, houses = np.linspace(0, 1, 401), np.array([0.15, 0.3, 0.9])
+    mean = houses.mean()
+    with plt.rc_context(CHART):
+        fig, (a, b) = plt.subplots(1, 2, figsize=(7.6, 2.9))
+        for w0, color in zip((0.0, 0.6, 0.9, 0.97), COLORS):
+            weight = M.reach_weight(u, w0, discount)
+            a.plot(u, weight * (1 - discount), color=color, lw=2, label=f"inertia {w0:g}")
+            gap = 6 * np.concatenate([[0], np.cumsum(((u - mean) * weight)[1:] * np.diff(u))])
+            gap -= np.interp(mean, u, gap)
+            b.plot(u, gap, color=color, lw=2)
+        for x, name, side in ((np.median(houses), "median receiver", -1), (1 / 3, "averaging receiver", 1), (mean, "planner", 1)):
+            b.axvline(x, color=INK2, lw=0.8, ls="--")
+            b.text(x + 0.012 * side, b.get_ylim()[1] * 0.95, name, fontsize=7, color=INK2, va="top", ha="left" if side > 0 else "right",
+                   rotation=90 if side > 0 else 0)
+        a.set(xlabel="Point u", ylabel="W(u) (1 - g)", ylim=(0, 1.05))
+        a.set_title("Discounted share of rounds in which u is reachable", fontsize=9, loc="left", color=INK)
+        a.legend(loc="lower center", fontsize=7.5)
+        b.set(xlabel="End point s", ylabel="Extra loss over the planner")
+        b.set_title("Targets 0.15, 0.30, 0.90", fontsize=9, loc="left", color=INK)
+        fig.tight_layout()
+        fig.savefig(out, dpi=220), plt.close(fig)
+
+
+def paper(out="paper/figures", results=S.STUDIES):
+    """The paper's figures, as vector PDFs."""
+    out = Path(out)
+    out.mkdir(parents=True, exist_ok=True)
+    rows = S.load(results)
+    fig3(out / "reversal.pdf", rows)
+    fig4(out / "design.pdf", rows)
+    fig8(out / "compensated_paths.pdf")
+    fig9(out / "weight.pdf")
+    return out
 
 
 def build(out=OUTPUT, results=S.STUDIES):
