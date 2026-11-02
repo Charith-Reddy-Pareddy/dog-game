@@ -1,6 +1,8 @@
 """The nine figures of the key-results summary (doggame.summary_pdf), as fig1.png and fig3.png ... fig10.png (fig8.png
 is the summary's Fig. 2, fig9.png its Fig. 7 and fig10.png its Fig. 9), and two more
 for the paper: fig8 (paths of the plain and compensated receivers) and fig9 (the welfare weight of Proposition 12).
+fig11 to fig13 are only in the results report (doggame.results_report): Proposition 2's feedback policy, the loss by
+inertia with noise (study mechanisms_noise), and gradient play against best-response regression (learning_fix).
 
 Figures 1 and 2 solve small games directly (doggame.mechanisms); the others read the saved runs:
 Fig. 3 study mechanisms_wide, Fig. 4 mechanisms_phantoms and mechanisms_compensated_design, Fig. 5
@@ -22,6 +24,7 @@ import numpy as np
 from matplotlib.lines import Line2D
 
 from doggame import dog_game_summary as S
+from doggame import inertia_theory as T
 from doggame import mechanisms as M
 
 OUTPUT = "build/summary"
@@ -320,6 +323,87 @@ def fig10(out, rows):
         fig.text(0.5, 0.012, "step length 0.2  ·  15 steps  ·  seed 0  ·  solid: from the houses  ·  faint: each starts in the other's corner",
                  ha="center", fontsize=7.2, color=INK2)
         fig.tight_layout(rect=(0, 0.05, 1, 0.88))
+        fig.savefig(out, dpi=220), plt.close(fig)
+
+
+def fig11(out, houses=(0.7, 0.6), w=0.7, discount=0.9):
+    """Left: Proposition 2's feedback policy for house setup 3, x-coordinate, at inertia 0.6 and 0.9. Right: the slack
+    rho(w0, g) an edge player needs for holding the one-shot actions to be Markov-perfect (Proposition 1). Returns,
+    per inertia, the largest one-round gain over 21 dog positions under the policy and under holding."""
+    a_red, a_blue, _ = T.nash_1d(*houses, w)
+    hold = lambda x: (np.full_like(np.asarray(x, float), a_red), np.full_like(np.asarray(x, float), a_blue))
+    gain = lambda act, w0: max(max(T.deviation_gain(act, houses[0], w, w0, x, True, discount),
+                                   T.deviation_gain(act, houses[1], w, w0, x, False, discount)) for x in np.linspace(0, 1, 21))
+    xs, gains = np.linspace(0, 1, 201), {}
+    with plt.rc_context(CHART):
+        fig, (ax, bx) = plt.subplots(1, 2, figsize=(7.4, 3.0))
+        for w0, ls in ((0.6, "-"), (0.9, "--")):
+            act = T.explicit_policy(*houses, w, a_red, a_blue, w0, discount)
+            red, blue = act(xs)
+            ax.plot(xs, red, color=COLORS[1], lw=2, ls=ls, label=f"red, w$_0$ = {w0}")
+            ax.plot(xs, blue, color=COLORS[0], lw=2, ls=ls, label=f"blue, w$_0$ = {w0}")
+            gains[w0] = gain(act, w0), gain(hold, w0)
+        ax.set(xlabel="Dog position x (one coordinate)", ylabel="Action", ylim=(-0.05, 1.05))
+        ax.set_title("Feedback equilibrium (Prop. 2)", fontsize=9)
+        ax.legend(fontsize=7, ncol=2, loc="upper center", bbox_to_anchor=(0.5, -0.24), columnspacing=1.0)
+        w0s = np.linspace(0, 0.999, 300)
+        for g, color in zip((0.5, 0.9, 0.99), COLORS[2:] + [GREY]):
+            bx.plot(w0s, w0s * (1 - g * w0s) / (1 - g * w0s ** 2), color=color, lw=2, label=f"discount {g}")
+        bx.plot(w0s, w0s, color=INK2, lw=0.8, ls=":", label="discount 0")
+        bx.set(xlabel="Inertia w$_0$", ylabel="Slack needed, $\\rho$(w$_0$, g)", ylim=(0, 1))
+        bx.set_title("When holding is Markov-perfect (Prop. 1)", fontsize=9)
+        bx.legend(fontsize=7, loc="upper left")
+        fig.tight_layout()
+        fig.savefig(out, dpi=220, bbox_inches="tight", pad_inches=0.04), plt.close(fig)
+    return gains
+
+
+def fig12(out, rows, players="3"):
+    """Mean total loss by inertia of the planner and both rules with a shock of sd 0.2 that comes with the new
+    aggregate or hits the outcome (study mechanisms_noise, through its table); circles mark each curve's lowest point."""
+    table = S.mechanisms_noise_table(rows)
+    with plt.rc_context(CHART):
+        fig, axes = plt.subplots(1, 2, figsize=(7.4, 2.6), sharey=True)
+        for ax, shock in zip(axes, ("0.2 with the aggregate", "0.2 on the outcome")):
+            lines = [r for r in table[1:] if r[0] == players and r[1] == shock and r[2] != "lowest at"]
+            w0s = [float(r[2]) for r in lines]
+            for j, (name, color) in enumerate(zip(("planner", "mean rule", "median rule"), (GREY, COLORS[0], COLORS[1]))):
+                loss = [float(r[3 + j]) for r in lines]
+                ax.plot(w0s, loss, color=color, lw=2, marker="o", ms=3.5, label=name)
+                k = int(np.argmin(loss))
+                ax.scatter([w0s[k]], [loss[k]], s=70, facecolors="none", edgecolors=color, lw=1.4, zorder=5)
+            ax.set(xlabel="Inertia w$_0$")
+            ax.set_title(f"shock sd {shock}", fontsize=9)
+        axes[0].set_ylabel("Mean total loss")
+        axes[0].legend(fontsize=7.5, loc="upper center")
+        fig.tight_layout()
+        fig.savefig(out, dpi=220), plt.close(fig)
+
+
+def fig13(out, rows, floor=1e-5):
+    """Largest one-round gain (soccer: mean duality gap), median over runs, with gradient play and with fitting
+    per-state targets, for networks and tables in four games (study learning_fix, through its table). A gain of
+    0 is drawn at `floor`."""
+    table = S.learning_fix_table(rows)
+    games = ["dog setup 3", "dog setup 5", "duopoly", "soccer"]
+    fixes = {"network": "equilibrium regression, value iteration", "table": "equilibrium regression, policy values"}
+    with plt.rc_context(CHART):
+        fig, axes = plt.subplots(1, 2, figsize=(7.4, 2.5), sharex=True)
+        for ax, policy in zip(axes, ("network", "table")):
+            for i, game in enumerate(games):
+                method = fixes[policy] if game == "soccer" else "best-response regression"
+                gain = lambda m: max(next(float(r[4].split()[0]) for r in table[1:] if r[:3] == [game, policy, m]), floor)
+                before, after, y = gain("gradient play"), gain(method), len(games) - 1 - i
+                ax.annotate("", xy=(after, y), xytext=(before, y), arrowprops=dict(arrowstyle="->", color=INK2, lw=1))
+                ax.scatter([before], [y], s=40, color=COLORS[1], zorder=5, label="gradient play" if i == 0 else None)
+                ax.scatter([after], [y], s=40, color=COLORS[0], zorder=5, label="fit per-state targets" if i == 0 else None)
+            ax.set_xscale("log")
+            ax.set_xlim(floor * 0.6, 1)
+            ax.set_yticks(range(len(games)), [g + (" (mean gap)" if g == "soccer" else "") for g in reversed(games)], fontsize=8)
+            ax.set_title(f"{policy} policy", fontsize=9)
+            ax.set_xlabel("Largest one-round gain (median of runs)")
+        axes[0].legend(fontsize=7.5, loc="lower left")
+        fig.tight_layout()
         fig.savefig(out, dpi=220), plt.close(fig)
 
 
