@@ -1,4 +1,4 @@
-"""The key-results summary PDF (five pages): the main results in plain words, with eight figures of
+"""The key-results summary PDF (six pages): the main results in plain words, with nine figures of
 doggame.summary_figures. The numbers in the text come from the tables of doggame.dog_game_summary and the
 propositions in docs/INERTIA_PROOFS.md; see docs/CODE_GUIDE.md for where each one is computed.
 
@@ -90,6 +90,21 @@ pg = [
     "position, A2C and PPO learn to hold the one-shot actions everywhere (19 of 20 runs), which can be exploited away from the "
     "equilibrium path. Fitting the policy network to exact per-state targets fixes this in three games, 5 of 5 seeds each.",
 ]
+nash_q = [
+    "<b>Cartesian moves work, polar moves do not.</b> One network reads the state and both players' moves and returns both "
+    "Q-values, Q(s, a<sub>1</sub>, a<sub>2</sub>); its learning target uses the equilibrium of each stage game, found by both "
+    "players climbing their own Q at once. With moves written as (v<sub>x</sub>, v<sub>y</sub>) in a disk, or as a square, all 5 "
+    "seeds bring both players to the one-shot Nash corners, from the houses and from 8 random starts; with polar moves "
+    "(r, &theta;) none of the 5 does (Fig. 9).",
+    "<b>Best response: a batched grid is exact and fastest.</b> At 50 random states a dense grid (1,257 to 1,722 evaluations in "
+    "one batch) takes about 0.3 ms on a CPU. Gradient ascent stops at local peaks and leaves 10 to 14% of the Q spread on "
+    "Cartesian and square moves; finite differences and autograd agree, so the analytic gradient is not needed. A quadratic "
+    "fitted through five points needs 15 evaluations and does about as well as gradient ascent. On polar moves every local "
+    "method leaves 27 to 32%, which is why polar learning fails.",
+    "<b>Both players at once.</b> Simultaneous gradient steps of 0.1 to 1 (in units of the move set's radius) rarely settle "
+    "exactly within 500 iterations, but where they hover leaves either player at most about 0.001 to gain on Cartesian and "
+    "square moves; on polar moves the gap stays at 0.57 to 0.76.",
+]
 
 
 def build(out=OUTPUT):
@@ -142,6 +157,13 @@ def build(out=OUTPUT):
         fig(folder, "fig7.png", 7.0 * inch * 946 / 1628, "<b>Fig. 8.</b> REINFORCE self-play in the walking game: each player starts at its target and moves "
             "at most 0.2 per step. Before training the players wander; after 300 training episodes both walk straight to the one-shot "
             "Nash corners, exaggerating as BIG predicts, and the dog ends in the middle. All 5 seeds end at the same corners."),
+        Paragraph("Nash-Q with continuous moves", h),
+        ListFlowable([ListItem(Paragraph(p, body), leftIndent=12, value="circle") for p in nash_q], bulletType="bullet", start="\u2022", leftIndent=12, bulletFontSize=8),
+        Spacer(1, 8),
+        fig(folder, "fig10.png", 7.0 * inch * 704 / 1672, "<b>Fig. 9.</b> Nash-Q with continuous moves in the walking game: greedy "
+            "equilibrium paths of the seed-0 networks. With Cartesian and square moves both players head for their one-shot Nash "
+            "corners, from their houses (solid) and from each other's corner (faint), sliding along the edge where a straight line "
+            "would leave the square; with polar moves the second player barely moves and the first stops short of its corner."),
     ]
 
     SimpleDocTemplate(str(out), pagesize=letter, leftMargin=0.75 * inch, rightMargin=0.75 * inch, topMargin=0.7 * inch, bottomMargin=0.7 * inch,

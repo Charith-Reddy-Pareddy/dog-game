@@ -18,7 +18,7 @@ files. The receiver (mechanism) results need only a small part of that:
 | `doggame/dog_game_summary.py` | Only the `mechanisms*_table` functions turn saved runs into the numbers in the docs | about 250 lines |
 | `results/dog_game_studies.jsonl` | The saved runs, one JSON row per run | data |
 | `tests/test_mechanisms.py` | 18 tests of the claims below | |
-| `doggame/summary_figures.py` | The eight figures of the key-results summary PDF (`fig8` and `fig9` are its Figs. 2 and 7, and also in the paper), and `paper()`, which writes the paper's figures | one function per figure |
+| `doggame/summary_figures.py` | The nine figures of the key-results summary PDF (`fig8`, `fig9` and `fig10` are its Figs. 2, 7 and 9; `fig8` and `fig9` are also in the paper), and `paper()`, which writes the paper's figures | one function per figure |
 | `doggame/summary_pdf.py` | The key-results summary PDF itself: text, figures, captions | |
 | `docs/INERTIA_PROOFS.md` | The proofs (Propositions 3, 4 and 7 to 13) | |
 | `paper/paper.tex` | The paper draft (LaTeX); its figures in `paper/figures/` come from `summary_figures.paper()`; `tectonic paper/paper.tex` compiles it to `paper/paper.pdf` | |

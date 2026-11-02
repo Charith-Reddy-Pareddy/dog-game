@@ -1,5 +1,5 @@
-"""The eight figures of the key-results summary (doggame.summary_pdf), as fig1.png and fig3.png ... fig9.png (fig8.png
-is the summary's Fig. 2 and fig9.png its Fig. 7), and two more
+"""The nine figures of the key-results summary (doggame.summary_pdf), as fig1.png and fig3.png ... fig10.png (fig8.png
+is the summary's Fig. 2, fig9.png its Fig. 7 and fig10.png its Fig. 9), and two more
 for the paper: fig8 (paths of the plain and compensated receivers) and fig9 (the welfare weight of Proposition 12).
 
 Figures 1 and 2 solve small games directly (doggame.mechanisms); the others read the saved runs:
@@ -299,6 +299,30 @@ def fig9(out, discount=0.9):
         fig.savefig(out, dpi=220), plt.close(fig)
 
 
+def fig10(out, rows):
+    """Continuous-move Nash-Q in the walking game (study continuous_q_tools, seed 0): greedy equilibrium paths from the
+    houses (solid) and with each player starting in the other's corner (faint), one panel per move encoding."""
+    found = {r["key"]["encoding"]: r["trajectories"] for r in S.study(rows, "continuous_q_tools")}
+    with plt.rc_context(SQUARE):
+        fig, axes = plt.subplots(1, 3, figsize=(7.6, 3.2))
+        for ax, (encoding, name) in zip(axes, (("cartesian", "Cartesian moves (vx, vy)"), ("polar", "Polar moves (r, \u03b8)"), ("square", "Square moves"))):
+            square(ax, name)
+            for start, alpha in (("each in the other's corner", 0.35), ("from the houses", 1.0)):
+                path = np.array(found[encoding][start])  # rounds x (red, blue, dog) x 2
+                for i in range(2):
+                    arrows(ax, path[:, i], COLORS[i], alpha=alpha, size=6)
+                    ends(ax, path[:, i], COLORS[i], size=45)
+            houses = np.array(found[encoding]["from the houses"][0][:2])
+            for i, h in enumerate(houses):
+                ax.scatter(*h, s=200, marker="*", facecolors="white", edgecolors=COLORS[i], lw=1.6, zorder=6)
+        fig.legend(handles=players(2)[:-1], loc="upper center", ncol=4, bbox_to_anchor=(0.5, 1.0), frameon=False, fontsize=8.5,
+                   columnspacing=1.4, handletextpad=0.4)
+        fig.text(0.5, 0.012, "step length 0.2  ·  15 steps  ·  seed 0  ·  solid: from the houses  ·  faint: each starts in the other's corner",
+                 ha="center", fontsize=7.2, color=INK2)
+        fig.tight_layout(rect=(0, 0.05, 1, 0.88))
+        fig.savefig(out, dpi=220), plt.close(fig)
+
+
 def paper(out="paper/figures", results=S.STUDIES):
     """The paper's figures, as vector PDFs."""
     out = Path(out)
@@ -321,6 +345,7 @@ def build(out=OUTPUT, results=S.STUDIES):
         draw(out / f"{name}.png", rows)
     fig7(out / "fig7.png")
     fig9(out / "fig9.png")
+    fig10(out / "fig10.png", rows)
     return out
 
 
