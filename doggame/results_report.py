@@ -117,7 +117,6 @@ updates = [
     "depend on inertia.",
     "<b>Random shocks.</b> With shocks on the receiver's position, truthful reporting is no longer exact, but the gain from "
     "lying is small (about 0.0015 at inertia 0.8).",
-    "<b>Paper draft.</b> A 10-page draft with the three theorems, proofs and four figures, compiled with LaTeX (tectonic).",
     "<b>Continuous-move Nash-Q.</b> The network Q(s, a<sub>1</sub>, a<sub>2</sub>) with Cartesian (v<sub>x</sub>, "
     "v<sub>y</sub>) or polar (r, &theta;) moves, best responses by grid, gradient ascent, finite differences or a fitted "
     "quadratic, and simultaneous best-response dynamics: results and trajectories now in the summary.",
@@ -309,7 +308,7 @@ def build(out=OUTPUT):
         Paragraph("Reproducibility", h),
         Paragraph("All numbers come from saved study results through <i>doggame/dog_game_summary.py</i>; <i>docs/CODE_GUIDE.md</i> maps each "
                   "result to its proof, study, table and test. <i>python3 -m doggame.results_report</i> rebuilds this report, "
-                  "<i>python3 -m doggame.summary_pdf</i> the summary and <i>tectonic paper/paper.tex</i> the paper; the tests "
+                  "and <i>python3 -m doggame.summary_pdf</i> the summary; the tests "
                   "check the theorems numerically.", body),
     ]
     SimpleDocTemplate(str(out), pagesize=letter, leftMargin=0.75 * inch, rightMargin=0.75 * inch, topMargin=0.65 * inch,

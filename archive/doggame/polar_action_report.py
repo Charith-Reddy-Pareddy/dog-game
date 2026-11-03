@@ -432,7 +432,7 @@ def build_markdown(rows, path=MARKDOWN, robustness_rows=None):
     lines = [
         "# Dog Game: concise policy-gradient update",
         "",
-        "**Prepared 15 October 2026 | Research update for discussion with a professor or primary researcher**",
+        "**Prepared 15 October 2026 | Research update**",
         "",
         "## What was implemented",
         "",

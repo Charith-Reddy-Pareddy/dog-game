@@ -65,7 +65,6 @@ Next: a sampled (model-free) version of the fix; item 6; and the three items tow
 - Proposition 13 (proved): the loss is a sum of one term per phantom with the static sign pattern, so for uniform
   targets the optimal compensated phantoms are k/N at every inertia; with clustered targets inertia can switch
   between the static local optima (counterexample found in an independent proof check).
-- Paper draft: `paper/paper.tex`.
 - Open: make Proposition 8's remainder uniform; unequal weights; whether truthful reporting is the only
   equilibrium of the compensated receiver; shocks (a small gain from shading, see the proof notes).
 

@@ -12,7 +12,7 @@ Saved results stay in `results/` and the reports built from them stay in the rep
 
 | Thread | Files | Results and reports |
 |---|---|---|
-| Report builders | `dog_game_report`, `figures`, `research_report_pdf`, `pdf_kit`, `working_paper`, `walking_figures`, `polar_action_report`, `soccer_report` | `RESEARCH_REPORT.md`, `docs/WORKING_PAPER.md`, `PG_RESEARCH_UPDATE.md` and their PDFs |
+| Report builders | `dog_game_report`, `figures`, `research_report_pdf`, `pdf_kit`, `walking_figures`, `polar_action_report`, `soccer_report` | `RESEARCH_REPORT.md`, `PG_RESEARCH_UPDATE.md` and their PDFs |
 | Nash-Q on a grid | `dqn`, `fictitious_play`, `continuous_q`, `continuous_br`, `continuous_q_figure`; studies `stage_solver`, `resolution`, `noise`, `continuous_q`, `continuous_q_tools` | `RESEARCH_REPORT.md` |
 | Polar actions and the walking equilibrium | `polar_action_study`, `polar_action_robustness`, `walking_equilibrium`; study `walking_equilibrium` | `PG_RESEARCH_UPDATE.md`, `WALKING_GAME_REPORT.md` |
 | Soccer extras | `soccer_averaging`, `soccer_eval`, `soccer_experiments`, `soccer_fp_diagnosis`, `soccer_pg`, `soccer_seeds` | `results/soccer_*` |
