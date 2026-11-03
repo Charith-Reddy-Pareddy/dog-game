@@ -123,7 +123,7 @@ updates = [
     "quadratic, and simultaneous best-response dynamics: results and trajectories now in the summary.",
     "<b>Explainable code.</b> Modules that no current result needs were moved to <i>archive/</i> (the tag <i>pre-archive</i> "
     "keeps the old tree). <i>docs/CODE_GUIDE.md</i> maps each result to its proof, study, table and test. Two CI defects "
-    "were fixed (a missing pypdf dependency; <i>np.trapz</i>, removed in NumPy 2). All tests pass locally and in CI.",
+    "were fixed (a missing pypdf dependency; NumPy 2's removal of <i>trapz</i>). All tests pass locally and in CI.",
 ]
 
 interesting = [
