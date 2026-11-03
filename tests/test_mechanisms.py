@@ -170,10 +170,11 @@ def test_with_clipped_shocks_the_median_influencer_gains_a_little_by_shading():
     def gain(x, w0):
         move = lambda v: M.compensated(v, np.broadcast_to(houses, (len(v), 3)), (0.0, 1.0), w0)
         z = M.compensated(np.full(201, x), reports, (0.0, 1.0), w0)
-        losses = M._shock_losses(move, z, houses, 0.9, M.shocks(0.15, w0, filtered=False))[1]
+        # clipping kinks the integrand, so Gauss-Hermite needs many nodes: 9 nodes gave 0.0024 and 0.0003
+        losses = M._shock_losses(move, z, houses, 0.9, M.shocks(0.15, w0, filtered=False, nodes=151))[1]
         return losses[60] - losses.min()
 
-    assert abs(gain(0.125, 0.8) - 0.0024) < 1e-4 and abs(gain(0.0, 0.0) - 0.0003) < 5e-5
+    assert abs(gain(0.125, 0.8) - 0.0015) < 1e-4 and abs(gain(0.0, 0.0) - 0.00009) < 2e-5
 
 
 def test_the_compensated_median_with_truthful_reports_follows_the_median_rule_equilibrium():

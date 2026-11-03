@@ -81,7 +81,7 @@ points = [
     "and within sampling error of averaging, while the median receiver stays clearly worse (Fig. 4, right).",
     "<b>Random shocks break exact truthfulness, slightly.</b> The results above assume the receiver moves exactly as "
     "told. If its position is also hit by random shocks (standard deviation 0.15, clipped to [0, 1]), the median influencer "
-    "gains a little by shading its report: 0.0024 at inertia 0.8 against 0.0003 without inertia, for targets 0.15, 0.30 and "
+    "gains a little by shading its report: about 0.0015 at inertia 0.8 against 0.0001 without inertia, for targets 0.15, 0.30 and "
     "0.80. This is a numerical check, not a theorem; with targets 0.2, 0.5 and 0.8 we found no gain.",
 ]
 pg = [

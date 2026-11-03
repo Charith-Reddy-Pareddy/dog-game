@@ -110,7 +110,7 @@ updates = [
     "for each (gains from lying of 0.085 and 1.24). New: an exact welfare formula, and a proof that the best fixed points do not "
     "depend on inertia.",
     "<b>Random shocks.</b> With shocks on the receiver's position, truthful reporting is no longer exact, but the gain from "
-    "lying is small (0.0024 at inertia 0.8).",
+    "lying is small (about 0.0015 at inertia 0.8).",
     "<b>Paper draft.</b> A 10-page draft with the three theorems, proofs and four figures, compiled with LaTeX (tectonic).",
     "<b>Continuous-move Nash-Q.</b> The network Q(s, a<sub>1</sub>, a<sub>2</sub>) with Cartesian (v<sub>x</sub>, "
     "v<sub>y</sub>) or polar (r, &theta;) moves, best responses by grid, gradient ascent, finite differences or a fitted "
@@ -232,7 +232,7 @@ def build(out=OUTPUT):
                   "edges because they are reached last. So of two compensated receivers whose end points lie on the same side of the "
                   "mean target, the closer one loses less at every inertia.", body),
         Paragraph("<b>Random shocks (numerical).</b> If the receiver's position is also hit by shocks (sd 0.15, clipped to [0, 1]), the "
-                  "median influencer gains a little by shading its report: 0.0024 at inertia 0.8 against 0.0003 without inertia "
+                  "median influencer gains a little by shading its report: about 0.0015 at inertia 0.8 against 0.0001 without inertia "
                   "(targets 0.15, 0.30, 0.80); with targets 0.2, 0.5, 0.8 no gain was found.", body),
 
         Paragraph("4. The feedback equilibrium of the dog game with inertia", h),

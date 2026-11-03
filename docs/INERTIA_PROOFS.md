@@ -637,7 +637,7 @@ random games.
 - **Shocks.** Propositions 9 to 13 assume a deterministic receiver. With a normal shock on each next outcome,
   clipped to [0, 1], truthful reporting under the compensated median is no longer exactly an equilibrium. With
   targets 0.15, 0.3 and 0.8, shocks of standard deviation 0.15 and discount 0.9, the median influencer gains
-  0.0024 by shading its report from 0.3 to 0.255 at outcome 0.125 with inertia 0.8, against 0.0003 without inertia
+  about 0.0015 by shading its report from 0.3 to 0.26 at outcome 0.125 with inertia 0.8, against about 0.0001 without inertia
   (from clipping alone); with targets 0.2, 0.5 and 0.8 no gain was found (test
   `test_with_clipped_shocks_the_median_influencer_gains_a_little_by_shading`).
 - **Shared coordinates.** When the houses coincide, both one-shot actions can be interior and the one-shot game has a
