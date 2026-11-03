@@ -380,3 +380,40 @@ def test_the_best_slow_receiver_is_the_order_statistic_closest_to_the_mean_targe
     assert M.best_order_statistic(rng.random((300_000, 5))) == 3  # uniform targets: the median
     assert M.best_order_statistic(houses) == 4  # skewed targets: a higher order statistic
     assert M.order_statistic_phantoms(5, 3) == (0.0, 0.0, 1.0, 1.0) and M.order_statistic_phantoms(5, 4) == (0.0, 1.0, 1.0, 1.0)
+
+
+def _pivot_policy(houses, w0):
+    """Proposition 18: everyone holds the one-shot action, and the pivot moves the dog as close to its house as it can."""
+    w = np.full(len(houses), 1 / len(houses))
+    a, d, p = H.one_shot(houses, w)
+    def policy(x):
+        r = a.copy()
+        r[p] = np.clip(a[p] + (d - (w0 * x + (1 - w0) * d)) / ((1 - w0) * w[p]), 0, 1)
+        return r
+    return policy, w, d, d - a[p] * w[p], d - a[p] * w[p] + w[p]
+
+
+def test_a_pivot_puts_the_dog_exactly_on_the_one_shot_outcome():
+    w0 = 0.8
+    policy, w, d, low, high = _pivot_policy(np.array([0.1, 0.5, 0.9]), w0)  # the condition of (b) holds
+    assert M.deviation_gain("mean", policy, [0.1, 0.5, 0.9], w, w0, states=11, rounds=120) < 1e-12
+    for x0, rounds in ((0.0, 7), (0.25, 5), (1.0, 7)):
+        x, n = x0, 0
+        while x != d:
+            x, n = w0 * x + (1 - w0) * policy(x) @ w, n + 1
+        gap = (high - x0) / (high - d) if x0 < d else (x0 - low) / (d - low)
+        assert n == rounds == np.ceil(np.log(gap) / np.log(1 / w0))
+    policy, w, *_ = _pivot_policy(np.array([0.1, 0.5, 0.6]), w0)  # the top player is too close to the pivot
+    assert M.deviation_gain("mean", policy, [0.1, 0.5, 0.6], w, w0, states=11, rounds=120) > 0.04
+    rng = np.random.default_rng(7)
+    for n in (3, 5) * 6:  # without the condition: the target form, numerically
+        houses, w = rng.random(n), np.full(n, 1 / n)
+        a, d, pivot = H.one_shot(houses, w)
+        if pivot is None:
+            continue
+        targets = M.target_equilibrium("mean", houses, w, w0)[0]
+        assert abs(targets[pivot] - houses[pivot]) < 2e-3
+        x, rest = np.linspace(0, 1, 41), M.steady_state(lambda v: M.step("mean", v, targets, w, w0))
+        for _ in range(80):
+            x = M.step("mean", x, targets, w, w0)
+        assert np.abs(x - rest).max() < 1e-12

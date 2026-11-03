@@ -152,6 +152,60 @@ The target form also carries over numerically: if every player aims at a target,
 with the targets as houses, and targets from a fixed point give a feedback equilibrium whenever every player's
 one-round objective is single-peaked (study `many_targets`); there is no proof for many houses.
 
+## A pivot puts the dog on the one-shot outcome
+
+Propositions 1 and 2 assume that every one-shot action is at an edge. With N players the one-shot equilibrium often has
+a pivot instead, a player p with 0 < a_p* < 1; a one-shot best response strictly inside the box puts the dog on the
+player's house, so h_p = d*. Every other player is at an edge: at the top (a_i* = 1, h_i >= d*) or at the bottom
+(a_i* = 0, h_i <= d*). Let
+
+    L = d* - w_p a_p*,      U = L + w_p,
+
+the dog when the pivot plays 0 or 1 and everyone else plays the one-shot actions, so L < d* < U.
+
+**Proposition 18 (a pivot puts the dog on the one-shot outcome in finitely many rounds).** Let every player other
+than the pivot hold its one-shot action and let the pivot move the dog as close to its house as it can,
+
+    a_p(x) = clip(a_p* + (d* - z_h(x)) / ((1 - w0) w_p), 0, 1),
+
+so that the next position is N(x) = clip(d*, w0 x + (1 - w0) L, w0 x + (1 - w0) U).
+
+(a) From x < d* the dog is on d* after exactly ceil(log((U - x) / (U - d*)) / log(1 / w0)) rounds, from x > d* after
+ceil(log((x - L) / (d* - L)) / log(1 / w0)) rounds, and it stays there. Without a pivot, holding gives
+x_t - d* = w0^t (x - d*), which is never 0 for x != d* when w0 > 0.
+
+(b) If every top player has h_i >= w0 + (1 - w0) L and every bottom player has h_i <= (1 - w0) U, the policy is a
+feedback equilibrium for every w0 in [0, 1) and g in [0, 1). In slack form, (h_i - L) / (1 - L) >= w0 at the top and
+(U - h_i) / U >= w0 at the bottom. Unlike Proposition 1, the condition does not involve g, and at w0 = 0 it always
+holds.
+
+**Proof.** (a) Take x < d*. As long as w0 x + (1 - w0) U < d*, both ends of the interval are below d*, so
+N(x) = w0 x + (1 - w0) U and x_t - U = w0^t (x - U). The first round with U - w0^n (U - x) >= d* puts the dog on d*
+exactly, and N(d*) = d* because d* lies inside [w0 d* + (1 - w0) L, w0 d* + (1 - w0) U]. x > d* is the mirror image.
+
+(b) N is nondecreasing, maps [0, d*] into [0, d*] and [d*, 1] into [d*, 1], and fixes d*. So for z <= z' <= d* every
+later position from z is at most the one from z' and at most d*, and the mirror statement holds above d*.
+
+*The pivot.* Given the others' actions it reaches [w0 x + (1 - w0) L, w0 x + (1 - w0) U]. Its one-round objective
+-(z - d*)^2 - sum_{t >= 1} g^t (N^t(z) - d*)^2 is nondecreasing on [0, d*] and nonincreasing on [d*, 1], by the ordering
+of the paths. Such a function is maximized over an interval at the point of the interval closest to d*, which is N(x).
+
+*A top player.* Given the others' actions it reaches [N(x) - (1 - w0) w_i, N(x)], and the policy takes the right end.
+Every position reachable from any state is at most N(1) <= max(d*, w0 + (1 - w0) L) <= h_i: the path from 1 decreases
+to d*, and every path from z <= 1 lies below it. On (-inf, h_i] the stage reward -(y - h_i)^2 increases in y, and the
+paths are ordered in their start, so the player's one-round objective is nondecreasing on [0, N(1)] and the right end is
+a best reply. A bottom player is the mirror image, with N(0) >= min(d*, (1 - w0) U) >= h_i. By the one-shot deviation
+principle the policy is a feedback equilibrium. ∎
+
+The condition in (b) is sufficient, not necessary: with equal weights, houses 0.1, 0.5 and 0.75 and w0 = 0.8 it fails
+(0.75 < 0.867) and the policy is still an equilibrium. It cannot simply be dropped either: with houses 0.1, 0.5 and 0.6
+the top player gains 0.044 by easing off its edge. It is also rarely met at high inertia, since it asks every edge player
+to be far from the pivot. Without it, the equilibrium in target form (`target_equilibrium`) still gives the pivot its
+house as target and still puts the dog exactly on its rest point in finitely many rounds in random games with 3 and 5
+players (test `test_a_pivot_puts_the_dog_exactly_on_the_one_shot_outcome`); that part is numerical, and in 2 of 12
+random games with five players at w0 = 0.9 the target form was not an equilibrium (largest gain 0.005). From the
+band of positions of width (1 - w0) w_p / w0 around d* the dog lands on d* in one round.
+
 ## Continuous-time limit
 
 With time step dt, w0 = 1 - dt and g = exp(-r dt), 1 - g w0 = (r + 1) dt + O(dt^2) and
@@ -733,7 +787,8 @@ needs to be symmetric but not unimodal. Test
   policy of Proposition 2 aims at 0.771. The policy fails in 53 of 123 such random games. Because a player's one-round objective depends only on the next
   position, an equilibrium in target form still exists whenever the objectives stay single-peaked; with the
   targets from a two-dimensional fixed point (`target_equilibrium`), this holds numerically in 122 of the 123
-  games. A proof is open.
+  games. Proposition 18 gives the equilibrium, and exact arrival at d*, when every edge player is far enough from the
+  pivot; otherwise a proof is open.
 - **Uniqueness.** The propositions give one feedback equilibrium; they do not rule out others.
 - **Shocks.** Propositions 9 to 13 assume a deterministic receiver. With a normal shock on each next outcome,
   clipped to [0, 1], truthful reporting under the compensated median is no longer exactly an equilibrium. With
