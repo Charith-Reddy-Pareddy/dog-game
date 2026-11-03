@@ -144,6 +144,33 @@ def test_a_falling_upper_reach_lets_a_single_influencer_gain():
     assert squared(high(0.35)) - squared(0.4909) > 0.0015  # stopping short of the dip pays even under squared loss
 
 
+def _noisy_median_gain(reach, targets=(0.15, 0.3, 0.8), sd=0.15, lo=-1.3, hi=2.3, n=1301, nodes=21, sweeps=600):
+    """Largest one-round gain of the median influencer of a compensated median receiver on the real line (the grid
+    [lo, hi]) when each next outcome gets a normal shock; reach(x) gives the reachable interval."""
+    t, x = np.asarray(targets, dtype=float), np.linspace(lo, hi, n)
+    nodes_, weights = np.polynomial.hermite_e.hermegauss(nodes)
+    eps, weights = sd * nodes_, weights / weights.sum()
+    low, high = reach(x)
+
+    def objective(z, value):  # this round's expected loss plus the discounted value, for next pre-shock outcome z
+        y = np.clip(z[..., None] + eps, lo, hi)
+        return ((y - t[1]) ** 2 + 0.9 * np.interp(y, x, value)) @ weights
+
+    truthful, value = np.clip(t[1], low, high), np.zeros(n)
+    for _ in range(sweeps):
+        value = objective(truthful, value)
+    rule = np.linspace(t[0], t[2], 241)  # the median influencer can put the rule's outcome anywhere between the others
+    best = objective(np.clip(rule, low[:, None], high[:, None]), value).min(1)
+    inside = (x >= 0) & (x <= 1)
+    return (objective(truthful, value) - best)[inside].max()
+
+
+def test_noise_breaks_truthful_reporting_only_through_asymmetric_adjustment():
+    assert _noisy_median_gain(lambda x: (x - 0.1, x + 0.1)) < 1e-9  # symmetric speed limit: still truthful
+    assert _noisy_median_gain(lambda x: (0.8 * x, 0.8 * x + 0.2)) > 3e-4  # proportional inertia: slower down than up
+    assert _noisy_median_gain(lambda x: (x - 0.05, x + 0.15)) > 0.01  # asymmetric speed limits
+
+
 def test_slowing_each_phantom_separately_does_not_keep_reporting_truthful():
     step = lambda x, reports: np.median([*reports, 0.0, min(1.0, x + 0.3), 1.0])  # middle phantom drifts up at speed 0.3
 

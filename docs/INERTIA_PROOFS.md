@@ -683,6 +683,47 @@ for it too. BIG's plain averaging receiver behaves differently: its mean price o
 `test_inertia_never_raises_a_compensated_receivers_price_of_anarchy` checks the bound and the monotonicity on
 random games.
 
+## Noise: what breaks truthful reporting is adjustment that is asymmetric about the outcome
+
+**Proposition 17 (symmetric adjustment keeps truthful reporting under noise).** Let the outcome take values on the real
+line, let the receiver move to clip(m(r), x - c, x + c) (a symmetric speed limit c >= 0), and let each next outcome
+receive an independent shock with a symmetric distribution of finite variance (normal, uniform or two-point). With
+squared loss, any discount, any number of influencers and any strategy-proof rule m, truthful reporting is a Markov
+perfect equilibrium of the compensated receiver.
+
+*Proof.* Let s = m(t) and write positions relative to s. Under truthful reports the next outcome is
+s + kappa(x - s) + eps, with kappa(v) = sign(v) max(|v| - c, 0), which is odd and nondecreasing. For influencer i with
+d_i = t_i - s, (y - t_i)^2 = (y - s)^2 - 2 d_i (y - s) + d_i^2, so its truthful value is
+V_i(x) = F(x - s) - 2 d_i H(x - s) + d_i^2 / (1 - g), where F and H are the expected discounted sums of u_k^2 and u_k
+for the process u_{k+1} = kappa(u_k) + eps_{k+1}.
+1. H is odd and nondecreasing: with common shocks a higher start gives a higher path (kappa is nondecreasing), and the
+   process from -v with shocks -eps is the negated process (kappa is odd, eps symmetric).
+2. F is even, convex and nondecreasing in |v|: value iteration maps F_n to F_{n+1}(v) = Psi(kappa(v)) with
+   Psi(w) = E phi(w + eps) and phi(w) = w^2 + g F_n(w). If F_n is even and convex, so is phi; Psi is then convex (an
+   average of convex functions) and even (the shock is symmetric), hence nondecreasing in |w|; and
+   Psi(kappa(v)) = Psi(max(|v| - c, 0)) is again even and convex. The limit F inherits these properties.
+3. A one-round deviation changes the rule's outcome to m' and the next pre-shock outcome to z' = clip(m', x - c, x + c),
+   while truthful reporting gives z = clip(s, x - c, x + c). The one-round objective is an even function of z - s,
+   nondecreasing in |z - s| (from 2), minus 2 d_i times a nondecreasing function of z (from 1). If d_i > 0 the rule is
+   uncompromising, so m' <= s: if z <= s then z' <= z and both parts are nonincreasing on (-infinity, s], so the
+   deviation does not help; if z > s then x - c > s >= m' and z' = x - c = z. The case d_i < 0 is symmetric. If d_i = 0,
+   z is the reachable point closest to s and the objective depends only on |z - s|.
+Every round moves the outcome by at most c plus the shock, so under any strategies |x_k| <= |x_0| + k c + sum_j |eps_j|,
+and the discounted tail of the squared loss vanishes uniformly; that is what the one-shot deviation principle needs
+with an unbounded loss. ∎
+
+Each ingredient matters. For targets 0.15, 0.3 and 0.8, shocks of standard deviation 0.15 and discount 0.9, the
+median influencer's largest one-round gain over outcomes in [0, 1] is, by value iteration with Gauss-Hermite nodes: 0 for symmetric speed limits 0.2 and 0.1 (and below 1e-7 for 0.05 on a fine grid); 0.0005 for
+proportional inertia 0.8 without clipping, where the receiver moves down from y by 0.2 y but up by 0.2 (1 - y), so near
+s = 0.3 overshoots above s are corrected more slowly and the influencer aims slightly low; 0.013 for limits of 0.05 down
+and 0.15 up; and about 0.0015 for proportional inertia with the outcome clipped to [0, 1] (this one needs many
+quadrature nodes, because clipping makes the integrand kinked). What the proof uses is symmetry about s, not about
+each position: proportional inertia keeps truthful reporting when s = 0.5 (targets 0.2, 0.5, 0.8: gain 0), while a
+speed limit that is symmetric at each position but grows with it, c(x) = 0.05 + 0.15 x, breaks it (gain 0.035).
+An independent check found no gain for uniform, Laplace and two-point shocks with symmetric limits, so the shock
+needs to be symmetric but not unimodal. Test
+`test_noise_breaks_truthful_reporting_only_through_asymmetric_adjustment` checks the speed limit and the two asymmetric cases.
+
 ## What the propositions do not cover
 
 - **Interior one-shot actions.** If a player's one-shot action is strictly inside the box, its hold region is the
