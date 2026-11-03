@@ -1,6 +1,6 @@
-"""The results report (eight pages): results at a glance, recent updates, trajectories and graphs, with twelve figures.
-The numbers come from the tables of doggame.dog_game_summary and the figures from doggame.summary_figures (the
-summary's figures and fig11 to fig13); see docs/CODE_GUIDE.md for where each one is computed.
+"""The results report: results at a glance, recent updates, and the five main graphs and trajectories. The numbers
+come from the tables of doggame.dog_game_summary and the figures from doggame.summary_figures (fig8, fig10, fig3,
+fig4 and fig6 of the summary); see docs/CODE_GUIDE.md for where each one is computed.
 
 Run with `python3 -m doggame.results_report [output.pdf]`; it draws the figures first.
 """
@@ -37,12 +37,6 @@ def fig(folder, name, caption, width=FULL):
     return KeepTogether([Image(str(folder / name), width=width, height=width * hgt / w), Spacer(1, 3), Paragraph(caption, cap)])
 
 
-def side(folder, name, width, caption):
-    w, hgt = PILImage.open(folder / name).size
-    t = Table([[Image(str(folder / name), width=width, height=width * hgt / w), Paragraph(caption, cap)]],
-              colWidths=[width + 0.2 * inch, FULL - width - 0.2 * inch])
-    t.setStyle(TableStyle([("VALIGN", (0, 0), (-1, -1), "MIDDLE"), ("LEFTPADDING", (0, 0), (-1, -1), 0)]))
-    return t
 
 
 def bullets(items):
@@ -91,23 +85,23 @@ def nash_q_rows(rows):
 glance = [
     ["Result", "Status", "Figure"],
     ["Inertia reverses the ranking of receivers: averaging is better without inertia, the median receiver in 81 to 88% of "
-     "random games at inertia 0.9", "Numerical, 100 games per point, 3/5/7 influencers", "5"],
-    ["With any inertia the median receiver is no longer strategy-proof; the pivotal influencer exaggerates", "Proved", "2"],
-    ["Averaging behaves exactly like a generalized median with phantoms at k/N, at every inertia", "Proved", "2"],
+     "random games at inertia 0.9", "Numerical, 100 games per point, 3/5/7 influencers", "3"],
+    ["With any inertia the median receiver is no longer strategy-proof; the pivotal influencer exaggerates", "Proved", "1"],
+    ["Averaging behaves exactly like a generalized median with phantoms at k/N, at every inertia", "Proved", "1"],
     ["A slow plain receiver should move toward one order statistic of the targets (median if uniform, higher if skewed)",
-     "Proved to first order; skew check 46 of 60 games", "6, 7"],
+     "Proved to first order; skew check 46 of 60 games", "4"],
     ["<b>Compensating for inertia restores truthful reporting</b> for every strategy-proof rule and every reachable set that "
-     "lets the receiver stay put and moves up with its position; neither condition can be dropped", "Proved (Theorem 1), two counterexamples", "2, 8"],
+     "lets the receiver stay put and moves up with its position; neither condition can be dropped", "Proved (Theorem 1), two counterexamples", "1, 5"],
     ["<b>Exact welfare</b> of every compensated receiver; the planner's path is the compensated path toward the mean target",
-     "Proved (Theorem 2)", "9"],
+     "Proved (Theorem 2)", ""],
     ["<b>The best compensated receiver does not depend on inertia</b>: averaging for uniform targets", "Proved (Theorem 3); grids of 500 to 1,000 games",
-     "6, 8"],
+     "4"],
     ["Closed-form feedback equilibrium of the two-player dog game with inertia, and when holding the one-shot actions is one",
-     "Proved (Props. 1-2); 77 of 77 random games", "10"],
-    ["A moderate inertia (0.45 to 0.75) lowers the total loss when the new information is noisy", "Numerical (planner part proved)", "11"],
+     "Proved (Props. 1-2); 77 of 77 random games", ""],
+    ["A moderate inertia (0.45 to 0.75) lowers the total loss when the new information is noisy", "Numerical (planner part proved)", ""],
     ["Self-play learns the one-shot equilibrium; networks miss the feedback equilibrium, and fitting per-state best responses fixes it",
-     "Numerical, 3 games (5 seeds)", "3, 12"],
-    ["Continuous-move Nash-Q reaches the Nash corners with Cartesian or square moves, never with polar moves", "Numerical, 5 seeds", "4"],
+     "Numerical, 3 games (5 seeds)", ""],
+    ["Continuous-move Nash-Q reaches the Nash corners with Cartesian or square moves, never with polar moves", "Numerical, 5 seeds", "2"],
 ]
 
 updates = [
@@ -155,9 +149,6 @@ def build(out=OUTPUT):
     out = Path(out)
     folder = summary_figures.build(out.parent)
     rows = S.load(S.STUDIES)
-    summary_figures.fig11(folder / "fig11.png")
-    summary_figures.fig12(folder / "fig12.png", rows)
-    summary_figures.fig13(folder / "fig13.png", rows)
     story = [
         Paragraph("The dog game with a persistent receiver: results report", title), Spacer(1, 4),
         Paragraph("Charith Reddy Pareddy &middot; November 2, 2026 &middot; draft", sub), Spacer(1, 8),
@@ -174,19 +165,13 @@ def build(out=OUTPUT):
         Paragraph("Updates since October 31", h),
         bullets(updates),
         Paragraph("Trajectories", h),
-        Paragraph("Figures 1 to 4 show what the players and the receiver actually do, round by round: equilibrium play under "
-                  "different receivers, and the paths learned by policy gradient and by continuous-move Nash-Q.", body),
-        side(folder, "fig1.png", 2.35 * inch, "<b>Fig. 1.</b> Two players in BIG with a persistent dog (inertia 0.8), the dog starting near the "
-             "corner (0.05, 0.05). The players' actions (circles) jump to the edges and corners of the square instead of their targets "
-             "(stars), while the dog drifts round by round to the middle. Grey cross: the mean target, where a planner would put the dog."),
-        fig(folder, "fig8.png", "<b>Fig. 2.</b> Three influencers, same targets and start, inertia 0.9, each coordinate aggregated "
+        Paragraph("Figures 1 and 2 show what the influencers and the receiver actually do, round by round: equilibrium play under "
+                  "different receivers, and the paths learned by continuous-move Nash-Q.", body),
+        fig(folder, "fig8.png", "<b>Fig. 1.</b> Three influencers, same targets and start, inertia 0.9, each coordinate aggregated "
             "separately. Top: BIG's averaging receiver and the median receiver at their equilibria; influencers exaggerate to the edges "
             "(circles); the median receiver is within 0.01 of its end point after 11 rounds, averaging after 27. Bottom: the compensated "
             "averaging receiver with truthful reports (on the targets), after 10 rounds, and the planner, after 7.", width=4.6 * inch),
-        fig(folder, "fig7.png", "<b>Fig. 3.</b> REINFORCE self-play in the walking game: each player starts at its target and moves at most 0.2 "
-            "per step. Before training the players wander; after 300 episodes both walk straight to the one-shot Nash corners, "
-            "exaggerating as BIG predicts, and the dog ends in the middle. All 5 seeds end at the same corners.", width=6.4 * inch),
-        fig(folder, "fig10.png", "<b>Fig. 4.</b> Nash-Q with continuous moves (seed 0): greedy equilibrium paths from the houses (solid) and "
+        fig(folder, "fig10.png", "<b>Fig. 2.</b> Nash-Q with continuous moves (seed 0): greedy equilibrium paths from the houses (solid) and "
             "with each player starting in the other's corner (faint). With Cartesian and square moves both players reach their one-shot "
             "Nash corners, sliding along an edge where a straight line would leave the square; with polar moves the second player barely "
             "moves and the first stops short of its corner."),
@@ -198,10 +183,10 @@ def build(out=OUTPUT):
 
         Paragraph("1. Inertia reverses the ranking of receivers", h),
         Paragraph("Without inertia BIG's averaging receiver has the lower social loss in most games, as known. With a sticky receiver "
-                  "the median receiver wins: it reaches its end point much faster (Fig. 2), and speed matters more than location "
+                  "the median receiver wins: it reaches its end point much faster (Fig. 1), and speed matters more than location "
                   "when the receiver is slow. The median receiver also stops being strategy-proof once &lambda; &gt; 0: it moves only "
                   "part of the way, so the pivotal influencer exaggerates to make up for it.", body),
-        fig(folder, "fig3.png", "<b>Fig. 5.</b> Share of 100 random games (targets uniform on [0, 1]) in which the median receiver has the "
+        fig(folder, "fig3.png", "<b>Fig. 3.</b> Share of 100 random games (targets uniform on [0, 1]) in which the median receiver has the "
             "lower total discounted loss, by inertia. Dashed line: 50%.", width=6.0 * inch),
         table(receiver_rows(rows), [0.85 * inch, 0.6 * inch, 1.4 * inch, 1.75 * inch, 2.4 * inch]),
         Spacer(1, 3),
@@ -212,14 +197,13 @@ def build(out=OUTPUT):
         Paragraph("Every strategy-proof receiver is a median of the reports and N - 1 fixed points (phantoms). Averaging behaves exactly "
                   "like phantoms at 1/N, ..., (N - 1)/N, so one family covers both receivers, and the phantoms decide where the receiver "
                   "settles and how fast. For a slow plain receiver we prove (to first order) that the best one moves toward the order "
-                  "statistic of the targets closest on average to the mean target.", body),
-        fig(folder, "fig4.png", "<b>Fig. 6.</b> Extra loss of phantoms (p, 1 - p) over the best at each inertia, three influencers. Left: plain "
+                  "statistic of the targets closest on average to the mean target: the median for uniform targets, a higher one "
+                  "for strongly skewed targets. With Beta(0.1, 1) targets, seven influencers and inertia 0.99, the 5th-smallest "
+                  "receiver beats the median receiver in 46 of 60 games, by 0.008 on average (s.e. 0.0025), about a third of the "
+                  "first-order prediction.", body),
+        fig(folder, "fig4.png", "<b>Fig. 4.</b> Extra loss of phantoms (p, 1 - p) over the best at each inertia, three influencers. Left: plain "
             "receivers at their equilibria (100 games each); the best p moves from averaging (near 1/3) to the median receiver (p = 0). "
             "Right: compensated receivers with truthful reports (1,000 games each); the best p stays next to averaging at every inertia."),
-        fig(folder, "fig5.png", "<b>Fig. 7.</b> Skewed targets. Left: the first-order criterion for 7 influencers, E[(t<sub>(j)</sub> - mean "
-            "target)<super>2</super>]; it picks the median for uniform targets and the 5th smallest for Beta(0.1, 1). Right: in the full "
-            "dynamic game (inertia 0.99) the 5th-smallest receiver beats the median receiver in 46 of 60 games, by 0.008 on average "
-            "(s.e. 0.0025), about a third of the first-order prediction."),
 
         Paragraph("3. Compensated receivers", h),
         Paragraph("A compensated receiver with rule m and reachable set R(x) = [a(x), b(x)] moves to clip(m(r), a(x), b(x)), the reachable "
@@ -239,12 +223,13 @@ def build(out=OUTPUT):
              "the sign it has without inertia. For uniform targets the unique optimum is &alpha;<sub>k</sub> = k/N, BIG's averaging "
              "receiver, at every inertia, discount and start distribution."]),
         Spacer(1, 6),
-        fig(folder, "fig6.png", "<b>Fig. 8.</b> Mean extra loss over the planner in 100 random games per point: BIG's averaging receiver and "
+        fig(folder, "fig6.png", "<b>Fig. 5.</b> Mean extra loss over the planner in 100 random games per point: BIG's averaging receiver and "
             "the median receiver at their equilibria, and the compensated averaging receiver with truthful reports. Compensation loses "
             "less than both plain receivers at every positive inertia, for 3, 5 and 7 influencers."),
-        fig(folder, "fig9.png", "<b>Fig. 9.</b> Why compensation removes the dependence on inertia (discount 0.9). Left: the reachability "
-            "weight W(u)(1 - &delta;); inertia lowers it most near the edges, which are reached last. Right: extra loss of a compensated "
-            "receiver by its end point, targets 0.15, 0.30, 0.90; averaging ends closer to the mean target, so it loses less at every inertia."),
+        Paragraph("Why the design does not depend on inertia: by Theorem 2 the loss is single-dipped in the end point, with its "
+                  "minimum at the mean target, whatever the inertia. Inertia only changes the weight W(u), which is lowest near the "
+                  "edges because they are reached last. So of two compensated receivers whose end points lie on the same side of the "
+                  "mean target, the closer one loses less at every inertia.", body),
         Paragraph("<b>Random shocks (numerical).</b> If the receiver's position is also hit by shocks (sd 0.15, clipped to [0, 1]), the "
                   "median influencer gains a little by shading its report: 0.0024 at inertia 0.8 against 0.0003 without inertia "
                   "(targets 0.15, 0.30, 0.80); with targets 0.2, 0.5, 0.8 no gain was found.", body),
@@ -257,26 +242,20 @@ def build(out=OUTPUT):
                   "<b>Proposition 2:</b> when the targets straddle d*, the policy in which each player aims the next dog position at "
                   "d* + k(t - d*), as far as its weight allows, is a feedback equilibrium at every inertia and discount. It matches the "
                   "dynamic program to within one grid step and is an equilibrium in 77 of 77 random straddling games. In continuous "
-                  "time the threshold becomes (1 + r)/(2 + r).", body),
-        fig(folder, "fig11.png", "<b>Fig. 10.</b> Left: Proposition 2's equilibrium for house setup 3, x-coordinate (targets 0.7 and 0.6, "
-            "weight 0.7, discount 0.9). Off the equilibrium path the players ease off their edges; its largest one-round deviation gain "
-            "over 21 dog positions is 0, while holding the one-shot actions (red at 1, blue at 0) gives 0.076 at &lambda; = 0.6 and "
-            "0.121 at 0.9. Right: the slack a player needs for holding to be Markov-perfect; patient players tolerate more inertia.",
-            width=6.2 * inch),
+                  "time the threshold becomes (1 + r)/(2 + r). In house setup 3 (x-coordinate, targets 0.7 and 0.6) the policy's "
+                  "largest one-round deviation gain over 21 dog positions is 0, while holding the one-shot actions gives 0.076 at "
+                  "&lambda; = 0.6 and 0.121 at 0.9.", body),
 
         Paragraph("5. Cooling off: some inertia can help", h),
         Paragraph("Without noise, inertia only slows the outcome. If each round's new aggregate is noisy, inertia filters it: for the "
                   "planner and both rules the loss is U-shaped in inertia, lowest at about 0.45 to 0.75 for shocks of 0.1 and 0.2, and "
                   "the best inertia rises with the shock. If instead the shock hits the outcome, the planner wants no inertia (proved "
                   "for the planner; the rest is numerical, 20 draws per point).", body),
-        fig(folder, "fig12.png", "<b>Fig. 11.</b> Mean total loss of the planner, the mean rule and the median rule, three players, shock sd 0.2. "
-            "Circles: the lowest point of each curve. Left: the shock comes with the new aggregate and inertia filters it. Right: the "
-            "shock hits the outcome itself.", width=6.0 * inch),
 
         Paragraph("6. What learning finds", h),
         bullets([
             "<b>Policy gradient finds the one-shot equilibrium.</b> 74 of 75 REINFORCE runs and 25 of 25 PPO runs reached "
-            "exploitability below 0.004 within 1,500 episodes; in the walking game every seed walks to the Nash corners (Fig. 3).",
+            "exploitability below 0.004 within 1,500 episodes; in the walking game every seed walks to the Nash corners.",
             "<b>With a persistent dog it learns the static answer, not the dynamic one.</b> Starting every episode from a random dog "
             "position, A2C and PPO hold the one-shot actions everywhere in 19 of 20 runs, exploitable off the equilibrium path. Exact "
             "(noise-free) gradient play shows why: a table of actions reaches Proposition 2's equilibrium every time, a shared network "
@@ -284,13 +263,8 @@ def build(out=OUTPUT):
             "<b>Fitting per-state best responses fixes the network.</b> Every 25 steps each player's exact best action is computed at "
             "every state and the policy is fitted to it. This brings the largest one-round gain from 0.048 and 0.104 down to at most "
             "0.001 in the dog game (5 of 5 seeds), keeps the duopoly right, and in soccer (with value-iteration targets) cuts the mean "
-            "duality gap from 0.255 to 0.019. For tables it does not help (Fig. 12).",
+            "duality gap from 0.255 to 0.019. For tables it does not help.",
         ]),
-        Spacer(1, 6),
-        fig(folder, "fig13.png", "<b>Fig. 12.</b> Largest one-round deviation gain of the learned policy (soccer: mean duality gap) with plain "
-            "gradient play and with fitting per-state best responses (soccer: stage equilibria with value-iteration values for the "
-            "network). Median of 5 runs for networks, 1 run for tables; a gain of 0.0000 is drawn at 10<super>-5</super>. The fix "
-            "helps networks in every game and is no better for tables.", width=6.2 * inch),
 
         Paragraph("7. The most interesting results, and how new they are", h),
         bullets(interesting),
