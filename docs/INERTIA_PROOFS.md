@@ -597,14 +597,14 @@ is the median receiver (Proposition 8). Proposition 13 also explains the numeric
 
 ## Inertia never raises a compensated receiver's price of anarchy
 
-**Proposition 14 (inertia only helps relative to the planner).** Under the assumptions of Proposition 12, with
-not all targets equal, write L_R for the loss under reachable sets R and L_0 for the receiver without inertia
+**Proposition 14 (inertia only helps relative to the planner).** Under the assumptions of Proposition 12, with l >= 0
+and Lambda(s*) > 0 (for squared loss: not all targets equal), write L_R for the loss under reachable sets R and L_0 for the receiver without inertia
 (R(x) = [0, 1]). For every end point s,
 
   L_R(s) - L_R(s*) <= L_0(s) - L_0(s*) = (Lambda(s) - Lambda(s*)) / (1 - g)   and   L_R(s*) >= L_0(s*) = Lambda(s*) / (1 - g),
 
 so the price of anarchy L_R(s) / L_R(s*) is at most its static value Lambda(s) / Lambda(s*). If the reachable sets
-shrink, R'(x) contained in R(x) for every x, the price of anarchy can only fall. For proportional inertia it is
+shrink, R'(x) contained in R(x) for every x with R' also satisfying (R1) and (R2), the price of anarchy can only fall. For proportional inertia it is
 therefore nonincreasing in the inertia w0, and when the start has a continuous distribution it tends to 1 as w0 -> 1.
 
 *Proof.* W(u) is a discounted count of rounds, so W <= 1 / (1 - g), the value without inertia. The integrand
