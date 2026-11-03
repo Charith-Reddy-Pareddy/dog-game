@@ -570,6 +570,34 @@ inertia changes only how much is lost, not which receiver is best. Without compe
 is the median receiver (Proposition 8). Proposition 13 also explains the numerical design study
 (`mechanisms_compensated_design`): its best grid shapes differ from k/N only within sampling error.
 
+## Inertia never raises a compensated receiver's price of anarchy
+
+**Proposition 14 (inertia only helps relative to the planner).** Under the assumptions of Proposition 12, with
+not all targets equal, write L_R for the loss under reachable sets R and L_0 for the receiver without inertia
+(R(x) = [0, 1]). For every end point s,
+
+  L_R(s) - L_R(s*) <= L_0(s) - L_0(s*) = (Lambda(s) - Lambda(s*)) / (1 - g)   and   L_R(s*) >= L_0(s*) = Lambda(s*) / (1 - g),
+
+so the price of anarchy L_R(s) / L_R(s*) is at most its static value Lambda(s) / Lambda(s*). If the reachable sets
+shrink, R'(x) contained in R(x) for every x, the price of anarchy can only fall. For proportional inertia it is
+therefore nonincreasing in the inertia w0, and when the start has a continuous distribution it tends to 1 as w0 -> 1.
+
+*Proof.* W(u) is a discounted count of rounds, so W <= 1 / (1 - g), the value without inertia. The integrand
+Lambda'(u) W(u) in Proposition 12 has the sign of (u - s*) along the path of integration (Lambda is convex), so the
+excess loss is at most the same integral with W replaced by 1 / (1 - g). The planner's position clip(s*, A_t, B_t)
+is never closer to s* than s* itself, so its loss is at least Lambda(s*) / (1 - g). If R' is contained in R and R
+satisfies (R2), then by induction A'_t >= A_t and B'_t <= B_t (A'_{t+1} = a'(A'_t) >= a(A'_t) >= a(A_t)), so W' <= W
+and the planner's position under R' is never closer to s* than under R: the excess falls and the planner's loss
+rises. Proportional inertia has t-round sets [w0^t x, 1 - w0^t (1 - x)], which shrink as w0 grows. As w0 -> 1 each
+indicator in W(u) tends to 1{x = u}, which has probability 0, so W -> 0 by dominated convergence and the excess
+loss vanishes while the planner's loss stays at least Lambda(s*) / (1 - g). ∎
+
+The plain median receiver's equilibrium follows the compensated median's path (Proposition 4), so the bound holds
+for it too. BIG's plain averaging receiver behaves differently: its mean price of anarchy rises with inertia, from
+1.104 to 1.155 for three influencers (study `mechanisms_wide`). Test
+`test_inertia_never_raises_a_compensated_receivers_price_of_anarchy` checks the bound and the monotonicity on
+random games.
+
 ## What the propositions do not cover
 
 - **Interior one-shot actions.** If a player's one-shot action is strictly inside the box, its hold region is the

@@ -95,6 +95,19 @@ def test_a_compensated_receiver_loses_the_planners_loss_plus_a_weighted_static_c
     assert np.allclose(M.reach_weight(np.linspace(0, 1, 5), 0.0), (1 - 0.9 ** 200) / 0.1)  # no inertia: always reachable
 
 
+def test_inertia_never_raises_a_compensated_receivers_price_of_anarchy():
+    rng = np.random.default_rng(5)
+    shapes = [(1 / 3, 2 / 3), (0.0, 1.0), (0.2, 0.9)]  # averaging, median, an asymmetric rule
+    for houses in rng.random((12, 3)):
+        ends = [np.median(np.r_[houses, s]) for s in shapes]
+        static = np.array([((e - houses) ** 2).sum() for e in ends]) / ((houses - houses.mean()) ** 2).sum()
+        poa = [M.compensated_losses(houses, shapes, w0) / M.social_loss(lambda x: M.planner_step(x, houses, w0), houses)
+               for w0 in (0.0, 0.3, 0.6, 0.9, 0.99)]
+        assert np.allclose(poa[0], static)
+        assert all((later <= earlier + 1e-9).all() for earlier, later in zip(poa, poa[1:]))
+        assert (poa[-1] < 1.05).all()
+
+
 def test_moving_a_phantom_changes_the_loss_at_the_static_rate_times_the_weight():
     rng = np.random.default_rng(3)
     houses, alpha, step = rng.random((200, 3)), np.array([0.22, 0.71]), 1e-4
