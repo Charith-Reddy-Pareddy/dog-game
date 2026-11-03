@@ -532,6 +532,34 @@ So whether a violation of (R2) matters can depend on the loss; Proposition 16 be
 reach can break truthful reporting even under squared loss. Tests `test_a_receiver_that_cannot_stay_put_lets_a_single_influencer_gain` and
 `test_a_dip_in_the_lower_reach_is_harmless_for_squared_loss_but_not_for_every_loss` check the examples.
 
+**Proposition 16 (a partial converse: the reach must not fall).** Let a and b be continuous with (R1), and suppose b is
+not nondecreasing. Let V = {y : b(y) < max_{u <= y} b(u)}, the points whose upward reach is below an earlier peak, and
+(v1, v2) a component of V, so that b(v1) = max_{u <= v1} b(u). If some x0 has a(x0) <= v1 and
+v1 < b(x0) < min(v2, b(v1)), the dip can be entered at full speed while the peak is still reachable; then for every
+discount g in (0, 1) there is a strictly increasing loss under which a single influencer with target 1 gains by
+misreporting at x0. Such an x0 exists, for instance, when b(0) <= v1 < b(v1): by continuity some x0 in [0, v1] has
+b(x0) in that interval, and a(x0) <= x0 <= v1 by (R1). A dip in a is the mirror case (x -> 1 - x, target 0).
+
+*Proof.* Let y = b(x0); v1 is reachable from x0 because a(x0) <= v1 < y. On (v1, y] there is no new peak, so max_{u <= y} b(u) = b(v1) and
+b(y) < b(v1). Truthful reporting with target 1 goes to the top of the reach: y, then b(y). Reporting v1 instead goes
+to v1, then b(v1), where (R1) lets the receiver stay. With theta = 1 - b(v1) and l(d) = eta d + M 1{d > theta}, both
+paths pay M in the first round (1 - y > theta and 1 - v1 > theta), but in the second round only the truthful one does
+(1 - b(y) > theta), and the deviation never pays M again. The deviation's extra first-round cost is eta (y - v1) and
+its later costs are bounded by eta / (1 - g), so for large M it pays. ∎
+
+Example: b(x) = min(1, x + 0.15 - 0.12 tent'(x)) and a(x) = max(0, x - 0.15). b peaks at 0.4 (b = 0.55) and stays below
+that until 0.509. From 0.3 the truthful path toward 1 is 0.45, 0.54; reporting 0.4 gives 0.4, 0.55. With theta = 0.45 and
+discount 0.9 the gain is 0.90. Under squared loss this deviation does not pay (-0.027), but another one does: from 0.35
+the truthful step goes to 0.5, inside the dip, and stopping at 0.4909 instead gains 0.0018 at discount 0.99 (exact
+paths, one-round deviation). So, unlike the dip in the lower reach above, this one breaks truthful reporting even for
+squared loss.
+
+Propositions 15 and 16 say that, for continuous reachable sets, (R1) and (R2) are needed when truthful reporting must
+hold for every increasing loss, except in edge cases: receivers forced in one direction from the edge of [0, 1] (Example 1
+covers one such case directly), and dips that cannot be entered at full speed while the peak is reachable (for instance
+when b(v1) = v1). Whether those edge cases can also break truthfulness is open. Test `test_a_falling_upper_reach_lets_a_single_influencer_gain` checks
+the example.
+
 **Compensate the outcome, not the phantoms.** Proposition 11 clips the rule's outcome into one reachable interval.
 Slowing each phantom down on its own is not enough, even when each phantom moves monotonically toward a fixed point.
 Example: two influencers with targets 0.5 and 1, discount 0.9, squared loss, and the rule

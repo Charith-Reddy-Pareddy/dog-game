@@ -122,6 +122,28 @@ def test_a_dip_in_the_lower_reach_is_harmless_for_squared_loss_but_not_for_every
     assert _single_influencer_gain(low, high, 0.025, 0.99, threshold) > 0.9
 
 
+def test_a_falling_upper_reach_lets_a_single_influencer_gain():
+    high = lambda x: min(1.0, x + 0.15 - 0.12 * max(0.0, 1 - abs(x - 0.5) / 0.1))  # peaks at 0.4, dips until 0.509
+    loss = lambda d: 0.001 * d + (d > 1 - high(0.4) + 1e-12)  # threshold at the peak's reach, 0.45 from target 1
+
+    def total(first):  # target 1: after the first round, move to the top of the reach every round
+        path = [first]
+        for _ in range(200):
+            path.append(high(path[-1]))
+        return sum(0.9 ** k * loss(1 - z) for k, z in enumerate(path))
+
+    assert np.isclose(high(0.3), 0.45) and high(0.45) < high(0.4)
+    assert total(0.45) - total(0.4) > 0.89  # truthful jumps to 0.45; stopping at the peak 0.4 reaches higher next round
+
+    def squared(first, rounds=3000):  # the same, under squared loss with discount 0.99
+        path = [first]
+        for _ in range(rounds):
+            path.append(high(path[-1]))
+        return sum(0.99 ** k * (1 - z) ** 2 for k, z in enumerate(path))
+
+    assert squared(high(0.35)) - squared(0.4909) > 0.0015  # stopping short of the dip pays even under squared loss
+
+
 def test_slowing_each_phantom_separately_does_not_keep_reporting_truthful():
     step = lambda x, reports: np.median([*reports, 0.0, min(1.0, x + 0.3), 1.0])  # middle phantom drifts up at speed 0.3
 
