@@ -81,6 +81,47 @@ def test_the_batched_compensated_losses_match_the_social_loss():
         assert np.allclose(M.compensated_losses(HOUSES, shapes, w0), each)
 
 
+def _single_influencer_gain(low, high, target, discount, loss, grid=401, sweeps=6000):
+    """Largest gain of one influencer over truthful reporting when the receiver can reach [low(x), high(x)]."""
+    x = np.linspace(0, 1, grid)
+    reach = (x >= low(x)[:, None] - 1e-12) & (x <= high(x)[:, None] + 1e-12)
+    stage, best = loss(np.abs(x - target)), np.zeros(grid)
+    for _ in range(sweeps):
+        new = np.where(reach, stage + discount * best, np.inf).min(1)
+        if np.allclose(new, best, rtol=0, atol=1e-13):
+            break
+        best = new
+    nxt = np.abs(x - np.clip(target, low(x), high(x))[:, None]).argmin(1)  # truthful: as close to the target as it can
+    truthful = np.zeros(grid)
+    for _ in range(sweeps):
+        new = stage[nxt] + discount * truthful[nxt]
+        if np.allclose(new, truthful, rtol=0, atol=1e-13):
+            break
+        truthful = new
+    return (truthful - best).max()
+
+
+def test_a_receiver_that_cannot_stay_put_lets_a_single_influencer_gain():
+    low = lambda x: np.maximum(0, x + 0.2 * np.clip(1 - np.abs(x - 0.5) / 0.2, 0, 1) - 0.15)  # forced up on (0.45, 0.55)
+    path, x = [], 0.45
+    for _ in range(6):
+        x = float(np.clip(0.47, low(x), min(1.0, x + 0.3)))
+        path.append(round(x, 4))
+    assert path == [0.47, 0.49, 0.53, 0.55, 0.55, 0.55]
+    truthful = sum(0.9 ** k * (z - 0.47) ** 2 for k, z in enumerate(path + [0.55] * 200))
+    assert truthful - 0.02 ** 2 / 0.1 > 0.045  # staying at 0.45 forever
+
+
+def test_a_dip_in_the_lower_reach_is_harmless_for_squared_loss_but_not_for_every_loss():
+    low = lambda x: np.maximum(0, x - 0.15 - 0.12 * np.clip(1 - np.abs(x - 0.5) / 0.1, 0, 1))
+    high = lambda x: np.minimum(1, x + 0.15)
+    for target in (0.0, 0.025, 0.3, 0.6, 1.0):
+        for discount in (0.5, 0.9, 0.99):
+            assert _single_influencer_gain(low, high, target, discount, lambda d: d ** 2) < 1e-12
+    threshold = lambda d: 0.001 * d + (d > 0.221)
+    assert _single_influencer_gain(low, high, 0.025, 0.99, threshold) > 0.9
+
+
 def test_slowing_each_phantom_separately_does_not_keep_reporting_truthful():
     step = lambda x, reports: np.median([*reports, 0.0, min(1.0, x + 0.3), 1.0])  # middle phantom drifts up at speed 0.3
 

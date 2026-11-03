@@ -500,6 +500,38 @@ strategy-proof), the loss is squared and the discount is 0.9.
   reporting moves to 0.6 and is stuck there (loss 0.16 per round, 1.6 in total); reporting 0.4 first loses 0.36
   once and then reaches 1 for good, a gain of 1.24.
 
+**Proposition 15 (a partial converse: staying put is needed).** Let a and b be continuous, and suppose (R1) fails
+because a(x0) > x0 at some x0 (the receiver cannot stay at x0). Let p = sup{x <= x0 : a(x) <= x} and suppose it
+exists and b(p) > p. Then for every discount g in (0, 1) there are a target and a strictly increasing loss under which
+a single influencer (the dictator rule, which is strategy-proof) gains by misreporting at the outcome p. The case
+b(x0) < x0 is symmetric.
+
+*Proof.* Let q = inf{x >= x0 : a(x) <= x}; it exists because a(1) <= 1, and a(x) > x on (p, q) while a(p) = p by
+continuity. Take a target t in (p, min(b(p), (p + q)/2)) and theta with t - p <= theta < q - t. From p the truthful
+outcome is clip(t, a(p), b(p)) = t. From any y in [t, q) the truthful next outcome is a(y) > y, because a(y) > y >= t.
+So the truthful path increases while it is in [t, q), and it cannot stay in [t, t + theta] forever: it would converge
+to some L in (p, q) with a(L) = L. Hence at some round K, which depends only on a, t and theta, it is farther than theta
+from t. Reporting p every round instead keeps the outcome at p, within theta of t. Under the loss
+l(d) = eta d + M 1{d > theta}, truthful reporting costs at least g^K M and staying at p at most eta (t - p) / (1 - g),
+so for M > eta / (g^K (1 - g)) misreporting pays. Because the deviation keeps the outcome at p, deviating for j rounds
+gains (1 + g + ... + g^(j-1)) times the gain from deviating once at p, so the one-round deviation at p already pays. ∎
+
+Example: a(x) = max(0, x + 0.2 tent(x) - 0.15), with tent(x) = max(0, 1 - |x - 0.5| / 0.2), and b(x) = min(1, x + 0.3).
+a is nondecreasing, so (R2) holds, and the receiver is forced up exactly on (0.45, 0.55). With target 0.47 the
+truthful path from 0.45 is 0.47, 0.49, 0.53, 0.55, 0.55, ...: it is pushed up and cannot come back. Staying at 0.45
+gains 0.046 under squared loss (discount 0.9) as well. Proposition 15 does not cover receivers that are forced up from
+0, such as Example 1, which shows the failure directly.
+
+**A dip in the lower reach can be harmless for squared loss, but not for every loss.** Let the lower end dip:
+a(x) = max(0, x - 0.15 - 0.12 tent'(x)) with tent'(x) = max(0, 1 - |x - 0.5| / 0.1), b(x) = min(1, x + 0.15). (R1)
+holds and (R2) fails on (0.4, 0.5). With squared loss truthful reporting is still optimal for a single influencer, by
+dynamic programming on a 401-point grid, for 41 targets and discounts 0.5 to 0.99. Under a near-threshold loss it is
+not: with target 0.025, discount 0.99 and l(d) = 0.001 d + 1{d > 0.221}, from 0.585 the truthful path goes 0.417,
+0.2466, ..., while stopping at 0.425 reaches 0.245, inside the threshold, one round sooner: a gain of about 0.99.
+So whether a violation of (R2) matters can depend on the loss; Proposition 16 below shows that a dip in the upper
+reach can break truthful reporting even under squared loss. Tests `test_a_receiver_that_cannot_stay_put_lets_a_single_influencer_gain` and
+`test_a_dip_in_the_lower_reach_is_harmless_for_squared_loss_but_not_for_every_loss` check the examples.
+
 **Compensate the outcome, not the phantoms.** Proposition 11 clips the rule's outcome into one reachable interval.
 Slowing each phantom down on its own is not enough, even when each phantom moves monotonically toward a fixed point.
 Example: two influencers with targets 0.5 and 1, discount 0.9, squared loss, and the rule
