@@ -206,6 +206,69 @@ players (test `test_a_pivot_puts_the_dog_exactly_on_the_one_shot_outcome`); that
 random games with five players at w0 = 0.9 the target form was not an equilibrium (largest gain 0.005). From the
 band of positions of width (1 - w0) w_p / w0 around d* the dog lands on d* in one round.
 
+## Whether the receiver arrives: an influencer or a phantom
+
+The exact arrival in Proposition 18 is a case of a statement about every plain generalized median receiver. Let N
+players aim at targets t_i in [0, 1], let alpha_1, ..., alpha_(N-1) in [0, 1] be phantoms, let w0 be in (0, 1), and let
+F(x) be the next outcome (`next_phantom`),
+
+    F(x) = w0 x + (1 - w0) med(clip((t_i - w0 x) / (1 - w0), 0, 1), alpha_k).
+
+With equal weights and alpha_k = k/N this is the averaging receiver (Proposition 7); with phantoms at the edges and
+N odd it is the median receiver. Let m = med(t_i, alpha_k), the static generalized median of the targets and phantoms.
+
+**Proposition 19 (a receiver arrives exactly when an influencer decides).**
+
+(a) F is nondecreasing and a contraction with modulus w0. Its unique fixed point is m, so
+|F^n(x) - m| <= w0^n |x - m| from every x.
+
+(b) If 0 < m < 1 and m is a target but not a phantom, then F = m on an interval around m. From every x the outcome
+reaches m exactly after finitely many rounds and stays there.
+
+(c) If m is a phantom but not a target, or if m is 0 or 1, then F(x) - m = w0 (x - m) near m, and from every x != m the
+outcome never reaches m.
+
+**Proof.** Let R(x) = [w0 x, w0 x + 1 - w0], c_i(x) = clip(t_i, R(x)) and p_k(x) = w0 x + (1 - w0) alpha_k. The map
+y -> w0 x + (1 - w0) y is increasing, so it commutes with the median and takes clip((t_i - w0 x) / (1 - w0), 0, 1) to
+c_i(x). Hence F(x) = med(c_i(x), p_k(x)).
+
+(a) Each c_i and p_k is built from constants and functions of slope w0 by max and min, and so is an order statistic of
+them. So F is nondecreasing with Lipschitz constant w0, and it maps [0, 1] into itself. For the fixed point: m is in
+[0, 1], so m is in R(m). Clipping t_i to an interval that contains m keeps it on its side of m, and it stays equal to m
+only if t_i = m; and p_k(m) - m = (1 - w0)(alpha_k - m). So the 2N - 1 numbers c_i(m), p_k(m) have as many points
+below, at and above m as the t_i and alpha_k have, and their median is m. Banach's theorem gives the rest.
+
+(b), (c) Let B be the set of the 2N - 1 functions that equal m at x = m. The others are not m at x = m, so they stay on
+their side of m near m, and the median at m lies in B; so near m, F(x) is the value of a function in B.
+
+In (b), m is strictly inside R(m), because 0 < m < 1. So near m every target in B stays at m, and B contains no phantom:
+F(x) = m on an interval I around m. By (a) the path enters I after finitely many rounds and lands on m in the next one.
+
+In (c), every function in B equals p(x) = w0 x + (1 - w0) m near m. For a phantom at m this is its definition. If
+m = 0 (or 1), a target at m is clipped to the end of R(x) nearest it, which is w0 x (or w0 x + 1 - w0), and that is p(x).
+So F(x) - m = w0 (x - m) near m. If F(x) = m for some x != m, then F, which is nondecreasing and fixes m, would equal m
+on the whole segment between x and m, a contradiction. So the path never reaches m. ∎
+
+Near the rest point F has slope 0 in (b) and w0 in (c). The reason is that a phantom is fixed, while an influencer's
+report (t_i - w0 x) / (1 - w0) is recomputed every round to make up for the inertia, so a pivotal influencer cancels it.
+
+For the receivers of this project, in target form:
+
+- *Averaging.* The rest point is a target exactly when the game has a pivot. So the outcome arrives exactly with a pivot
+  (Proposition 18(a) adds the number of rounds) and otherwise approaches the rest point k/N at rate w0, as in
+  Propositions 1 and 2 for two players.
+- *Median.* The phantoms are at the edges, so m is the median target, and the outcome arrives unless m is 0 or 1.
+- *Compensated receivers* do not have this split. They clip the aggregate as a whole, F(x) = clip(m, R(x)), so for
+  0 < m < 1 they arrive whether m is a target or a phantom: after ceil(log((1 - x) / (1 - m)) / log(1 / w0)) rounds
+  from x < m and ceil(log(x / m) / log(1 / w0)) rounds from x > m. The compensation does for a phantom what a pivot
+  does for itself.
+
+The proposition is about paths, for any targets. Whether the targets form an equilibrium is a separate question
+(Proposition 18(b) and `target_equilibrium`). It does not cover an interior m that is both a target and a phantom, or
+unequal weights. In the continuous-time limit of the next section, log(1 / w0) is about dt, so the rounds of
+Proposition 18 times dt tend to ln((U - x) / (U - d*)): arrival in finite time, where a phantom gives only an
+exponential approach. The mathematics is elementary; what the proposition adds is which receivers arrive, and why.
+
 ## Continuous-time limit
 
 With time step dt, w0 = 1 - dt and g = exp(-r dt), 1 - g w0 = (r + 1) dt + O(dt^2) and

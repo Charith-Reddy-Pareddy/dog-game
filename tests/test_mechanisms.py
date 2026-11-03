@@ -417,3 +417,29 @@ def test_a_pivot_puts_the_dog_exactly_on_the_one_shot_outcome():
         for _ in range(80):
             x = M.step("mean", x, targets, w, w0)
         assert np.abs(x - rest).max() < 1e-12
+
+
+def test_the_receiver_arrives_exactly_when_a_target_decides_and_not_when_a_phantom_does():
+    w0 = 0.8
+    next_x = lambda x, targets, phantoms: M.next_phantom(np.atleast_1d(x), np.array(targets), phantoms, w0)
+    x = np.array([0.0, 0.2, 1.0])
+    for _ in range(40):
+        x = next_x(x, [0.2, 0.5, 0.9], (1 / 3, 2 / 3))  # the rest point is a target
+    assert np.abs(x - 0.5).max() < 1e-15
+    x = np.array([0.0, 1.0])
+    for _ in range(40):
+        x = next_x(x, [0.1, 0.2, 0.9], (1 / 3, 2 / 3))  # the rest point is a phantom
+    gap = x - 1 / 3
+    assert (gap != 0).all() and np.allclose(next_x(x, [0.1, 0.2, 0.9], (1 / 3, 2 / 3)) - 1 / 3, w0 * gap, rtol=1e-9, atol=0)
+    assert np.isclose(next_x(0.01, [0.0, 0.0, 0.9], (0.0, 0.5))[0], w0 * 0.01)  # a target on the edge moves like a phantom
+    rng = np.random.default_rng(3)
+    for _ in range(300):
+        n, w = int(rng.integers(2, 8)), rng.uniform(0.05, 0.95)
+        targets, phantoms = rng.random(n), tuple(np.sort(rng.random(n - 1)))
+        move = lambda x: M.next_phantom(np.atleast_1d(x), targets, phantoms, w)
+        m = float(np.median([*targets, *phantoms]))
+        grid, step = np.linspace(0, 1, 201), 1e-9
+        moved = np.diff(move(grid))
+        assert abs(move(m)[0] - m) < 1e-13 and moved.min() > -1e-12 and moved.max() <= w * grid[1] + 1e-12
+        slope = (move(m + step)[0] - move(m - step)[0]) / (2 * step)
+        assert abs(slope - (0.0 if m in targets else w)) < 1e-5

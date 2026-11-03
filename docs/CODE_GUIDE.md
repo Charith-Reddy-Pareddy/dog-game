@@ -17,11 +17,11 @@ files. The receiver (mechanism) results need only a small part of that:
 | `doggame/dog_game_studies.py` | Only the `study_mechanisms*` functions run the experiments | about 250 lines |
 | `doggame/dog_game_summary.py` | Only the `mechanisms*_table` functions turn saved runs into the numbers in the docs | about 250 lines |
 | `results/dog_game_studies.jsonl` | The saved runs, one JSON row per run | data |
-| `tests/test_mechanisms.py` | 32 tests of the claims below | |
+| `tests/test_mechanisms.py` | 33 tests of the claims below | |
 | `doggame/summary_figures.py` | The nine figures of the key-results summary PDF (`fig8`, `fig9` and `fig10` are its Figs. 2, 7 and 9), `fig11` and `fig12` (the dynamic game for averaging and median: the dog's vector field with paths and reports, and each influencer's response field), and `paper()`, which writes four of them as vector PDFs | one function per figure |
 | `doggame/summary_pdf.py` | The key-results summary PDF itself: text, figures, captions | |
 | `doggame/results_report.py` | The eight-page results report: results at a glance, recent updates, and the seven main graphs and trajectories (`fig8`, `fig10`, `fig3`, `fig4`, `fig6`, and `fig11`, `fig12` of the dynamic game) | |
-| `docs/INERTIA_PROOFS.md` | The proofs (Propositions 1 to 5 and 7 to 18) | |
+| `docs/INERTIA_PROOFS.md` | The proofs (Propositions 1 to 5 and 7 to 19) | |
 
 The policy-gradient results use a second, separate set: `env.py` (the game), `agents.py` and `networks.py`
 (the policies), `train.py` and `train_ac.py` (REINFORCE, A2C, PPO), `verify.py` (exploitability),
@@ -138,6 +138,7 @@ All in `doggame/mechanisms.py` unless named otherwise.
 | Median receiver better at high inertia (Fig. 3) | numerical | `mechanisms_wide` | `mechanisms_wide_table` | none for the ranking; `test_the_target_form_is_an_equilibrium_under_both_rules_and_the_planner_loses_least` checks the equilibria being compared |
 | Median receiver not strategy-proof with inertia | Prop. 3 | `mechanisms` (`truthful_gain`) | `mechanisms_table` | `test_truthful_median_reporting_survives_without_inertia_but_not_with_it` |
 | With a pivot the averaging receiver lands exactly on the one-shot outcome in finitely many rounds (closed form); an equilibrium when every edge player is far enough from the pivot | Prop. 18 (target form without the condition: numerical) | | | `test_a_pivot_puts_the_dog_exactly_on_the_one_shot_outcome` |
+| A plain receiver reaches its rest point exactly when a target decides it; a phantom gives only a geometric approach | Prop. 19 | | | `test_the_receiver_arrives_exactly_when_a_target_decides_and_not_when_a_phantom_does` |
 | Averaging = generalized median with phantoms k/N | Prop. 7 | | | `test_the_mean_rule_is_the_generalized_median_with_evenly_spread_phantoms_and_the_median_rule_with_edge_phantoms` |
 | Best phantoms move toward the edges (Fig. 4 left) | numerical | `mechanisms_phantoms` | `mechanisms_phantoms_table` | `test_without_inertia_the_three_player_loss_of_phantoms_p_and_1_minus_p_matches_the_closed_form` |
 | Slow receiver: the order statistic nearest the mean target | Prop. 8 (first order) | `mechanisms_limit`, `mechanisms_skewed_seven` | `mechanisms_limit_table`, `mechanisms_skewed_table` | `test_the_high_inertia_coefficients_match_simulation_and_pick_the_median_receiver`, `test_the_best_slow_receiver_is_the_order_statistic_closest_to_the_mean_target` |

@@ -124,6 +124,20 @@ and main claim were confirmed from the publisher's page or abstract, not that th
   undirected graphs. *Ours:* a price of anarchy for aggregation with inertia, with a planner that is
   limited by the same inertia. Verified (abstract).
 
+- **Mei, Hendrickx, Chen, Bullo and Dörfler (2022)**, [Convergence, consensus and dissensus in the weighted-median
+  opinion dynamics](https://arxiv.org/abs/2212.08808). Agents move to a weighted median of their neighbours' opinions;
+  convergence in finite time, almost surely. *Ours:* agents there are not strategic, and the finite-time result is about
+  a rule without our split. Abstract read; the update rule and proofs were not checked.
+- **Cheng and Mei (2026)**, [Equilibria and consensus in discrete-time opinion dynamics with mixed weighted-averaging
+  and weighted-median mechanisms](https://arxiv.org/html/2610.16406v1). The closest update rule to ours: each agent
+  keeps part of its opinion and moves the rest toward a weighted average or median. Convergence is shown only
+  asymptotically, with no finite-time statement in the part read. *Ours:* Proposition 19 says when arrival is exact and
+  why, for influencers who report strategically. Read through a summary of the first 100,000 of 158,836 characters.
+- A search for a median-based opinion or voting model with strategic reports and a persistent state found none, and
+  none with the target-against-phantom split of Proposition 19. The mathematics of that proposition is elementary (a
+  contraction with slope 0 or w0 at its fixed point), so it may well appear in another form. Searches were general web
+  searches, not a systematic review.
+
 ## Smoothing and caution
 
 - **Brainard (1967)**, Uncertainty and the effectiveness of policy, *American Economic Review* 57(2),
