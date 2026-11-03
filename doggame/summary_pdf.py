@@ -71,10 +71,11 @@ points = [
     "condition can be dropped. With truthful reports the compensated averaging receiver loses less on average than both "
     "plain receivers at every positive inertia, for 3, 5 and 7 influencers (Fig. 6); in the example of Fig. 2 it also "
     "settles sooner than either.",
-    "<b>With compensation the best receiver no longer depends on inertia.</b> We prove this exactly, at every inertia: a "
+    "<b>With compensation and evenly spread targets the best receiver no longer depends on inertia.</b> We prove this "
+    "exactly, at every inertia: a "
     "compensated receiver's loss is the planner's loss plus a weighted version of the no-inertia criterion, where the weight "
-    "of a point is the discounted time during which the receiver can still reach it (Fig. 7). So the best fixed points are "
-    "those without inertia: for evenly spread targets exactly BIG's averaging receiver, where without compensation a slow "
+    "of a point is the discounted time during which the receiver can still reach it (Fig. 7). So for evenly spread targets "
+    "the best fixed points are those without inertia, exactly BIG's averaging receiver, where without compensation a slow "
     "receiver should be the median receiver. On fine grids of fixed points (1,000 random "
     "games for 3 influencers, 500 for 5 and 7) the best compensated receiver is the same at every inertia from 0 to 0.995 "
     "and within sampling error of averaging, while the median receiver stays clearly worse (Fig. 4, right).",

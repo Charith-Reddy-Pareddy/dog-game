@@ -108,6 +108,21 @@ def test_inertia_never_raises_a_compensated_receivers_price_of_anarchy():
         assert (poa[-1] < 1.05).all()
 
 
+def test_with_clustered_targets_inertia_can_move_the_best_compensated_phantom():
+    lo, weights, m = np.array([0.0, 0.48, 0.96]), np.array([0.455, 0.1, 0.445]), 30  # targets in three clusters of width 0.04
+    pts = (lo[:, None] + 0.04 * (np.arange(m) + 0.5) / m).ravel()
+    t1, t2 = np.meshgrid(pts, pts, indexing="ij")
+    p = np.outer(np.repeat(weights / m, m), np.repeat(weights / m, m))
+
+    def loss(alpha, w0, rounds=200):  # two influencers, one phantom, start at 1: after k rounds the receiver is at max(s, w0^k)
+        s = np.clip(alpha, np.minimum(t1, t2), np.maximum(t1, t2))
+        x = np.maximum(s, w0 ** np.arange(1, rounds + 1)[:, None, None])
+        return (0.9 ** np.arange(rounds)[:, None, None] * p * ((x - t1) ** 2 + (x - t2) ** 2)).sum()
+
+    assert loss(0.5432, 0.0) - loss(0.456, 0.0) > 5e-4  # without inertia the lower local minimum is best
+    assert loss(0.5432, 0.97) - loss(0.456, 0.97) < -1e-4  # with inertia 0.97 the upper one is
+
+
 def test_moving_a_phantom_changes_the_loss_at_the_static_rate_times_the_weight():
     rng = np.random.default_rng(3)
     houses, alpha, step = rng.random((200, 3)), np.array([0.22, 0.71]), 1e-4

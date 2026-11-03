@@ -536,28 +536,42 @@ formula against simulated losses (to quadrature error, about 1e-6 relative) at i
 
 ## Choosing the receiver: persistence does not move the optimum
 
-**Proposition 13 (the optimal compensated receiver does not depend on inertia).** Let the targets be independent
+**Proposition 13 (inertia keeps the sign pattern of the design criterion).** Let the targets be independent
 with a continuous distribution F, the loss squared, and the phantoms ordered, alpha_1 < ... < alpha_{N-1}. Under the
-assumptions of Proposition 12, with W > 0 on (0, 1),
+assumptions of Proposition 12, with W > 0 on (0, 1), for almost every alpha_k (every alpha_k at which W is continuous)
 
-  dL/d alpha_k = 2N W(alpha_k) E[(alpha_k - hbar) 1{exactly N - k targets lie below alpha_k}].
+  dL/d alpha_k = 2N W(alpha_k) g_k(alpha_k),   g_k(a) = E[(a - hbar) 1{exactly N - k targets lie below a}].
 
-The expectation depends on alpha_k alone, so L is a sum of one function of each phantom plus a constant, and each
-derivative has the sign it has without inertia. Hence the welfare-best ordered phantoms are the same for every
-reachable-set receiver, discount and start distribution, including no inertia: each alpha_k minimizes the
-static criterion on its own. For uniform targets,
+g_k depends on alpha_k alone, so L is a sum of one function of each phantom plus a constant, and each term rises
+and falls on the same intervals as without inertia (W > 0 only rescales the slope). Hence:
+1. If g_k changes sign once, from negative to positive, its zero is the unique minimizer of the k-th term at every
+   inertia, discount and start distribution. When this holds for every k (and the zeros are ordered), the
+   welfare-best phantoms are the static ones, whatever the reachable sets. For uniform targets,
 
   dL/d alpha_k = N W(alpha_k) C(N, k) alpha_k^(N-k) (1 - alpha_k)^k (alpha_k - k/N),
 
 so the unique optimum is alpha_k = k/N, BIG's averaging receiver, at every inertia.
+2. If g_k changes sign several times, the local minimizers of the k-th term are the same at every inertia, but which
+   of them is the global minimum depends on W, so inertia and the start distribution can move the optimum.
+   Example: N = 2 (one phantom), targets drawn from 0.455 U[0, 0.04] + 0.1 U[0.48, 0.52] + 0.445 U[0.96, 1], discount
+   0.9, start at 1. The two local minima are near 0.456 and 0.543. Without inertia L(0.5432) - L(0.456) = +7.6e-4,
+   so the best phantom is near 0.456; with proportional inertia 0.97 the difference is -2.1e-4, so the best phantom
+   is near 0.543. The weight W(u) for this start falls toward the bottom of [0, 1], which is reached late, and that
+   tips the balance between the two local minima.
 
 *Proof.* With ordered phantoms, alpha_k is the median of the 2N - 1 points exactly when N - 1 points lie below it,
 k - 1 of them phantoms, so exactly N - k targets. On that event moving alpha_k moves s one for one; otherwise s does
 not move. By Proposition 12, L depends on alpha only through s, and dL/ds = 2N (s - hbar) W(s); on the event s =
 alpha_k, so dL/d alpha_k is as stated (differentiation under E is justified because s is Lipschitz in alpha). For
 uniform targets, with j = N - k targets below a, the targets below have mean a / 2 and those above (1 + a) / 2, so
-E[(a - hbar) 1{j below}] = C(N, j) a^j (1 - a)^(N-j) (a - (j a / 2 + k (1 + a) / 2) / N) = C(N, k) a^(N-k) (1 - a)^k (a - k/N) / 2.
-∎
+E[(a - hbar) 1{j below}] = C(N, j) a^j (1 - a)^(N-j) (a - (j a / 2 + k (1 + a) / 2) / N) = C(N, k) a^(N-k) (1 - a)^k (a - k/N) / 2,
+which changes sign once, at k/N. L is Lipschitz in each alpha_k, so it is the integral of this almost-everywhere
+derivative: a term is decreasing where g_k < 0 and increasing where g_k > 0, whatever W > 0 is. That gives 1 and the
+first half of 2; the example is computed directly from the compensated paths (test
+`test_with_clustered_targets_inertia_can_move_the_best_compensated_phantom`). ∎
+
+An earlier version of this proposition claimed part 1 for every target distribution; the example above, found in
+an independent check of the proofs, shows that it needs the single sign change.
 
 Tests `test_moving_a_phantom_changes_the_loss_at_the_static_rate_times_the_weight` (finite differences of the
 simulated loss, to 0.1%, at inertia 0, 0.6 and 0.9) and
@@ -565,8 +579,9 @@ simulated loss, to 0.1%, at inertia 0, 0.6 and 0.9) and
 The separability needs ordered, distinct phantoms; when the minimizers of the separate terms are not ordered the
 ordering constraint binds, which uniform targets never meet.
 
-So with compensation the reversal disappears completely: the averaging receiver is optimal at every inertia, and
-inertia changes only how much is lost, not which receiver is best. Without compensation the slow-receiver optimum
+So for uniform targets compensation removes the reversal completely: the averaging receiver is optimal at every
+inertia, and inertia changes only how much is lost, not which receiver is best. With clustered targets inertia can
+still switch between the static local optima (part 2), but never create a new one. Without compensation the slow-receiver optimum
 is the median receiver (Proposition 8). Proposition 13 also explains the numerical design study
 (`mechanisms_compensated_design`): its best grid shapes differ from k/N only within sampling error.
 

@@ -94,7 +94,7 @@ glance = [
      "lets the receiver stay put and moves up with its position; neither condition can be dropped", "Proved (Theorem 1), two counterexamples", "1, 5"],
     ["<b>Exact welfare</b> of every compensated receiver; the planner's path is the compensated path toward the mean target",
      "Proved (Theorem 2)", ""],
-    ["<b>The best compensated receiver does not depend on inertia</b>: averaging for uniform targets", "Proved (Theorem 3); grids of 500 to 1,000 games",
+    ["<b>For uniform targets the best compensated receiver does not depend on inertia</b>: averaging. With clustered targets inertia can switch between static local optima", "Proved (Theorem 3); grids of 500 to 1,000 games",
      "4"],
     ["Closed-form feedback equilibrium of the two-player dog game with inertia, and when holding the one-shot actions is one",
      "Proved (Props. 1-2); 77 of 77 random games", ""],
@@ -123,7 +123,8 @@ updates = [
 interesting = [
     "<b>Compensation separates incentives from dynamics.</b> Theorems 1 to 3 together say that a receiver which moves as close to "
     "the strategy-proof outcome as it can (rather than a fixed fraction of the way) keeps everyone truthful, has a closed-form "
-    "welfare, and is designed exactly as if there were no inertia. Without compensation all three fail: the best slow receiver "
+    "welfare, and for evenly spread targets is designed exactly as if there were no inertia. Without compensation all three "
+    "fail: the best slow receiver "
     "changes from averaging to the median receiver. The one-round step is a known static fact (a generalized median clipped to "
     "an interval is strategy-proof); the dynamic versions are new as far as our literature check went.",
     "<b>Speed against location.</b> The reversal is not about where receivers end up, which inertia does not change, but about how "
@@ -226,7 +227,7 @@ def build(out=OUTPUT):
         fig(folder, "fig6.png", "<b>Fig. 5.</b> Mean extra loss over the planner in 100 random games per point: BIG's averaging receiver and "
             "the median receiver at their equilibria, and the compensated averaging receiver with truthful reports. Compensation loses "
             "less than both plain receivers at every positive inertia, for 3, 5 and 7 influencers."),
-        Paragraph("Why the design does not depend on inertia: by Theorem 2 the loss is single-dipped in the end point, with its "
+        Paragraph("Why, for uniform targets, the design does not depend on inertia: by Theorem 2 the loss is single-dipped in the end point, with its "
                   "minimum at the mean target, whatever the inertia. Inertia only changes the weight W(u), which is lowest near the "
                   "edges because they are reached last. So of two compensated receivers whose end points lie on the same side of the "
                   "mean target, the closer one loses less at every inertia.", body),
