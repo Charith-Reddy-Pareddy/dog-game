@@ -3,6 +3,7 @@ is the summary's Fig. 2, fig9.png its Fig. 7 and fig10.png its Fig. 9), and two 
 for the paper: fig8 (paths of the plain and compensated receivers) and fig9 (the welfare weight of Proposition 12).
 fig11 and fig12 show the dynamic game for the averaging and the median receiver: where the dog moves next from every
 position with paths and reports (fig11), and each influencer's equilibrium response at every position (fig12).
+They are not part of the summary; draw them with fig11(path) and fig12(path).
 
 Figures 1 and 2 solve small games directly (doggame.mechanisms); the others read the saved runs:
 Fig. 3 study mechanisms_wide, Fig. 4 mechanisms_phantoms and mechanisms_compensated_design, Fig. 5
@@ -431,8 +432,6 @@ def build(out=OUTPUT, results=S.STUDIES):
     fig7(out / "fig7.png")
     fig9(out / "fig9.png")
     fig10(out / "fig10.png", rows)
-    fig11(out / "fig11.png")
-    fig12(out / "fig12.png")
     return out
 
 
