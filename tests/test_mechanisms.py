@@ -81,6 +81,20 @@ def test_the_batched_compensated_losses_match_the_social_loss():
         assert np.allclose(M.compensated_losses(HOUSES, shapes, w0), each)
 
 
+def test_slowing_each_phantom_separately_does_not_keep_reporting_truthful():
+    step = lambda x, reports: np.median([*reports, 0.0, min(1.0, x + 0.3), 1.0])  # middle phantom drifts up at speed 0.3
+
+    def loss(first_report, targets=(0.5, 1.0), rounds=200):  # the first influencer's loss from x = 0
+        x = step(0.0, (first_report, targets[1]))
+        total = (x - targets[0]) ** 2
+        for k in range(1, rounds):
+            x = step(x, targets)
+            total += 0.9 ** k * (x - targets[0]) ** 2
+        return total
+
+    assert np.isclose(loss(0.5) - loss(0.0), 0.081 + 0.2025 - 0.1786)
+
+
 def test_a_compensated_receiver_loses_the_planners_loss_plus_a_weighted_static_criterion():
     mean = HOUSES.mean()
     for w0 in (0.0, 0.6, 0.95):

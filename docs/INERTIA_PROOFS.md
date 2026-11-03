@@ -500,6 +500,16 @@ strategy-proof), the loss is squared and the discount is 0.9.
   reporting moves to 0.6 and is stuck there (loss 0.16 per round, 1.6 in total); reporting 0.4 first loses 0.36
   once and then reaches 1 for good, a gain of 1.24.
 
+**Compensate the outcome, not the phantoms.** Proposition 11 clips the rule's outcome into one reachable interval.
+Slowing each phantom down on its own is not enough, even when each phantom moves monotonically toward a fixed point.
+Example: two influencers with targets 0.5 and 1, discount 0.9, squared loss, and the rule
+x' = median(r_1, r_2, 0, min(1, x + 0.3), 1), whose middle phantom heads for 1 at speed 0.3 while the others stay
+put. From x = 0 the truthful path is 0.5, 0.8, 1, 1, ...; if the first influencer reports 0 once, the path is
+0.3, 0.6, 0.9, 1, ..., and its loss falls by 0.081 + 0.2025 - 0.1786 = 0.1049. The drifting phantom keeps pulling the
+outcome past the first influencer's target, so slowing the outcome down early pays. In random three-influencer
+games, phantoms that approach their own fixed points at different speeds gave gains up to 0.067. Test
+`test_slowing_each_phantom_separately_does_not_keep_reporting_truthful` checks the example.
+
 ## The welfare of a compensated receiver, exactly
 
 **Proposition 12 (welfare is a weighted static criterion).** Take a receiver satisfying (R1) and (R2), any
