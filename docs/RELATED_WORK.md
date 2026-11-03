@@ -61,7 +61,10 @@ and main claim were confirmed from the publisher's page or abstract, not that th
   strategy-proof rule. *Ours:* so without inertia BIG's averaging receiver is welfare-optimal among
   strategy-proof receivers (our exact three-player formula, (1 - 10p^3 + 30p^4 - 18p^5)/5 with its
   minimum at p = 1/3, is a special case); the question is whether persistence changes the optimum.
-  Verified (abstract and introduction).
+  Verified (abstract and introduction). Their Theorem 19 gives the welfare-optimal anonymous strategy-proof rule
+  for any i.i.d. prior and L_q loss, and Theorem 21 the linear median for the uniform prior with L_2 (v2, Section
+  6.2; full text checked). So the static part of Proposition 13 is theirs; what Proposition 13 adds is that the same
+  rule stays optimal for every compensated receiver, at every inertia.
 - **Caragiannis, Procaccia and Shah (2016)**, [Truthful univariate
   estimators](https://proceedings.mlr.press/v48/caragiannis16.html), ICML. Truthful estimators of a
   population mean are generalized medians; worst-case optimal ones beat the median. Verified (abstract).
@@ -94,6 +97,22 @@ and main claim were confirmed from the publisher's page or abstract, not that th
   previous location, are not strategy-proof (Corollary 4), and offers the median agent in every stage, which ignores
   history, as the strategy-proof mechanism (Theorem 4). *Ours:* Proposition 11 gives history-dependent receivers
   that keep truthful reporting an equilibrium. Verified (full text, Section 6).
+- **Wada, Ono, Todo and Yokoo (2018)**, [Facility location with variable and dynamic
+  populations](https://ifaamas.csc.liv.ac.uk/Proceedings/aamas2018/pdfs/p336.pdf), AAMAS, 336-344. Online
+  facility location with agents arriving and leaving and a status quo. The dynamic target rule
+  med(previous outcome, lowest report, highest report) and the k-shifted median (phantoms: k copies of the previous
+  outcome plus copies of 0 and 1) are truthful (Theorems 5.3 and 6.2, under their Assumption 1 on reported
+  presence). The proof has the same two steps as Proposition 11: a manipulation moves the outcome away from the
+  manipulator, and the next outcome is monotone in the previous one. *Ours:* Proposition 11 is a generalization of
+  their argument to any reachable sets with (R1) and (R2), any discount and any loss increasing in distance, and
+  the two examples show that neither condition can be dropped; they have no inertia, welfare formula or design
+  result. Verified (full text, Sections 5-6).
+- **Garg, Kamble, Goel, Marn and Munagala (2019)**, Iterative local voting for collective decision-making in
+  continuous spaces, *Journal of Artificial Intelligence Research* 64, 315-355. Voters arrive one at a time and
+  move the current point within a shrinking neighbourhood; the process converges to welfare optima (coordinate-wise
+  medians for some neighbourhoods) and is myopically but not globally incentive compatible. *Ours:* a related
+  projection onto a local reachable set, but all influencers report every round and truthful reporting is an
+  equilibrium. Verified (JAIR page and arXiv 1702.07984).
 ## Repeated strategic reporting and convergence
 
 - **Meir, Polukarov, Rosenschein and Jennings (2010)**, [Convergence to equilibria in plurality
@@ -118,6 +137,7 @@ and main claim were confirmed from the publisher's page or abstract, not that th
    period, for instance in partial-adjustment or gradualism models of committees.
 2. Differential games in the style of Fershtman and Kamien, for the continuous-time framing in
    [REVERSAL_NOTES.md](REVERSAL_NOTES.md).
-3. Strategy-proofness in dynamic or repeated settings: checked for Proposition 11 (Chandrasekher 2015, de Keijzer
-   and Wojtczak 2018 and its full version, Barberà, Massó and Neme 1997); none implies it, as far as checked.
-   Google Scholar blocked automated searches, so the search used publisher pages, IDEAS/RePEc and arXiv.
+3. Strategy-proofness in dynamic or repeated settings: Wada et al. (2018) prove the special case above; the
+   others checked (Chandrasekher 2015, de Keijzer and Wojtczak 2018 and its full version, Barberà, Massó and Neme
+   1997, Garg et al. 2019, Wang et al. AAAI 2023) do not imply Proposition 11. Google Scholar and DBLP blocked
+   automated searches, so the search used arXiv, OpenAlex, Semantic Scholar, IDEAS/RePEc and publisher pages.
