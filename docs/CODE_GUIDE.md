@@ -20,7 +20,7 @@ files. The receiver (mechanism) results need only a small part of that:
 | `tests/test_mechanisms.py` | 32 tests of the claims below | |
 | `doggame/summary_figures.py` | The nine figures of the key-results summary PDF (`fig8`, `fig9` and `fig10` are its Figs. 2, 7 and 9; `fig8` and `fig9` are also in the paper), `fig11` and `fig12` (the dynamic game for averaging and median: the dog's vector field with paths and reports, and each influencer's response field), and `paper()`, which writes the paper's figures | one function per figure |
 | `doggame/summary_pdf.py` | The key-results summary PDF itself: text, figures, captions | |
-| `doggame/results_report.py` | The six-page results report: results at a glance, recent updates, and the five main graphs and trajectories (`fig8`, `fig10`, `fig3`, `fig4`, `fig6`) | |
+| `doggame/results_report.py` | The eight-page results report: results at a glance, recent updates, and the seven main graphs and trajectories (`fig8`, `fig10`, `fig3`, `fig4`, `fig6`, and `fig11`, `fig12` of the dynamic game) | |
 | `docs/INERTIA_PROOFS.md` | The proofs (Propositions 1 to 5 and 7 to 18) | |
 | `paper/paper.tex` | The paper draft (LaTeX); its figures in `paper/figures/` come from `summary_figures.paper()`; `tectonic paper/paper.tex` compiles it to `paper/paper.pdf` | |
 

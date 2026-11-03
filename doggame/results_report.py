@@ -1,6 +1,6 @@
-"""The results report: results at a glance, recent updates, and the five main graphs and trajectories. The numbers
+"""The results report: results at a glance, recent updates, and the seven main graphs and trajectories. The numbers
 come from the tables of doggame.dog_game_summary and the figures from doggame.summary_figures (fig8, fig10, fig3,
-fig4 and fig6 of the summary); see docs/CODE_GUIDE.md for where each one is computed.
+fig4 and fig6 of the summary, and fig11 and fig12 of the dynamic game); see docs/CODE_GUIDE.md for where each one is computed.
 
 Run with `python3 -m doggame.results_report [output.pdf]`; it draws the figures first.
 """
@@ -98,6 +98,8 @@ glance = [
      "4"],
     ["Closed-form feedback equilibrium of the two-player dog game with inertia, and when holding the one-shot actions is one",
      "Proved (Props. 1-2); 77 of 77 random games", ""],
+    ["<b>With a pivot the averaging receiver lands exactly on BIG's one-shot outcome</b> in finitely many rounds (closed form); "
+     "without one it only approaches it", "Proved when edge players are far enough from the pivot (Prop. 18); otherwise numerical", "6, 7"],
     ["A moderate inertia (0.45 to 0.75) lowers the total loss when the new information is noisy", "Numerical (planner part proved)", ""],
     ["Self-play learns the one-shot equilibrium; networks miss the feedback equilibrium, and fitting per-state best responses fixes it",
      "Numerical, 3 games (5 seeds)", ""],
@@ -105,6 +107,10 @@ glance = [
 ]
 
 updates = [
+    "<b>The dynamic game, plotted.</b> Vector fields of where the receiver moves next from every position, equilibrium paths "
+    "with every report, and the influencers' response fields, for the averaging and the median receiver (Figs. 6 and 7).",
+    "<b>Proposition 18.</b> When BIG's one-shot equilibrium has a pivot, the averaging receiver lands exactly on the one-shot "
+    "outcome after finitely many rounds, with a closed-form count; this covers part of a case listed as open before.",
     "<b>Compensated receivers, three theorems.</b> Truthfulness now holds for any reachable set with two conditions (the "
     "receiver can stay where it is; the reachable range never moves down when the position moves up), with a counterexample "
     "for each (gains from lying of 0.085 and 1.24). New: an exact welfare formula, and a proof that the best fixed points do not "
@@ -130,6 +136,10 @@ interesting = [
     "<b>Speed against location.</b> The reversal is not about where receivers end up, which inertia does not change, but about how "
     "fast they get there: under averaging the influencers on the far side keep pulling, a tug of war; the median receiver moves "
     "at full speed once a majority pushes one way. A sticky receiver magnifies that difference.",
+    "<b>A pivot makes the slow receiver arrive.</b> Under BIG's averaging, a coordinate whose one-shot equilibrium has a pivot "
+    "reaches the one-shot outcome exactly, in a number of rounds that is logarithmic in the distance; a coordinate without one "
+    "only approaches it. The proof is short and covers the case where every edge player is far enough from the pivot; it has "
+    "not yet been checked carefully against the literature.",
     "<b>What a learner can represent decides what it learns.</b> In the dog game, whose feedback equilibrium jumps, a table "
     "learns it and a network does not; in a sticky-price duopoly, whose equilibrium is linear, it is the other way round. "
     "Fitting each state's best response removes the failure for networks in all three games tested.",
@@ -140,8 +150,9 @@ limits = [
     "have not been refereed.",
     "The slow-receiver result is first order; its remainder is not shown to be uniform in the phantoms. The skew check is "
     "smaller than predicted (about a third of the first-order gain).",
-    "The feedback equilibrium with an interior one-shot action is open: the target fixed point is an equilibrium in 122 of "
-    "123 random games, numerically. Uniqueness is not shown.",
+    "The feedback equilibrium with an interior one-shot action is proved only when every edge player is far enough from the "
+    "pivot (Prop. 18); otherwise the target fixed point is an equilibrium in 122 of 123 random two-player games, and in 10 of "
+    "12 checked games with three or five players, numerically. Uniqueness is not shown.",
     "The learning results use 5 seeds per setting (1 for tables); the Nash-Q results use 5 seeds and one step length.",
 ]
 
@@ -149,10 +160,12 @@ limits = [
 def build(out=OUTPUT):
     out = Path(out)
     folder = summary_figures.build(out.parent)
+    summary_figures.fig11(folder / "fig11.png")
+    summary_figures.fig12(folder / "fig12.png")
     rows = S.load(S.STUDIES)
     story = [
         Paragraph("The dog game with a persistent receiver: results report", title), Spacer(1, 4),
-        Paragraph("Charith Reddy Pareddy &middot; November 2, 2026 &middot; draft", sub), Spacer(1, 8),
+        Paragraph("Charith Reddy Pareddy &middot; November 3, 2026 &middot; draft", sub), Spacer(1, 8),
         Paragraph("The game in one paragraph", h),
         Paragraph("The dog game is the Battling Influencers Game (BIG; Wu, Zhu, Cai and Zhu, 2025): N influencers with targets "
                   "t<sub>i</sub> in the unit square report actions, a receiver (the dog) aggregates them, and each influencer loses "
@@ -246,6 +259,25 @@ def build(out=OUTPUT):
                   "time the threshold becomes (1 + r)/(2 + r). In house setup 3 (x-coordinate, targets 0.7 and 0.6) the policy's "
                   "largest one-round deviation gain over 21 dog positions is 0, while holding the one-shot actions gives 0.076 at "
                   "&lambda; = 0.6 and 0.121 at 0.9.", body),
+        Paragraph("<b>Proposition 18 (a pivot gives exact arrival).</b> With three or more influencers the one-shot equilibrium often "
+                  "has a pivot: one influencer whose one-shot action is strictly inside the box, so that d* is its target. Let U and L be "
+                  "the dog with the pivot at 1 and at 0 and everyone else at the one-shot actions. If every edge influencer holds its "
+                  "one-shot action and the pivot moves the dog as close to its target as it can, the dog lands exactly on d* after "
+                  "ceil(log((U - x)/(U - d*)) / log(1/&lambda;)) rounds from x &lt; d* (the mirror formula above d*) and stays "
+                  "there; without a pivot it only approaches d*. This policy is a feedback equilibrium at every inertia and discount "
+                  "when every edge influencer is far enough from the pivot (slack (t - L)/(1 - L) &ge; &lambda; at the top, "
+                  "(U - t)/U &ge; &lambda; at the bottom). Otherwise the equilibrium in target form still lands exactly in random games "
+                  "with three and five influencers (numerical), but in 2 of 12 games with five influencers at inertia 0.9 it is not "
+                  "an equilibrium (largest gain 0.005).", body),
+        fig(folder, "fig11.png", "<b>Fig. 6.</b> Averaging and median receivers in the dynamic game, inertia 0.8, targets and start as in "
+            "Fig. 1. Left: the receiver's one-round move from each position (scaled per panel, darker = faster) and paths from the four "
+            "corners. Right: one equilibrium path with every report. The averaging receiver lands exactly on y = 0.55 in round 5, "
+            "because the y-coordinate has a pivot (influencer 3), but only approaches x = 1/3; the median receiver lands exactly in "
+            "both coordinates (rounds 6 and 3).", width=4.6 * inch),
+        fig(folder, "fig12.png", "<b>Fig. 7.</b> Response vector fields of the same game: at each receiver position, an arrow toward the "
+            "report each influencer makes there in equilibrium (fixed length, darker = farther), and the reports themselves (circles). "
+            "Under averaging the influencers report at the edges, with two or three distinct reports each over the whole square; under "
+            "the median the reports move with the receiver's position (8, 5 and 5 distinct reports)."),
 
         Paragraph("5. Cooling off: some inertia can help", h),
         Paragraph("Without noise, inertia only slows the outcome. If each round's new aggregate is noisy, inertia filters it: for the "
