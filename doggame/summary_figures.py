@@ -1,6 +1,8 @@
 """The nine figures of the key-results summary (doggame.summary_pdf), as fig1.png and fig3.png ... fig10.png (fig8.png
 is the summary's Fig. 2, fig9.png its Fig. 7 and fig10.png its Fig. 9), and two more
 for the paper: fig8 (paths of the plain and compensated receivers) and fig9 (the welfare weight of Proposition 12).
+fig11 and fig12 show the dynamic game for the averaging and the median receiver: where the dog moves next from every
+position with paths and reports (fig11), and each influencer's equilibrium response at every position (fig12).
 
 Figures 1 and 2 solve small games directly (doggame.mechanisms); the others read the saved runs:
 Fig. 3 study mechanisms_wide, Fig. 4 mechanisms_phantoms and mechanisms_compensated_design, Fig. 5
@@ -323,6 +325,89 @@ def fig10(out, rows):
         fig.savefig(out, dpi=220), plt.close(fig)
 
 
+NAMES = {"mean": "Averaging", "median": "Median"}
+
+
+def _dynamic(rule, targets, w, w0):
+    """Equilibrium targets of each coordinate, and the dog's next position from an array of positions (n, 2)."""
+    aims = [M.target_equilibrium(rule, targets[:, c], w, w0)[0] for c in range(2)]
+    return aims, lambda p: np.stack([M.step(rule, p[:, c], aims[c], w, w0) for c in range(2)], 1)
+
+
+def fig11(out, w0=0.8, rounds=25):
+    """Averaging and median receivers in the dynamic game: where the dog moves next from every position, with paths from
+    the corners (left), and one equilibrium path with every report (right). Under averaging the y-coordinate has a pivot
+    (influencer 3), so the dog lands exactly on y = 0.55 (Proposition 18) while x only approaches 1/3. Returns, per
+    rule, the round in which the path lands exactly on its end point in each coordinate (None if it never does)."""
+    targets, w = np.array([[0.15, 0.7], [0.3, 0.2], [0.9, 0.55]]), np.full(3, 1 / 3)
+    grid, corners, found = np.linspace(0.03, 0.97, 15), np.array([[0.02, 0.02], [0.98, 0.02], [0.02, 0.98], [0.98, 0.98]]), []
+    with plt.rc_context(SQUARE):
+        fig, axes = plt.subplots(2, 2, figsize=(7.0, 8.6))
+        for r, rule in enumerate(("mean", "median")):
+            aims, move = _dynamic(rule, targets, w, w0)
+            u, v = np.meshgrid(*[M.step(rule, grid, aims[c], w, w0) - grid for c in range(2)])  # each coordinate on its own
+            speed = np.hypot(u, v)
+            ax = axes[r, 0]
+            square(ax, f"{NAMES[rule]}: where the dog moves next\n(largest step {speed.max():.2f} per round)")
+            ax.quiver(*np.meshgrid(grid, grid), u, v, speed, cmap="Greys", clim=(-0.3 * speed.max(), speed.max()), angles="xy",
+                      scale_units="xy", scale=speed.max() / (0.9 * (grid[1] - grid[0])), width=0.004, headwidth=4, headlength=4.5, zorder=2)
+            paths = [corners]
+            for _ in range(60):
+                paths.append(move(paths[-1]))
+            paths = np.array(paths)
+            for i in range(len(corners)):
+                ax.plot(paths[:, i, 0], paths[:, i, 1], color=INK, lw=1.1, zorder=3)
+            ax.scatter(*paths[-1, 0], s=55, marker="D", color=INK, zorder=7)
+            for i, t in enumerate(targets):
+                ax.scatter(*t, s=200, marker="*", facecolors="white", edgecolors=COLORS[i], lw=1.6, zorder=6)
+            ax.scatter(*targets.mean(0), s=50, marker="P", color=GREY, zorder=5)
+            dog, actions = simulate(rule, targets, (0.95, 0.95), w0, rounds)
+            panel(axes[r, 1], targets, dog, actions, f"{NAMES[rule]}: one path, {rounds} rounds\nwith every report")
+            end = paths[-1, 0]
+            found.append(tuple(next((t for t in range(len(dog)) if dog[t, c] == end[c]), None) for c in range(2)))
+        influencers = players(3)[:-1]
+        for h in influencers:
+            h.set_label(h.get_label().replace("player", "influencer"))
+        fig.legend(handles=influencers + [Line2D([], [], marker="D", ls="", color=INK, ms=7, label="dog (filled: end)"),
+                                          Line2D([], [], marker="P", ls="", color=GREY, ms=8, label="mean target")],
+                   loc="upper center", ncol=4, bbox_to_anchor=(0.5, 1.0), frameon=False, fontsize=7.8, columnspacing=1.1, handletextpad=0.3)
+        fig.text(0.5, 0.008, f"Feedback equilibrium, inertia {w0}. Left: arrow = the dog's one-round move from each position\n(scaled to "
+                 "the panel's largest step, darker = faster); lines: paths from the four corners.\nRight: start (0.95, 0.95); circles = "
+                 "each influencer's report each round.", ha="center", fontsize=7.2, color=INK2)
+        fig.tight_layout(rect=(0, 0.06, 1, 0.92), h_pad=4.0)
+        fig.savefig(out, dpi=220), plt.close(fig)
+    return found
+
+
+def fig12(out, w0=0.8):
+    """The influencers' response vector fields in the dynamic game: at each dog position, an arrow toward the report each
+    influencer makes there in equilibrium (fixed length; darker = the report is farther away), and the reports as circles,
+    for the averaging and the median receiver. Returns, per rule and influencer, the number of distinct reports."""
+    targets, w = np.array([[0.15, 0.7], [0.3, 0.2], [0.9, 0.55]]), np.full(3, 1 / 3)
+    grid, counts = np.linspace(0.05, 0.95, 11), []
+    x, y = np.meshgrid(grid, grid)
+    with plt.rc_context(SQUARE):
+        fig, axes = plt.subplots(2, 3, figsize=(9.9, 7.2))
+        for r, rule in enumerate(("mean", "median")):
+            aims, _ = _dynamic(rule, targets, w, w0)
+            reports = [np.array([M.reports(rule, z, aims[c], w, w0) for z in grid]) for c in range(2)]  # (position, influencer)
+            for i in range(len(targets)):
+                ax = axes[r, i]
+                square(ax, f"{NAMES[rule]}: influencer {i + 1}'s report")
+                rx, ry = np.meshgrid(reports[0][:, i], reports[1][:, i])
+                far = np.hypot(rx - x, ry - y)
+                ax.quiver(x, y, (rx - x) / far, (ry - y) / far, far, cmap="Greys", clim=(-0.5, 1.4), angles="xy", scale_units="xy",
+                          scale=1 / (0.8 * (grid[1] - grid[0])), width=0.005, headwidth=3.5, headlength=4, zorder=3)
+                ax.scatter(rx, ry, s=16, facecolors="white", edgecolors=COLORS[i], lw=1.1, zorder=5, clip_on=False)
+                ax.scatter(*targets[i], s=200, marker="*", facecolors="white", edgecolors=COLORS[i], lw=1.6, zorder=6)
+                counts.append(len(np.unique(np.round(np.stack([rx.ravel(), ry.ravel()], 1), 6), axis=0)))
+        fig.text(0.5, 0.008, f"Feedback equilibrium, inertia {w0}, targets as in Fig. 11 (stars). Arrows point from the dog's position "
+                 "toward the influencer's report there; circles = the reports.", ha="center", fontsize=7.2, color=INK2)
+        fig.tight_layout(rect=(0, 0.03, 1, 1), h_pad=2.0)
+        fig.savefig(out, dpi=220), plt.close(fig)
+    return counts
+
+
 def paper(out="paper/figures", results=S.STUDIES):
     """The paper's figures, as vector PDFs."""
     out = Path(out)
@@ -346,6 +431,8 @@ def build(out=OUTPUT, results=S.STUDIES):
     fig7(out / "fig7.png")
     fig9(out / "fig9.png")
     fig10(out / "fig10.png", rows)
+    fig11(out / "fig11.png")
+    fig12(out / "fig12.png")
     return out
 
 

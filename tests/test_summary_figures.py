@@ -14,3 +14,9 @@ def test_figure_8_times_each_receiver_and_the_paper_figures_are_vector_pdfs(tmp_
     assert F.fig8(tmp_path / "fig8.png") == [27, 11, 10, 7]  # averaging, median, compensated averaging, planner
     out = F.paper(tmp_path / "paper")
     assert sorted(p.name for p in out.glob("*.pdf")) == ["compensated_paths.pdf", "design.pdf", "reversal.pdf", "weight.pdf"]
+
+
+def test_the_dynamic_game_figures_show_exact_arrival_only_where_the_receiver_can_reach_its_end(tmp_path):
+    # averaging: x has no pivot and only approaches 1/3, y has one and lands in round 5; the median lands in both
+    assert F.fig11(tmp_path / "fig11.png") == [(None, 5), (6, 3)]
+    assert F.fig12(tmp_path / "fig12.png") == [2, 3, 3, 8, 5, 5]  # averaging reports stay at the edges, median ones move
