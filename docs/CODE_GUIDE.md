@@ -22,7 +22,7 @@ files. The receiver (mechanism) results need only a small part of that:
 | `doggame/summary_pdf.py` | The key-results summary PDF itself: text, figures, captions | |
 | `doggame/results_report.py` | The eight-page results report: results at a glance, recent updates, and the seven main graphs and trajectories (`fig8`, `fig10`, `fig3`, `fig4`, `fig6`, and `fig11`, `fig12` of the dynamic game) | |
 | `docs/INERTIA_PROOFS.md` | The proofs (Propositions 1 to 5 and 7 to 19) | |
-| `docs/Dog_Game_Results_and_Updates.pdf`, `docs/Dog_Game_FAQ.pdf` | Snapshots of the latest results and a FAQ, linked from the site; `docs/figures/` holds their plots (`fig11`, `fig12`, and the distance to the rest point) | |
+| `docs/Dog_Game_Results_and_Updates.pdf` | A snapshot of the latest results, linked from the site; `docs/figures/` holds its plots (`fig11`, `fig12`, and the distance to the rest point) | |
 
 The policy-gradient results use a second, separate set: `env.py` (the game), `agents.py` and `networks.py`
 (the policies), `train.py` and `train_ac.py` (REINFORCE, A2C, PPO), `verify.py` (exploitability),

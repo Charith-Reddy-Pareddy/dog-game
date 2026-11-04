@@ -5,7 +5,7 @@
 **Live demo:** https://charith-reddy-pareddy.github.io/dog-game/
 **Research report:** [RESEARCH_REPORT.md](RESEARCH_REPORT.md) ([PDF](research_report.pdf), built from it)
 **Walking-game report:** [WALKING_GAME_REPORT.md](WALKING_GAME_REPORT.md) ([PDF](docs/walking_game_report.pdf)), policy gradient on the angle-radius game
-**Latest results:** [PDF](docs/Dog_Game_Results_and_Updates.pdf), with a [FAQ](docs/Dog_Game_FAQ.pdf)
+**Latest results:** [PDF](docs/Dog_Game_Results_and_Updates.pdf)
 **Inertia proofs:** [docs/INERTIA_PROOFS.md](docs/INERTIA_PROOFS.md) ([PDF](docs/INERTIA_PROOFS.pdf)), the two propositions on feedback equilibria with dog inertia
 **Research questions:** [RESEARCH_QUESTIONS.md](RESEARCH_QUESTIONS.md), with the status of each
 **Results PDF:** [dog_game_results.pdf](dog_game_results.pdf) (convergence over seeds, the walking game and its paths)
