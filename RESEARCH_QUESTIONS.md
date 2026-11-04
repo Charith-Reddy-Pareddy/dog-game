@@ -346,32 +346,35 @@ with the numbers and the caveats, are in [RESEARCH_REPORT.md](RESEARCH_REPORT.md
 | 1, 2, 7, 8 | `results/dog_game_runs.jsonl` (75 REINFORCE runs), `doggame/experiments.py` |
 | 1, 2, 16 | `results/dog_game_studies.jsonl`, study `algorithms` (75 runs), `doggame/train_ac.py` |
 | 3, 20 | studies `pretraining` (15 runs) and `pretraining_mechanism` (50 runs) |
-| 4, 17 | studies `selection` (30 runs), `selection_noise` (200), `selection_clip` (50) and `selection_linear` (50), `doggame/potential.py` |
+| 4, 17 | studies `selection` (30 runs), `selection_noise` (200), `selection_clip` (50) and `selection_linear` (50), `archive/doggame/potential.py` |
 | 5, 21 | study `stage_solver` (90 runs) |
 | 6, 22 | study `resolution` (25 games) |
 | 9 | `doggame/verify.py` |
 | 10 | study `noise` (31 runs) |
 | 12, 18 | study `inertia` (40 runs) |
 | 19, 34 | studies `inertia_dp` (15 solves), `inertia_explicit` (15), `inertia_random` (200 games) and `target_random` (200 games), `doggame/inertia_dp.py`, `doggame/inertia_mpe.py`, `doggame/inertia_theory.py` |
-| 33 | study `markov_potential` (8 cycles), `doggame/markov_potential.py` |
+| 33 | study `markov_potential` (8 cycles), `archive/doggame/markov_potential.py` |
 | 7 | studies `cross_play` (15 runs) and `selection` (30 runs) |
 | 13 | study `vertex_selection` (6 solves), `selection` in `doggame/inertia_dp.py` |
 | 36 | studies `many_houses` (2,000 draws) and `many_targets` (60 games), `doggame/many_houses.py` |
-| 38, 39 | studies `continuous_q` (15 runs) and `continuous_q_tools` (3), `doggame/continuous_q.py`, `docs/continuous_q_trajectories.svg`; for Q38 also `doggame/encoding_factorial.py`, `docs/ENCODING_NOTES.md` |
+| 38, 39 | studies `continuous_q` (15 runs) and `continuous_q_tools` (3), `archive/doggame/continuous_q.py`, `docs/continuous_q_trajectories.svg`; for Q38 also `doggame/encoding_factorial.py`, `docs/ENCODING_NOTES.md` |
 | 37 | studies `feedback_learning` (55 rows) and `exact_play` (24 runs), `doggame/feedback_learning.py`, `doggame/exact_play.py` |
-| 35 | study `noisy_inertia` (9 solves), `continuous_limit` in `doggame/inertia_theory.py`, `noise` in `doggame/inertia_dp.py` |
+| 35 | study `noisy_inertia` (12 solves), `continuous_limit` in `doggame/inertia_theory.py`, `noise` in `doggame/inertia_dp.py` |
 | 26 | study `walking` (15 runs) |
 | walking game, all questions | [WALKING_GAME_REPORT.md](WALKING_GAME_REPORT.md) ([PDF](docs/walking_game_report.pdf)) |
 | 24, 27, 28 | study `ppo_variants` (65 runs) |
 | 27, 28, 29 | study `ppo_long` (15 runs) |
 | 25 | study `walking_settings` (20 runs) |
 | 30 | studies `walking_houses` (45 runs) and `walking_inertia` (10 runs) |
-| 23 | study `walking_equilibrium` (8 checks), `doggame/walking_equilibrium.py` |
+| 23 | study `walking_equilibrium` (8 checks), `archive/doggame/walking_equilibrium.py` |
 | walking game | `results/dog_game_runs.jsonl`, `results/dog_game_trajectories.json` |
 | 40, 41 | studies `mechanisms` (240 games), `mechanisms_wide` (2,100), `mechanisms_noise` (1,120) and `mechanisms_noise_planner` (1,120), `doggame/mechanisms.py` |
 | 42 | studies `learning_fix` (31 runs) and `learning_checks` (5), `doggame/sticky_duopoly.py`, `doggame/duopoly_learning.py`, `doggame/exact_play.py`, `doggame/soccer_exact_play.py` |
-| 32 | `docs/POLAR_ACTION_PROTOCOL.md`, `docs/POLAR_ACTION_ROBUSTNESS_PROTOCOL.md`, `doggame/polar_action_study.py`, `doggame/polar_action_robustness.py`, `results/polar_action_pg.jsonl`, `results/polar_action_pg_robustness.jsonl` |
+| 32 | `docs/POLAR_ACTION_PROTOCOL.md`, `docs/POLAR_ACTION_ROBUSTNESS_PROTOCOL.md`, `archive/doggame/polar_action_study.py`, `archive/doggame/polar_action_robustness.py`, `results/polar_action_pg.jsonl`, `results/polar_action_pg_robustness.jsonl` |
 
 Question 14 is open, and 11, 15, 25, 30, 32, 34, 35 and 36 are partly answered. The studies are in
 [`doggame/dog_game_studies.py`](doggame/dog_game_studies.py) and the tables are
-produced by [`doggame/dog_game_summary.py`](doggame/dog_game_summary.py).
+produced by [`doggame/dog_game_summary.py`](doggame/dog_game_summary.py). The studies `stage_solver`,
+`resolution`, `noise`, `markov_potential`, `continuous_q`, `continuous_q_tools` and `walking_equilibrium`
+are archived: their saved results stay in `results/dog_game_studies.jsonl`, and they run from the git
+tag `pre-archive` (see [`archive/README.md`](archive/README.md)).

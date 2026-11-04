@@ -200,9 +200,10 @@ train_self_play(env, policy, episodes=1500)                    # REINFORCE
 train_actor_critic(env, policy, "ppo", episodes=1500)         # or "a2c"
 ```
 
-Run the fixed polar-action comparison with `python3 -m doggame.polar_action_study`
-and print its summary with `python3 -m doggame.polar_action_study summary`.
-The separate four-setup REINFORCE follow-up is
+The polar-action studies are archived and run from the git tag `pre-archive` (see
+[Reproducing the results](#reproducing-the-results)). There, run the fixed comparison with
+`python3 -m doggame.polar_action_study` and print its summary with
+`python3 -m doggame.polar_action_study summary`. The separate four-setup REINFORCE follow-up is
 `python3 -m doggame.polar_action_robustness`; rebuild the concise PDF, Markdown and
 site figures with `python3 -m doggame.polar_action_report`.
 
@@ -253,11 +254,19 @@ python3 -m doggame.experiments        # the original 15-run convergence study
 python3 -m doggame.dog_game_study     # five-seed convergence and walking runs
 python3 -m doggame.dog_game_studies   # all registered studies (resumable; add 0/4 to shard)
 python3 -m doggame.dog_game_summary   # print every table as Markdown
+```
+
+The report builders and the polar-action studies are archived, so they run from the git tag
+`pre-archive`:
+
+```bash
+git worktree add ../dog-game-pre-archive pre-archive
+cd ../dog-game-pre-archive
 python3 -m doggame.research_report_pdf   # rebuild research_report.pdf from RESEARCH_REPORT.md
 python3 -m doggame.polar_action_study       # primary 90-run polar-action comparison
 python3 -m doggame.polar_action_robustness  # 80-run cross-house follow-up
 python3 -m doggame.polar_action_report      # concise PG PDF, Markdown and graphs
-python3 -m doggame.research_report_pdf ASSUMPTIONS.md docs/ASSUMPTIONS.pdf
+python3 -m doggame.research_report_pdf ../dog-game/ASSUMPTIONS.md ../dog-game/docs/ASSUMPTIONS.pdf
 ```
 
 Each study appends one line per finished run to a file in `results/`, so a stopped
@@ -286,19 +295,19 @@ run keeps what it finished and a rerun skips it.
 **Nash-Q on a grid**
 
 - `doggame/discretize.py` -- the N x N action grid and its payoff matrices.
-- `doggame/fictitious_play.py` -- approximate stage-game equilibrium by iterated best
+- `archive/doggame/fictitious_play.py` -- approximate stage-game equilibrium by iterated best
   response against the running average.
 - `doggame/exact_nash.py` -- exact bimatrix solvers: `lemke_howson_nash` (hardened: every
   answer is checked, retried from another start on failure, and cut off by a pivot
   count rather than a clock) and `zero_sum_lp_nash`.
-- `doggame/dqn.py` -- the Nash-Q Bellman backup, with `solver="exact"` and
+- `archive/doggame/dqn.py` -- the Nash-Q Bellman backup, with `solver="exact"` and
   `resync_every`.
-- `doggame/continuous_br.py` -- best response over a continuous action by bisection,
+- `archive/doggame/continuous_br.py` -- best response over a continuous action by bisection,
   finite-difference gradient or a quadratic fit.
 
 **The walking game**
 
-- `doggame/walking_equilibrium.py` -- checks whether walking to the one-shot corners is an equilibrium (a numerical best response against a fixed path).
+- `archive/doggame/walking_equilibrium.py` -- checks whether walking to the one-shot corners is an equilibrium (a numerical best response against a fixed path).
 - `doggame/polar.py` -- the environment. `doggame/polar_agent.py` -- the von Mises and
   Beta policy, trained with REINFORCE, A2C or PPO.
 - `doggame/polar_dqn.py` -- a deep Nash-Q for it: 10 compass directions, one network for
@@ -311,10 +320,10 @@ run keeps what it finished and a rerun skips it.
   convergence and walking runs, and the recorded paths of the players and the dog.
 - `doggame/dog_game_studies.py`, `doggame/dog_game_summary.py` -- experiments
   that answer open research questions, and the tables built from their saved results.
-- `doggame/dog_game_report.py`, `doggame/research_report_pdf.py`, `doggame/walking_figures.py`,
-  `doggame/pdf_kit.py` -- build `dog_game_results.pdf`, `research_report.pdf` and
+- `archive/doggame/dog_game_report.py`, `archive/doggame/research_report_pdf.py`, `archive/doggame/walking_figures.py`,
+  `archive/doggame/pdf_kit.py` -- build `dog_game_results.pdf`, `research_report.pdf` and
   `docs/walking_game_report.pdf` (from `WALKING_GAME_REPORT.md`).
-- `doggame/figures.py` -- the link-preview image and the README charts (needs poppler's `pdftoppm`).
+- `archive/doggame/figures.py` -- the link-preview image and the README charts (needs poppler's `pdftoppm`).
 - `results/` -- the saved runs: `dog_game_runs.jsonl`, `dog_game_studies.jsonl`,
   `dog_game_trajectories.json`, and the 90 primary plus 80 robustness PG runs;
   see [results/README.md](results/README.md) for every field.
