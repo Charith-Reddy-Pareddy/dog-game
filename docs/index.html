@@ -190,6 +190,9 @@
     </p>
   
     <p class="nav">
+      <a href="#latest">Latest results</a>
+      <a href="Dog_Game_Results_and_Updates.pdf" target="_blank" rel="noopener">Results and updates (PDF)</a>
+      <a href="Dog_Game_FAQ.pdf" target="_blank" rel="noopener">FAQ (PDF)</a>
       <a href="#highlights">Key results</a>
       <a href="#simulator">Simulator</a>
       <a href="#findings">Training results</a>
@@ -206,6 +209,37 @@
       <a href="INERTIA_PROOFS.pdf" target="_blank" rel="noopener">Inertia proofs (PDF)</a>
     </p>
 </header>
+
+  <section class="card" id="latest">
+    <h2>Latest results</h2>
+    <p class="sub">
+      The focus is the averaging receiver in the dynamic Markov game: the dog keeps a share &lambda; of its position each
+      round, and influencers plan ahead. Read more in the
+      <a href="Dog_Game_Results_and_Updates.pdf" target="_blank" rel="noopener">results and updates (PDF)</a> and the
+      <a href="Dog_Game_FAQ.pdf" target="_blank" rel="noopener">frequently asked questions (PDF)</a>; the proofs are in
+      <a href="INERTIA_PROOFS.pdf" target="_blank" rel="noopener">Inertia proofs (PDF)</a>.
+    </p>
+    <ul class="highlights">
+      <li><b>A sticky receiver arrives exactly when an influencer decides.</b> If an influencer's target decides the rest point, the dog lands on it in finitely many rounds. If a phantom decides it, the dog only gets closer and never arrives (Proposition 19, proved).</li>
+      <li><b>In the main game, averaging arrives exactly when there is a pivot.</b> The number of rounds has a closed form. The simple policy is proved to be an equilibrium only when every edge influencer is far enough from the pivot (Proposition 18). About half of random games have a pivot (numerical).</li>
+      <li><b>Trajectories and vector fields of the dynamic game,</b> for the receiver and for each influencer's response, below.</li>
+      <li><b>Open:</b> the general pivot case. Target form was an equilibrium in 10 of 12 checked games. In the other 2, an influencer gains up to 0.005.</li>
+      <li><b>Corrected:</b> the result that the best compensated phantoms do not depend on inertia holds when each phantom's criterion changes sign once, as for uniform targets. The gain from shading under clipped shocks is about 0.0015, not 0.0024.</li>
+      <li><b>How new this is:</b> new as far as the searches went, which were not a systematic review. The mathematics of Proposition 19 is elementary, and none of the proofs has been refereed.</li>
+    </ul>
+    <figure style="margin:16px 0">
+      <img src="figures/dynamic_fields.png" alt="Vector fields and equilibrium paths for the averaging and median receivers at inertia 0.8" style="width:100%;max-width:560px;display:block;margin:0 auto" loading="lazy" />
+      <figcaption class="sub">Where the dog moves next from each position, with one equilibrium path and every report. Three influencers, inertia 0.8. Averaging lands exactly on y = 0.55 in round 5 and only approaches x = 1/3. The median lands exactly in both coordinates.</figcaption>
+    </figure>
+    <figure style="margin:16px 0">
+      <img src="figures/response_fields.png" alt="Response vector fields of each influencer for the averaging and median receivers" style="width:100%;display:block" loading="lazy" />
+      <figcaption class="sub">Response vector fields: at each dog position, an arrow toward the report each influencer makes there in equilibrium, with the reports as circles.</figcaption>
+    </figure>
+    <figure style="margin:16px 0">
+      <img src="figures/arrival_gap.png" alt="Distance to the rest point by round: the phantom coordinate falls steadily, and the target coordinate reaches zero in round 5" style="width:100%;max-width:640px;display:block;margin:0 auto" loading="lazy" />
+      <figcaption class="sub">Distance to the rest point for the averaging receiver above (log scale). The phantom coordinate falls by a factor 0.8 per round; the target coordinate reaches 0.</figcaption>
+    </figure>
+  </section>
 
   <section class="card" id="highlights">
     <h2>Key results</h2>
@@ -829,11 +863,9 @@
   </section>
 
   <section class="card notes" id="assumptions">
-    <h2>Assumptions and open questions</h2>
+    <h2>Assumptions</h2>
     <p class="sub" style="margin-bottom:8px">
-      Where the instructions left something open, I picked the simplest
-      reasonable option. These are the choices to check, and the questions
-      that would settle them. The full list is in
+      The modelling choices behind these results. The full list is in
       <a href="https://github.com/Charith-Reddy-Pareddy/dog-game/blob/main/ASSUMPTIONS.md" target="_blank" rel="noopener">ASSUMPTIONS.md</a>.
       A printable copy is available as <a href="ASSUMPTIONS.pdf" target="_blank" rel="noopener">ASSUMPTIONS.pdf</a>.
     </p>
@@ -863,13 +895,6 @@
       <li>The training-results table uses five seeds per row; the other experiments use five seeds, and ten for the equilibrium-selection study.</li>
     </ul>
 
-    <h3>Still open</h3>
-    <ol>
-      <li>Is the angle-radius action a per-step move of the player's own position, or an absolute polar point?</li>
-      <li>In <em>w&#8320;&middot;dog + w&#8321;&middot;x<sub>red</sub> + w&#8322;&middot;x<sub>blue</sub></em>, are x<sub>red</sub> and x<sub>blue</sub> the players' positions? Is w&#8320;&middot;dog the dog's current position or the paper's fixed x&#8320;? Must the weights sum to 1?</li>
-      <li>The angle-radius game has a deep Nash-Q. Should the original dog game have one too?</li>
-      <li>How should the angle's wraparound and the board edge be handled?</li>
-    </ol>
   </section>
 
   <footer>
