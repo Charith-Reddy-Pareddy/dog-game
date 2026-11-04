@@ -103,7 +103,7 @@ glance = [
     ["A moderate inertia (0.45 to 0.75) lowers the total loss when the new information is noisy", "Numerical (planner part proved)", ""],
     ["Self-play learns the one-shot equilibrium; networks miss the feedback equilibrium, and fitting per-state best responses fixes it",
      "Numerical, 3 games (5 seeds)", ""],
-    ["Continuous-move Nash-Q reaches the Nash corners with Cartesian or square moves, never with polar moves", "Numerical, 5 seeds", "2"],
+    ["Continuous-move Nash-Q reaches the Nash corners with Cartesian or square moves. Polar moves reach them too once the search tries several directions first", "Numerical, 10 seeds per cell", "2"],
 ]
 
 updates = [
@@ -191,8 +191,8 @@ def build(out=OUTPUT):
         table(nash_q_rows(rows), [1.1 * inch, 0.55 * inch, 2.1 * inch, 1.5 * inch, 1.75 * inch]),
         Spacer(1, 4),
         Paragraph("A batched grid is the exact and fastest best response (about 0.3 ms for 1,257 to 1,722 moves); gradient ascent "
-                  "leaves 10 to 14% of the Q spread on Cartesian and square moves and 27 to 32% on polar moves, which is why polar "
-                  "learning fails. Finite differences agree with autograd, so the analytic gradient is not needed.", body),
+                  "leaves 10 to 14% of the Q spread on Cartesian and square moves and 27 to 32% on polar moves, because that search starts from one fixed angle "
+                  "(docs/ENCODING_NOTES.md). Finite differences agree with autograd, so the analytic gradient is not needed.", body),
 
         Paragraph("1. Inertia reverses the ranking of receivers", h),
         Paragraph("Without inertia BIG's averaging receiver has the lower social loss in most games, as known. With a sticky receiver "

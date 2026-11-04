@@ -7,7 +7,7 @@ checks it. Every number in the worked example below can be reproduced with the c
 
 ## 1. What you need, and what you can ignore
 
-After the archive (Section 8) the active code is 32 modules (about 5,600 lines) with 34 test
+After the archive (Section 8) the active code is 33 modules (about 6,000 lines) with 35 test
 files. The receiver (mechanism) results need only a small part of that:
 
 | File | What it is | Size |
@@ -138,6 +138,7 @@ All in `doggame/mechanisms.py` unless named otherwise.
 |---|---|---|---|---|
 | Median receiver better at high inertia (Fig. 3) | numerical | `mechanisms_wide` | `mechanisms_wide_table` | none for the ranking; `test_the_target_form_is_an_equilibrium_under_both_rules_and_the_planner_loses_least` checks the equilibria being compared |
 | The median is truthful about the next outcome: reporting clip((target - w0 x) / (1 - w0)) is an equilibrium at every inertia | Prop. 20 | | | `test_the_median_rule_is_truthful_about_the_next_outcome_and_not_about_the_report` |
+| Cartesian and polar moves differ because of the search's starting angle, not the region (region about 3%) | numerical | `doggame/encoding_factorial.py`, `results/encoding_factorial.jsonl` | `docs/ENCODING_NOTES.md` | `tests/test_encoding_factorial.py` |
 | Median receiver not strategy-proof with inertia | Prop. 3 | `mechanisms` (`truthful_gain`) | `mechanisms_table` | `test_truthful_median_reporting_survives_without_inertia_but_not_with_it` |
 | With a pivot the averaging receiver lands exactly on the one-shot outcome in finitely many rounds (closed form); an equilibrium when every edge player is far enough from the pivot | Prop. 18 (target form without the condition: numerical) | | | `test_a_pivot_puts_the_dog_exactly_on_the_one_shot_outcome` |
 | A plain receiver reaches its rest point exactly when a target decides it; a phantom gives only a geometric approach | Prop. 19 | | | `test_the_receiver_arrives_exactly_when_a_target_decides_and_not_when_a_phantom_does` |

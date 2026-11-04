@@ -92,7 +92,7 @@ pg = [
     "equilibrium path. Fitting the policy network to exact per-state targets fixes this in three games, 5 of 5 seeds each.",
 ]
 nash_q = [
-    "<b>Cartesian moves work, polar moves do not.</b> One network reads the state and both players' moves and returns both "
+    "<b>Cartesian moves work; polar moves need a better search.</b> One network reads the state and both players' moves and returns both "
     "Q-values, Q(s, a<sub>1</sub>, a<sub>2</sub>); its learning target uses the equilibrium of each stage game, found by both "
     "players climbing their own Q at once. With moves written as (v<sub>x</sub>, v<sub>y</sub>) in a disk, or as a square, all 5 "
     "seeds bring both players to the one-shot Nash corners, from the houses and from 8 random starts; with polar moves "
@@ -101,7 +101,7 @@ nash_q = [
     "one batch) takes about 0.3 ms on a CPU. Gradient ascent stops at local peaks and leaves 10 to 14% of the Q spread on "
     "Cartesian and square moves; finite differences and autograd agree, so the analytic gradient is not needed. A quadratic "
     "fitted through five points needs 15 evaluations and does about as well as gradient ascent. On polar moves every local "
-    "method leaves 27 to 32%, which is why polar learning fails.",
+    "method leaves 27 to 32%, because that search starts from one fixed angle.",
     "<b>Both players at once.</b> Simultaneous gradient steps of 0.1 to 1 (in units of the move set's radius) rarely settle "
     "exactly within 500 iterations, but where they hover leaves either player at most about 0.001 to gain on Cartesian and "
     "square moves; on polar moves the gap stays at 0.57 to 0.76.",
