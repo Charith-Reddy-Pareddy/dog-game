@@ -52,6 +52,12 @@ experiment keeps what it finished and a rerun skips it. Print every table with
   house configurations × ten seeds). Its score fields match the primary file. This follow-up
   was specified after the primary study started and is exploratory; it is analyzed separately.
 
+- **`noisy_inertia_cycle.txt`**, from `python3 -m doggame.inertia_dp` (hours; this log was stopped after sweep 90,000).
+  The `noisy_inertia` game at `sigma = 0.4`, clipped, run past its cap of 8000 sweeps. One line per checkpoint: the value
+  change, the gaps between returns of the same policy pair, the smallest and largest value change over the last 400
+  sweeps, how many policy pairs have appeared, each player's switching points over those sweeps, unresolved states and
+  elapsed seconds.
+
 ## Companion code (grid soccer)
 
 `soccer_5_seeds.jsonl`, `soccer_fp_diagnosis_runs.jsonl` and `soccer_averaging_round_*.txt` come from

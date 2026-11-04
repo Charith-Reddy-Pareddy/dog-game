@@ -254,6 +254,7 @@ python3 -m doggame.experiments        # the original 15-run convergence study
 python3 -m doggame.dog_game_study     # five-seed convergence and walking runs
 python3 -m doggame.dog_game_studies   # all registered studies (resumable; add 0/4 to shard)
 python3 -m doggame.dog_game_summary   # print every table as Markdown
+python3 -m doggame.inertia_dp         # the noisy solve that cycles (hours; log in results/noisy_inertia_cycle.txt)
 ```
 
 The report builders and the polar-action studies are archived, so they run from the git tag

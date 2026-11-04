@@ -1,0 +1,14 @@
+sweep 554 change 8.481e-04 recent repeat gaps [1, 14, 15, 16] min/max change 1.95e-04/2.84e-03 policies seen 41 red [0.79] blue [0.585, 0.59] unresolved 0 40s
+sweep 1000 change 8.675e-04 recent repeat gaps [1, 14, 15, 16] min/max change 3.17e-04/2.34e-03 policies seen 41 red [0.79] blue [0.585, 0.59] unresolved 0 88s
+sweep 2000 change 8.750e-04 recent repeat gaps [1, 14, 15, 16] min/max change 3.17e-04/2.34e-03 policies seen 41 red [0.79] blue [0.585, 0.59] unresolved 0 197s
+sweep 4000 change 8.750e-04 recent repeat gaps [1, 14, 15, 16] min/max change 3.17e-04/2.34e-03 policies seen 41 red [0.79] blue [0.585, 0.59] unresolved 0 526s
+sweep 8000 change 8.750e-04 recent repeat gaps [1, 14, 15, 16] min/max change 3.17e-04/2.34e-03 policies seen 41 red [0.79] blue [0.585, 0.59] unresolved 0 911s
+sweep 10000 change 8.750e-04 recent repeat gaps [1, 14, 15, 16] min/max change 3.17e-04/2.34e-03 policies seen 41 red [0.79] blue [0.585, 0.59] unresolved 0 1072s
+sweep 20000 change 8.750e-04 recent repeat gaps [1, 14, 15, 16] min/max change 3.17e-04/2.34e-03 policies seen 41 red [0.79] blue [0.585, 0.59] unresolved 0 1855s
+sweep 30000 change 8.750e-04 recent repeat gaps [1, 14, 15, 16] min/max change 3.17e-04/2.34e-03 policies seen 41 red [0.79] blue [0.585, 0.59] unresolved 0 2408s
+sweep 40000 change 8.750e-04 recent repeat gaps [1, 14, 15, 16] min/max change 3.17e-04/2.34e-03 policies seen 41 red [0.79] blue [0.585, 0.59] unresolved 0 5584s
+sweep 50000 change 8.750e-04 recent repeat gaps [1, 14, 15, 16] min/max change 3.17e-04/2.34e-03 policies seen 41 red [0.79] blue [0.585, 0.59] unresolved 0 6284s
+sweep 60000 change 8.750e-04 recent repeat gaps [1, 14, 15, 16] min/max change 3.17e-04/2.34e-03 policies seen 41 red [0.79] blue [0.585, 0.59] unresolved 0 6999s
+sweep 70000 change 8.750e-04 recent repeat gaps [1, 14, 15, 16] min/max change 3.17e-04/2.34e-03 policies seen 41 red [0.79] blue [0.585, 0.59] unresolved 0 7651s
+sweep 80000 change 8.750e-04 recent repeat gaps [1, 14, 15, 16] min/max change 3.17e-04/2.34e-03 policies seen 41 red [0.79] blue [0.585, 0.59] unresolved 0 9158s
+sweep 90000 change 8.750e-04 recent repeat gaps [1, 14, 15, 16] min/max change 3.17e-04/2.34e-03 policies seen 41 red [0.79] blue [0.585, 0.59] unresolved 0 9729s

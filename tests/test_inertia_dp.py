@@ -2,7 +2,7 @@ import numpy as np
 
 from doggame.env import Square
 from doggame.experiments import DEFAULT_CONFIGS
-from doggame.inertia_dp import policy, solve, solve_1d
+from doggame.inertia_dp import noisy_cycle, policy, solve, solve_1d
 from doggame.inertia_mpe import check_mpe
 from doggame.nash import solve_stage_nash
 
@@ -63,3 +63,18 @@ def test_vertex_selection_changes_actions_but_not_values_where_the_houses_coinci
     assert np.any(first["red"] != vertex["red"])
     straddle = [solve_1d(0.7, 0.6, 0.7, 0.6, states=41, actions=21, selection=s) for s in ("first", "vertex")]
     assert np.array_equal(straddle[0]["red"], straddle[1]["red"]) and np.array_equal(straddle[0]["blue"], straddle[1]["blue"])
+
+
+def test_the_watch_hook_sees_every_sweep_and_the_final_change():
+    seen = []
+    sol = solve_1d(0.7, 0.6, 0.7, 0.5, states=31, actions=11, tol=1e-6, watch=lambda sweep, red, blue, change, stable: seen.append((sweep, change)))
+    assert [s for s, _ in seen] == list(range(1, sol["sweeps"] + 1)) and seen[-1][1] < 1e-6
+
+
+def test_the_clipped_noisy_solve_cycles_with_switching_points_within_one_grid_step():
+    lines = open("results/noisy_inertia_cycle.txt").read().splitlines()
+    assert lines[-1].startswith("sweep 90000 ") and len(lines) == 14
+    assert all("recent repeat gaps [1, 14, 15, 16]" in l and "policies seen 41 red [0.79] blue [0.585, 0.59] unresolved 0" in l for l in lines)
+    assert all("change 3.17e-04/2.34e-03" in l for l in lines[1:])
+    start = noisy_cycle(cap=30, report=lambda line: None)
+    assert start["policies"] <= 30 and set(start) == {"policies", "gaps", "red", "blue", "change"}

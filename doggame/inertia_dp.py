@@ -7,6 +7,8 @@ coordinate of the dog), actions in [0, 1] and z' = w0 z + (1 - w0) (w a_red + (1
 value iteration on a grid of states and actions, with the continuation values interpolated linearly.
 """
 
+import time
+
 import numpy as np
 
 
@@ -37,12 +39,13 @@ def _vertex_nash(q_red, q_blue, red, blue):
 
 
 def solve_1d(h_red, h_blue, w, w0, discount=0.9, states=401, actions=101, tol=1e-10, max_iter=2000, noise=0.0, nodes=7, low=0.0, high=1.0,
-             selection="first"):
+             selection="first", watch=None):
     """Feedback equilibrium of one coordinate. Returns the state grid, each player's action and value per state,
     the number of value-iteration sweeps, and how many states had no pure grid equilibrium. With `noise`, the dog's
     next position gets a Gaussian shock of that standard deviation (clipped to [low, high], [0, 1] like the environment
     by default), and expectations use Gauss-Hermite quadrature with `nodes` points. `selection` picks among a state's
-    pure equilibria: "first", the one iterated best response reaches, or "vertex", the one with the largest total value."""
+    pure equilibria: "first", the one iterated best response reaches, or "vertex", the one with the largest total value.
+    `watch(sweep, red, blue, change, stable)`, if given, sees each sweep's action indices, value change and solved states."""
     z, a = np.linspace(low, high, states), np.linspace(0.0, 1.0, actions)
     shock, weight = np.polynomial.hermite_e.hermegauss(nodes) if noise else (np.zeros(1), np.ones(1))
     weight = weight / weight.sum()
@@ -59,9 +62,39 @@ def solve_1d(h_red, h_blue, w, w0, discount=0.9, states=401, actions=101, tol=1e
         new_red, new_blue = q_red[idx, red, blue], q_blue[idx, red, blue]
         change = max(np.abs(new_red - v_red).max(), np.abs(new_blue - v_blue).max())
         v_red, v_blue = new_red, new_blue
+        if watch:
+            watch(sweep, red, blue, change, stable)
         if change < tol:
             break
     return dict(z=z, red=a[red], blue=a[blue], v_red=v_red, v_blue=v_blue, sweeps=sweep, unresolved=int((~stable).sum()))
+
+
+def noisy_cycle(cap=100000, report=print):
+    """The clipped sigma = 0.4, dt = 0.05 game of study noisy_inertia, which stops at its cap of 8000 sweeps. Runs value
+    iteration to `cap` and reports at checkpoints the gaps between returns of the same policy pair, the value changes
+    and switching points over the last 400 sweeps, and how many policy pairs have appeared. The saved log is
+    results/noisy_inertia_cycle.txt."""
+    dt, sigma = 0.05, 0.4
+    z, a = np.linspace(0.0, 1.0, 201), np.linspace(0.0, 1.0, 21)
+    switch = lambda i: round(float(z[np.argmax(a[i] < 0.5)]), 4)
+    seen, recent, start = {}, [], time.time()
+    summary = lambda: dict(policies=len(seen), gaps=sorted({r[3] for r in recent if r[3]}), red=sorted({r[0] for r in recent}),
+                           blue=sorted({r[1] for r in recent}), change=(min(r[2] for r in recent), max(r[2] for r in recent)))
+
+    def watch(sweep, red, blue, change, stable):
+        key = (red.tobytes(), blue.tobytes())
+        recent.append((switch(red), switch(blue), change, sweep - seen[key] if key in seen else None))
+        del recent[:-400]
+        seen[key] = sweep
+        if sweep in (554, 1000, 2000, 4000, 8000) or sweep % 10000 == 0:
+            s = summary()
+            report(f"sweep {sweep} change {change:.3e} recent repeat gaps {s['gaps'][:8]} min/max change {s['change'][0]:.2e}/"
+                   f"{s['change'][1]:.2e} policies seen {s['policies']} red {s['red'][:6]} blue {s['blue'][:6]} unresolved "
+                   f"{int((~stable).sum())} {time.time() - start:.0f}s")
+
+    solve_1d(0.7, 0.6, 0.7, 1 - dt, discount=float(np.exp(-0.5 * dt)), states=201, actions=21, tol=1e-8, max_iter=cap,
+             noise=sigma * np.sqrt(dt), watch=watch)
+    return summary()
 
 
 def solve(houses, w, w0, **options):
@@ -78,3 +111,7 @@ def policy(solution, x):
         red.append(part["red"][j])
         blue.append(part["blue"][j])
     return np.array(red), np.array(blue)
+
+
+if __name__ == "__main__":
+    noisy_cycle()
