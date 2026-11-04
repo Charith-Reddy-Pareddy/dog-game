@@ -58,6 +58,16 @@
     max-width: 480px;
     min-width: 0;
   }
+  .trail-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 12px;
+    margin-top: 6px;
+    font-size: 0.78rem;
+    color: var(--muted);
+  }
+  .trail-legend span { display: inline-flex; align-items: center; gap: 5px; }
+  .trail-legend i { width: 16px; height: 3px; border-radius: 2px; display: inline-block; }
   canvas {
     background: #fbf9f4;
     border: 1px solid var(--line);
@@ -143,6 +153,7 @@
     <div class="layout">
       <div class="stage-wrap">
         <canvas id="stage" width="480" height="480"></canvas>
+        <div class="trail-legend" id="trailLegend"></div>
       </div>
 
       <div class="panel">
@@ -168,6 +179,10 @@
         <div class="btn-row">
           <button class="ghost" id="runBtn">Run to equilibrium</button>
         </div>
+        <div class="btn-row">
+          <button class="ghost" id="keepBtn">Keep paths to compare</button>
+          <button class="ghost" id="clearBtn">Clear kept paths</button>
+        </div>
 
         <div class="legend">
           <div class="row"><span><span class="swatch" style="background:var(--red)"></span>Red pick / house</span><span class="metric" id="redDist">&mdash;</span></div>
@@ -176,6 +191,10 @@
         </div>
 
         <p class="hint">
+          Lines show the dog (black) and each player's pick, round by round,
+          from the hollow circles. Press "Keep paths to compare" to hold a run
+          on the board, then change a slider and run again; up to four kept
+          runs stay, labelled with their settings.
           Distances shown are squared distance from the dog to each house
           after the round. Drag the solid house markers anywhere in the
           square to re-pose the game. Raising w0 makes the dog only
@@ -217,6 +236,9 @@
   const stepBtn = document.getElementById("stepBtn");
   const runBtn = document.getElementById("runBtn");
   const resetBtn = document.getElementById("resetBtn");
+  const keepBtn = document.getElementById("keepBtn");
+  const clearBtn = document.getElementById("clearBtn");
+  const trailLegend = document.getElementById("trailLegend");
   const redDistEl = document.getElementById("redDist");
   const blueDistEl = document.getElementById("blueDist");
   const roundEl = document.getElementById("round");
@@ -228,7 +250,12 @@
     actionBlue: { x: 0.3, y: 0.65 },
     dog: { x: 0.5, y: 0.5 },
     round: 0,
+    trail: [],
   };
+  // Runs held on the board for comparison, each with its settings and its own color.
+  const KEPT_COLORS = ["#b8862e", "#1baf7a", "#8a4fc9", "#eb6834"];
+  let kept = [];
+  let keptCount = 0;
 
   function clip(v) {
     return Math.min(DOMAIN.high, Math.max(DOMAIN.low, v));
@@ -504,6 +531,89 @@
     ctx.fill();
   }
 
+  function drawPath(points, color, width, dash) {
+    ctx.save();
+    ctx.setLineDash(dash || []);
+    ctx.strokeStyle = color;
+    ctx.lineWidth = width;
+    ctx.lineJoin = "round";
+    ctx.beginPath();
+    points.forEach((p, i) => {
+      const c = toCanvas(p);
+      if (i === 0) ctx.moveTo(c.x, c.y);
+      else ctx.lineTo(c.x, c.y);
+    });
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  // A hollow circle at the start, then a dot for every round of the path.
+  function drawPathMarks(points, color, radius) {
+    points.forEach((p, i) => {
+      const c = toCanvas(p);
+      ctx.beginPath();
+      ctx.arc(c.x, c.y, i === 0 ? radius + 2 : radius, 0, Math.PI * 2);
+      ctx.fillStyle = i === 0 ? "#fdfbf7" : color;
+      ctx.fill();
+      if (i === 0) {
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+      }
+    });
+  }
+
+  function drawTrails() {
+    kept.forEach((run) => {
+      drawPath(run.trail.map((t) => t.red), run.color + "77", 1.2, [2, 3]);
+      drawPath(run.trail.map((t) => t.blue), run.color + "77", 1.2, [2, 3]);
+      drawPath(run.trail.map((t) => t.dog), run.color, 2.2);
+      drawPathMarks(run.trail.map((t) => t.dog), run.color, 1.6);
+    });
+    if (state.trail.length < 2) return;
+    const red = state.trail.map((t) => t.red);
+    const blue = state.trail.map((t) => t.blue);
+    const dog = state.trail.map((t) => t.dog);
+    drawPath(red, "#d8555f", 1.6);
+    drawPathMarks(red, "#d8555f", 1.5);
+    drawPath(blue, "#3f7d9e", 1.6);
+    drawPathMarks(blue, "#3f7d9e", 1.5);
+    drawPath(dog, "#2a2622", 2.2);
+    drawPathMarks(dog, "#2a2622", 1.8);
+  }
+
+  function settings() {
+    const delta = stepSize() > 0 ? stepSize().toFixed(2) : "none";
+    return "w " + w().toFixed(2) + ", w0 " + inertia().toFixed(2) + ", max step " + delta;
+  }
+
+  function renderLegend() {
+    trailLegend.textContent = "";
+    kept.forEach((run) => {
+      const item = document.createElement("span");
+      const chip = document.createElement("i");
+      chip.style.background = run.color;
+      item.append(chip, run.label);
+      trailLegend.append(item);
+    });
+  }
+
+  function keepPaths() {
+    if (state.trail.length < 2) return;
+    kept.push({ trail: state.trail.slice(), label: settings(), color: KEPT_COLORS[keptCount % KEPT_COLORS.length] });
+    keptCount += 1;
+    if (kept.length > KEPT_COLORS.length) kept.shift();
+    renderLegend();
+    render();
+  }
+
+  function clearKept() {
+    kept = [];
+    keptCount = 0;
+    renderLegend();
+    render();
+  }
+
   function render() {
     ctx.clearRect(0, 0, CSS_SIZE, CSS_SIZE);
 
@@ -536,6 +646,8 @@
     ctx.stroke();
     ctx.setLineDash([]);
 
+    drawTrails();
+
     drawHouse(state.houseRed, "#b23a44", "#d8555f", "#8f2e37");
     drawHouse(state.houseBlue, "#2c5c76", "#3f7d9e", "#234a5e");
     drawPerson(state.actionRed, "#d8555f", "#8f2e37");
@@ -549,6 +661,10 @@
     roundEl.textContent = state.round;
   }
 
+  function recordTrail() {
+    state.trail.push({ dog: { ...state.dog }, red: { ...state.actionRed }, blue: { ...state.actionBlue } });
+  }
+
   function step() {
     const wv = w();
     const newRed = walkToward(state.actionRed, bestResponseRed(state.actionBlue, state.houseRed, wv), stepSize());
@@ -557,6 +673,7 @@
     state.actionBlue = newBlue;
     state.dog = inertialBlend(state.dog, state.actionRed, state.actionBlue, wv, inertia());
     state.round += 1;
+    recordTrail();
     render();
   }
 
@@ -565,6 +682,8 @@
     state.actionBlue = { ...state.houseBlue };
     state.dog = blend(state.actionRed, state.actionBlue, w());
     state.round = 0;
+    state.trail = [];
+    recordTrail();
     render();
   }
 
@@ -635,6 +754,8 @@
   stepBtn.addEventListener("click", step);
   runBtn.addEventListener("click", runToEquilibrium);
   resetBtn.addEventListener("click", reset);
+  keepBtn.addEventListener("click", keepPaths);
+  clearBtn.addEventListener("click", clearKept);
 
   reset();
 })();
