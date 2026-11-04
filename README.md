@@ -126,9 +126,11 @@ from the saved runs in `results/`:
   learning works, and one setup is much harder (no algorithm learns it in 300 episodes).
 - **An entropy bonus does not make PPO reliable on the walking game.** A coefficient of 0.03 lowers the mean
   distance from the corners but leaves 3 of 5 seeds there, as without it (Q31).
-- **For Nash-Q with continuous moves, Cartesian coordinates work and polar ones do not.** Every seed reaches
-  the corners with (vx, vy) moves and none with (r, theta), because gradient play cannot find the stage-game
-  equilibrium in polar coordinates; a batched grid or a five-point quadratic gives fast best responses (Q38, Q39).
+- **For Nash-Q with continuous moves, polar coordinates depend on where the search starts.** Every seed reaches
+  the corners with (vx, vy) moves. With (r, theta) none does when gradient play starts at one fixed angle, because
+  it misses the stage-game equilibrium from there; trying 8 directions first reaches them in 10 of 10 seeds. The
+  disk or square region is about 3% of the difference. A batched grid or a five-point quadratic gives fast best
+  responses (Q38, Q39).
 - **Persistence changes which voting rule is better.** With inertia truthful median reporting is no longer an
   equilibrium, but the median rule moves the outcome as fast as any mechanism could, so it loses less than the
   mean rule at high inertia; when shocks come with the new aggregate some inertia is welfare-maximizing

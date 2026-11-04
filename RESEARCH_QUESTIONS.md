@@ -300,11 +300,15 @@ with the numbers and the caveats, are in [RESEARCH_REPORT.md](RESEARCH_REPORT.md
     the network to per-state best responses or stage equilibria reaches it in all three games
     (Q42).*
 38. **Which move coordinates work better for Nash-Q with continuous moves, (vx, vy) or (r, theta)?**
-    (Week-7 notes.) *Status: answered for the walking game (five seeds per encoding).
-    Cartesian moves, in a disk or a square, bring both players to the one-shot corners from
-    every start in every seed; polar moves in none. In polar coordinates gradient play does not
-    find the stage-game equilibrium (best responses miss 27 to 32% of the Q spread), and the
-    learning target depends on it.*
+    (Week-7 notes.) *Status: answered for the walking game. Cartesian moves, in a disk or a
+    square, bring both players to the one-shot corners from every start in every seed (five
+    seeds per encoding); polar moves in none with a search that starts at theta = 0, because
+    gradient play from that angle does not find the stage-game equilibrium (best responses
+    miss 27 to 32% of the Q spread), and the learning target depends on it. The cause is the
+    search, not the region: in a 2 x 2 x 2 study (10 seeds per cell) the
+    search coordinates are 74.0% of the difference between mean paths and the disk or square
+    region 2.8%, and trying 8 directions before the gradient steps, in training and in play,
+    brings polar moves within 0.1 of the corners in 10 of 10 seeds (`docs/ENCODING_NOTES.md`).*
 39. **How should a best response over a continuous move be computed from a Q-network, quickly?**
     (Week-7 notes: finite differences, gradients, a quadratic through a few points, projection
     back onto the move set.) *Status: answered for these networks. A batched dense grid is exact
@@ -353,7 +357,7 @@ with the numbers and the caveats, are in [RESEARCH_REPORT.md](RESEARCH_REPORT.md
 | 7 | studies `cross_play` (15 runs) and `selection` (30 runs) |
 | 13 | study `vertex_selection` (6 solves), `selection` in `doggame/inertia_dp.py` |
 | 36 | studies `many_houses` (2,000 draws) and `many_targets` (60 games), `doggame/many_houses.py` |
-| 38, 39 | studies `continuous_q` (15 runs) and `continuous_q_tools` (3), `doggame/continuous_q.py`, `docs/continuous_q_trajectories.svg` |
+| 38, 39 | studies `continuous_q` (15 runs) and `continuous_q_tools` (3), `doggame/continuous_q.py`, `docs/continuous_q_trajectories.svg`; for Q38 also `doggame/encoding_factorial.py`, `docs/ENCODING_NOTES.md` |
 | 37 | studies `feedback_learning` (55 rows) and `exact_play` (24 runs), `doggame/feedback_learning.py`, `doggame/exact_play.py` |
 | 35 | study `noisy_inertia` (9 solves), `continuous_limit` in `doggame/inertia_theory.py`, `noise` in `doggame/inertia_dp.py` |
 | 26 | study `walking` (15 runs) |
