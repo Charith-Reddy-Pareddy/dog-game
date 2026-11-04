@@ -273,6 +273,18 @@ def test_the_compensated_median_with_truthful_reports_follows_the_median_rule_eq
     assert np.allclose(path, np.clip(0.45, 0.6 * x, 0.6 * x + 0.4))
 
 
+def test_the_median_rule_is_truthful_about_the_next_outcome_and_not_about_the_report():
+    rng = np.random.default_rng(5)
+    for n, w0, discount in ((3, 0.5, 0.9), (5, 0.8, 0.9), (3, 0.8, 0.0), (5, 0.3, 0.99)):
+        houses, w = rng.random(n), np.full(n, 1 / n)
+        aim = lambda x: np.clip((houses - w0 * x) / (1 - w0), 0, 1)
+        assert M.deviation_gain("median", aim, houses, w, w0, discount, states=7, grid=101, rounds=60) == 0
+        assert M.deviation_gain("median", lambda x: houses, houses, w, w0, discount, states=7, grid=101, rounds=60) > 0.01
+        x = np.linspace(0, 1, 41)
+        assert np.allclose(w0 * x + (1 - w0) * np.median(np.array([aim(v) for v in x]), 1), M.step("median", x, houses, w, w0))
+        assert all(((aim(v) - v) * (houses - v) >= 0).all() for v in x)  # a report never points away from the house
+
+
 def test_the_target_form_is_an_equilibrium_under_both_rules_and_the_planner_loses_least():
     planner = M.social_loss(lambda x: M.planner_step(x, HOUSES, 0.6), HOUSES)
     for rule in M.RULES:

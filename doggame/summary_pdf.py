@@ -129,7 +129,7 @@ def build(out=OUTPUT):
             "(stars), while the dog drifts round by round to the middle. Grey cross: the mean target, where a planner would put the dog."),
         fig(folder, "fig8.png", 4.7 * inch * 1826 / 1628, "<b>Fig. 2.</b> Three influencers with the same targets and start, inertia 0.9; "
             "each coordinate is aggregated separately. Top: BIG's averaging receiver and the median receiver at their equilibria; the "
-            "influencers exaggerate to the edges (circles), and the median receiver is within 0.01 of where it ends after 11 rounds, "
+            "influencers exaggerate toward the edges (circles), and the median receiver is within 0.01 of where it ends after 11 rounds, "
             "averaging after 27. Bottom: the compensated averaging receiver with truthful reports (on the targets), after 10 rounds, "
             "and the planner, after 7.", width=4.7 * inch),
         fig(folder, "fig3.png", 6.2 * inch * 572 / 1584, "<b>Fig. 3.</b> Share of 100 random games (targets uniform on [0, 1]) in which the "

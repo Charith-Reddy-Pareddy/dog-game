@@ -181,7 +181,7 @@ def build(out=OUTPUT):
         Paragraph("Figures 1 and 2 show what the influencers and the receiver actually do, round by round: equilibrium play under "
                   "different receivers, and the paths learned by continuous-move Nash-Q.", body),
         fig(folder, "fig8.png", "<b>Fig. 1.</b> Three influencers, same targets and start, inertia 0.9, each coordinate aggregated "
-            "separately. Top: BIG's averaging receiver and the median receiver at their equilibria; influencers exaggerate to the edges "
+            "separately. Top: BIG's averaging receiver and the median receiver at their equilibria; influencers exaggerate toward the edges "
             "(circles); the median receiver is within 0.01 of its end point after 11 rounds, averaging after 27. Bottom: the compensated "
             "averaging receiver with truthful reports (on the targets), after 10 rounds, and the planner, after 7.", width=4.6 * inch),
         fig(folder, "fig10.png", "<b>Fig. 2.</b> Nash-Q with continuous moves (seed 0): greedy equilibrium paths from the houses (solid) and "

@@ -323,7 +323,31 @@ deviation principle it suffices to check one-round deviations.
   and nothing can be lowered.
 - Players below the median are the mirror image. ∎
 
-So inertia costs the median rule its truthfulness but not its speed: the outcome still moves to the
+**Proposition 20 (the median rule is truthful about the next outcome).** For every w0 in [0, 1) and every
+discount, the profile in which every player reports
+
+    r_i(x) = clip((h_i - w0 x) / (1 - w0), 0, 1)
+
+is a feedback equilibrium, with the same outcomes as Proposition 4. Unclipped, r_i(x) = h_i + (w0 / (1 - w0)) (h_i - x):
+the report lies on the line from the outcome through the player's house, 1 / (1 - w0) times as far away. So r_i(x) - x
+has the sign of h_i - x, and a report never points away from the house. With discount 0 the report is weakly dominant.
+
+*Proof.* The map y -> (y - w0 x) / (1 - w0) is increasing, so the reports are ordered as the houses, the median of
+the reports is the median player's report, and the outcome moves to G(x) as in Proposition 4. The median player can
+reach only outcomes in [w0 x, w0 x + 1 - w0], and by Proposition 4 its report is the best of those. A player with
+h_i > h_m has r_i(x) >= r_m(x), so it can only lower the median, and the rest of the argument for that player in
+Proposition 4 applies unchanged; players below are the mirror image. For the sign, r_i(x) - x = (h_i - x) / (1 - w0)
+before clipping, and clipping to [0, 1] keeps it on the same side of x, because h_i and x are in [0, 1]. With discount
+0 a player cares only about the next outcome, so its peak over the median is clip((h_i - w0 x) / (1 - w0), 0, 1),
+and the median rule makes reporting that peak weakly dominant (Moulin, 1980). ∎
+
+Propositions 3 and 20 belong together. Reporting the house itself is not an equilibrium once w0 > 0, because the outcome
+moves only part of the way to the median. Reporting what would put the outcome on the house is one: the rule
+stays strategy-proof, in the next outcome and not in the report. Proposition 4 is the same outcomes with a different
+report by the players who are not pivotal: their report only has to stay on the same side of the median
+player's, so equilibrium reports are far from unique, and only the median player's is pinned down.
+
+So inertia costs the median rule its literal truthfulness but not its speed: the outcome still moves to the
 median house as fast as any mechanism could move it there. The mean rule has no such property; in the
 study `mechanisms` its outcome moves more slowly, because players on the far side of the outcome keep
 pulling against it.

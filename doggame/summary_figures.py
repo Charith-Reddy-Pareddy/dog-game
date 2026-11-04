@@ -36,10 +36,16 @@ CHART = {"font.size": 9, "axes.edgecolor": INK2, "axes.labelcolor": INK, "xtick.
 SQUARE = {"font.family": "DejaVu Sans", "font.size": 9, "axes.edgecolor": FRAME}
 
 
+def aims_of(rule, targets, weights, w0):
+    """What each influencer aims the next position at, per coordinate. Under the median its own target (Proposition 20);
+    under averaging the equilibrium targets."""
+    return [targets[:, c] if rule == "median" else M.target_equilibrium(rule, targets[:, c], weights, w0)[0] for c in range(2)]
+
+
 def simulate(rule, targets, start, w0, rounds):
     """Dog path and every player's actions per round in the square, each coordinate solved on its own."""
     weights = np.full(len(targets), 1 / len(targets))
-    aims = [M.target_equilibrium(rule, targets[:, c], weights, w0)[0] for c in range(2)]
+    aims = aims_of(rule, targets, weights, w0)
     dog, actions = [np.array(start, float)], []
     for _ in range(rounds):
         a = np.stack([M.reports(rule, dog[-1][c], aims[c], weights, w0) for c in range(2)], 1)
@@ -331,7 +337,7 @@ NAMES = {"mean": "Averaging", "median": "Median"}
 
 def _dynamic(rule, targets, w, w0):
     """Equilibrium targets of each coordinate, and the dog's next position from an array of positions (n, 2)."""
-    aims = [M.target_equilibrium(rule, targets[:, c], w, w0)[0] for c in range(2)]
+    aims = aims_of(rule, targets, w, w0)
     return aims, lambda p: np.stack([M.step(rule, p[:, c], aims[c], w, w0) for c in range(2)], 1)
 
 
@@ -383,7 +389,8 @@ def fig11(out, w0=0.8, rounds=25):
 def fig12(out, w0=0.8):
     """The influencers' response vector fields in the dynamic game: at each dog position, an arrow toward the report each
     influencer makes there in equilibrium (fixed length; darker = the report is farther away), and the reports as circles,
-    for the averaging and the median receiver. Returns, per rule and influencer, the number of distinct reports."""
+    for the averaging and the median receiver. Median reports are those of Proposition 20: unclipped, each lies on the
+    line from the dog through the influencer's target. Returns, per rule and influencer, the number of distinct reports."""
     targets, w = np.array([[0.15, 0.7], [0.3, 0.2], [0.9, 0.55]]), np.full(3, 1 / 3)
     grid, counts = np.linspace(0.05, 0.95, 11), []
     x, y = np.meshgrid(grid, grid)
