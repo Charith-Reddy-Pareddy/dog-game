@@ -142,6 +142,21 @@ def deviation_gain(rule, policy, houses, weights, w0, discount=0.9, states=21, g
     return best
 
 
+def report_directions(rule, targets, w0, grid=21):
+    """How reports point in the square (targets: players x 2), over a grid of dog positions, in equilibrium; median reports
+    are those of Proposition 20. Returns the median angle in degrees between dog -> report and dog -> target, the share of
+    report coordinates that point away from the target, and the share of report coordinates strictly inside the box."""
+    weights, axis = np.full(len(targets), 1 / len(targets)), np.linspace(0.05, 0.95, grid)
+    aims = [targets[:, c] if rule == "median" else target_equilibrium(rule, targets[:, c], weights, w0)[0] for c in range(2)]
+    dog = np.stack(np.meshgrid(axis, axis), -1).reshape(-1, 2)
+    chosen = np.stack([np.array([reports(rule, x, aims[c], weights, w0) for x in dog[:, c]]) for c in range(2)], -1)
+    to_report, to_target = chosen - dog[:, None], targets[None] - dog[:, None]
+    cosine = (to_report * to_target).sum(-1) / (np.linalg.norm(to_report, axis=-1) * np.linalg.norm(to_target, axis=-1) + 1e-300)
+    angle = np.degrees(np.arccos(np.clip(cosine, -1, 1)))[np.linalg.norm(to_target, axis=-1) > 1e-3]
+    away = (to_report * to_target < 0) & (np.abs(to_target) > 1e-3)
+    return float(np.median(angle)), float(away.mean()), float(((chosen > 1e-9) & (chosen < 1 - 1e-9)).mean())
+
+
 def limit_coefficients(n):
     """c_k = E[(x - mean house) 1{k houses above x}] for n houses and a start x, all uniform on [0, 1]:
     (n - 2k) / (2n(n + 2)), k = 0..n. As inertia tends to 1 a generalized median receiver's loss is, to first

@@ -285,6 +285,15 @@ def test_the_median_rule_is_truthful_about_the_next_outcome_and_not_about_the_re
         assert all(((aim(v) - v) * (houses - v) >= 0).all() for v in x)  # a report never points away from the house
 
 
+def test_median_reports_never_point_away_from_the_target_and_the_gap_to_averaging_closes_with_inertia():
+    targets = np.array([[0.15, 0.7], [0.3, 0.2], [0.9, 0.55]])
+    found = {(rule, w0): M.report_directions(rule, targets, w0) for rule in ("mean", "median") for w0 in (0.2, 0.8, 0.9)}
+    assert all(found["median", w0][1] == 0 and found["mean", w0][1] > 0.1 for w0 in (0.2, 0.8, 0.9))
+    assert found["median", 0.2][0] < 1 < 13 < found["mean", 0.2][0]
+    assert 1 < found["mean", 0.9][0] - found["median", 0.9][0] < 2  # at high inertia median reports reach the edges too
+    assert found["median", 0.2][2] > 0.8 > 0.1 > found["median", 0.9][2] - 0.02
+
+
 def test_the_target_form_is_an_equilibrium_under_both_rules_and_the_planner_loses_least():
     planner = M.social_loss(lambda x: M.planner_step(x, HOUSES, 0.6), HOUSES)
     for rule in M.RULES:
