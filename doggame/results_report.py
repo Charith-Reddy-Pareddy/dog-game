@@ -268,15 +268,14 @@ def build(out=OUTPUT):
                   "(U - t)/U &ge; &lambda; at the bottom). Otherwise the equilibrium in target form still lands exactly in random games "
                   "with three and five influencers (numerical), but in 2 of 12 games with five influencers at inertia 0.9 it is not "
                   "an equilibrium (largest gain 0.005).", body),
-        fig(folder, "fig11.png", "<b>Fig. 6.</b> Averaging and median receivers in the dynamic game, inertia 0.8, targets and start as in "
-            "Fig. 1. Left: the receiver's one-round move from each position (scaled per panel, darker = faster) and paths from the four "
-            "corners. Right: one equilibrium path with every report. The averaging receiver lands exactly on y = 0.55 in round 5, "
-            "because the y-coordinate has a pivot (influencer 3), but only approaches x = 1/3; the median receiver lands exactly in "
-            "both coordinates (rounds 6 and 3).", width=4.6 * inch),
+        fig(folder, "fig11.png", "<b>Fig. 6.</b> The dynamic game with two influencers under averaging, equal weights, targets (0.3, 0.6) and "
+            "(0.7, 0.95), inertia 0.8. Left: the receiver's one-round move from each position (darker = faster) and paths from the four "
+            "corners. Right: one equilibrium path with every report. The receiver lands exactly on y = 0.6 in round 4, because influencer 1 "
+            "is the pivot in y, but only approaches the phantom x = 1/2.", width=6.0 * inch),
         fig(folder, "fig12.png", "<b>Fig. 7.</b> Response vector fields of the same game: at each receiver position, an arrow toward the "
             "report each influencer makes there in equilibrium (fixed length, darker = farther), and the reports themselves (circles). "
-            "Under averaging the influencers report at the edges, with two or three distinct reports each over the whole square; under "
-            "the median the reports move with the receiver's position (8, 5 and 5 distinct reports)."),
+            "Most reports sit on an edge. Influencer 2 always reports 1 in y; influencer 1 is the pivot in y, so its report there "
+            "depends on where the receiver is."),
 
         Paragraph("5. Cooling off: some inertia can help", h),
         Paragraph("Without noise, inertia only slows the outcome. If each round's new aggregate is noisy, inertia filters it: for the "

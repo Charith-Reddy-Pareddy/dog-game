@@ -18,11 +18,11 @@ files. The receiver (mechanism) results need only a small part of that:
 | `doggame/dog_game_summary.py` | Only the `mechanisms*_table` functions turn saved runs into the numbers in the docs | about 250 lines |
 | `results/dog_game_studies.jsonl` | The saved runs, one JSON row per run | data |
 | `tests/test_mechanisms.py` | 35 tests of the claims below | |
-| `doggame/summary_figures.py` | The nine figures of the key-results summary PDF (`fig8`, `fig9` and `fig10` are its Figs. 2, 7 and 9), `fig11` and `fig12` (the dynamic game for averaging and median: the dog's vector field with paths and reports, and each influencer's response field), and `paper()`, which writes four of them as vector PDFs | one function per figure |
+| `doggame/summary_figures.py` | The nine figures of the key-results summary PDF (`fig8`, `fig9` and `fig10` are its Figs. 2, 7 and 9), `fig11`, `fig12` and `fig13` (the dynamic game with two influencers under averaging: the dog's vector field with paths and reports, each influencer's response field, and the distance to the rest point), and `paper()`, which writes four of them as vector PDFs | one function per figure |
 | `doggame/summary_pdf.py` | The key-results summary PDF itself: text, figures, captions | |
 | `doggame/results_report.py` | The eight-page results report: results at a glance, recent updates, and the seven main graphs and trajectories (`fig8`, `fig10`, `fig3`, `fig4`, `fig6`, and `fig11`, `fig12` of the dynamic game) | |
 | `docs/INERTIA_PROOFS.md` | The proofs (Propositions 1 to 5 and 7 to 20) | |
-| `docs/Dog_Game_Results_and_Updates.pdf` | A snapshot of the latest results, linked from the site; `docs/figures/` holds its plots (`fig11`, `fig12`, and the distance to the rest point) | |
+| `docs/Dog_Game_Results_and_Updates.pdf` | A snapshot of the latest results, linked from the site; `docs/figures/` holds its plots (`fig11`, `fig12` and `fig13`) | |
 
 The policy-gradient results use a second, separate set: `env.py` (the game), `agents.py` and `networks.py`
 (the policies), `train.py` and `train_ac.py` (REINFORCE, A2C, PPO), `verify.py` (exploitability),

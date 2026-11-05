@@ -1,6 +1,7 @@
 import numpy as np
 
 from doggame import dog_game_summary as S
+from doggame import mechanisms as M
 from doggame import summary_figures as F
 
 
@@ -16,7 +17,16 @@ def test_figure_8_times_each_receiver_and_the_paper_figures_are_vector_pdfs(tmp_
     assert sorted(p.name for p in out.glob("*.pdf")) == ["compensated_paths.pdf", "design.pdf", "reversal.pdf", "weight.pdf"]
 
 
-def test_the_dynamic_game_figures_show_exact_arrival_only_where_the_receiver_can_reach_its_end(tmp_path):
-    # averaging: x has no pivot and only approaches 1/3, y has one and lands in round 5; the median lands in both
-    assert F.fig11(tmp_path / "fig11.png") == [(None, 5), (6, 3)]
-    assert F.fig12(tmp_path / "fig12.png") == [2, 3, 3, 15, 20, 10]  # averaging reports stay near the edges, median ones move
+def test_the_dynamic_game_figures_show_exact_arrival_only_where_a_target_decides(tmp_path):
+    # x ends on the phantom 1/2 and never arrives, y lands on influencer 1's target in round 4 (Proposition 18)
+    assert F.fig11(tmp_path / "fig11.png") == (None, 4)
+    assert F.fig12(tmp_path / "fig12.png") == [6, 2]
+    land, left = F.fig13(tmp_path / "fig13.png")
+    assert land == 4 and round(left, 4) == 0.0014
+
+
+def test_the_game_of_the_dynamic_figures_is_an_equilibrium_in_both_coordinates():
+    aims, _ = F.two_influencers(0.8)
+    for c in range(2):
+        policy = lambda x, c=c: M.reports("mean", x, aims[c], F.TWO_WEIGHTS, 0.8)
+        assert M.deviation_gain("mean", policy, F.TWO_TARGETS[:, c], F.TWO_WEIGHTS, 0.8) < 1e-6
