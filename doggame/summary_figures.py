@@ -409,7 +409,7 @@ def fig12(out, w0=0.8):
                 ax.scatter(rx, ry, s=16, facecolors="white", edgecolors=COLORS[i], lw=1.1, zorder=5, clip_on=False)
                 ax.scatter(*targets[i], s=200, marker="*", facecolors="white", edgecolors=COLORS[i], lw=1.6, zorder=6)
                 counts.append(len(np.unique(np.round(np.stack([rx.ravel(), ry.ravel()], 1), 6), axis=0)))
-        fig.text(0.5, 0.008, f"Feedback equilibrium, inertia {w0}, targets as in Fig. 11 (stars). Arrows point from the dog's position "
+        fig.text(0.5, 0.008, f"Feedback equilibrium, inertia {w0}, targets shown as stars. Arrows point from the dog's position "
                  "toward the influencer's report there; circles = the reports.", ha="center", fontsize=7.2, color=INK2)
         fig.tight_layout(rect=(0, 0.03, 1, 1), h_pad=2.0)
         fig.savefig(out, dpi=220), plt.close(fig)
