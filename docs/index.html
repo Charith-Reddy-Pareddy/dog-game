@@ -209,18 +209,19 @@
     <p class="sub">
       The focus is the averaging receiver in the dynamic Markov game: the dog keeps a share &lambda; of its position each
       round, and influencers plan ahead. Read more in the
-      <a href="Dog_Game_Results_and_Updates.pdf" target="_blank" rel="noopener">results and updates (PDF)</a>; the proofs are in
-      <a href="INERTIA_PROOFS.pdf" target="_blank" rel="noopener">Inertia proofs (PDF)</a>.
+      <a href="Dog_Game_Results_and_Updates.pdf" target="_blank" rel="noopener">results and updates (PDF)</a>; the written arguments are in
+      <a href="INERTIA_PROOFS.pdf" target="_blank" rel="noopener">Inertia proofs (PDF)</a>. &ldquo;Derived&rdquo; below means a
+      written argument plus numerical checks, not refereed or checked independently.
     </p>
     <ul class="highlights">
-      <li><b>A sticky receiver arrives exactly when an influencer decides.</b> If an influencer's target decides the rest point, the dog lands on it in finitely many rounds. If a phantom decides it, the dog only gets closer and never arrives (Proposition 19, proved).</li>
-      <li><b>In the main game, averaging arrives exactly when there is a pivot.</b> The number of rounds has a closed form. The simple policy is proved to be an equilibrium only when every edge influencer is far enough from the pivot (Proposition 18). About half of random games have a pivot (numerical).</li>
-      <li><b>The median with inertia is truthful about the next position.</b> Reporting your target is not an equilibrium once the dog has inertia. Reporting what would put the dog on your target next round is one, at every inertia, and that report lies on the line from the dog through the target (Proposition 20, proved).</li>
+      <li><b>A sticky receiver arrives exactly when an influencer decides.</b> If an influencer's target decides the rest point, the dog lands on it in finitely many rounds. If a phantom decides it, the dog only gets closer and never arrives (Proposition 19, derived for equal weights with influencers playing one round at a time).</li>
+      <li><b>With a pivot, averaging arrives in a known number of rounds.</b> The number of rounds has a closed form, and the simple policy is an equilibrium when every edge influencer is far enough from the pivot (Proposition 18, derived; the condition is sufficient, not necessary). About half of random games have a pivot (numerical).</li>
+      <li><b>The median with inertia is truthful about the next position.</b> Reporting your target is no longer always an equilibrium once the dog has inertia; counterexamples need at least three distinct targets. With an odd number of influencers, reporting what would put the dog on your target next round is one, at every inertia, and that report lies on the line from the dog through the target (Proposition 20, derived). The median material is known; this one-round step is a known result (Walsh, 2021).</li>
       <li><b>Cartesian and polar moves differed because of the search, not the region.</b> The search for a move always started at &theta; = 0. The disk or square region accounts for about 3% of the difference, and a search that tries 8 directions first brings polar moves to the corners in 10 of 10 seeds (numerical; <a href="https://github.com/Charith-Reddy-Pareddy/dog-game/blob/main/docs/ENCODING_NOTES.md" target="_blank" rel="noopener">notes</a>).</li>
       <li><b>Trajectories and vector fields of the dynamic game,</b> for the receiver and for each influencer's response, below. The <a href="#simulator">live simulator</a> now draws its trajectories and can keep runs to compare.</li>
       <li><b>Open:</b> the general pivot case. Target form was an equilibrium in 10 of 12 checked games. In the other 2, an influencer gains up to 0.005.</li>
       <li><b>Corrected:</b> the result that the best compensated phantoms do not depend on inertia holds when each phantom's criterion changes sign once, as for uniform targets. The gain from shading under clipped shocks is about 0.0015, not 0.0024.</li>
-      <li><b>How new this is:</b> new as far as the searches went, which were not a systematic review. The mathematics of Proposition 19 is elementary, and none of the proofs has been refereed.</li>
+      <li><b>How new this is:</b> the median form of the rest point is known (Renault and Trannoy, 2005; Munie and Shoham, 2010, for a persistent game with a running average). The equilibrium results are new as far as the searches went, which were not a systematic review. The mathematics of Proposition 19 is elementary, and none of the arguments has been refereed.</li>
     </ul>
     <figure style="margin:16px 0">
       <img src="figures/dynamic_fields.png" alt="Vector field and one equilibrium path for two influencers under averaging at inertia 0.8" style="width:100%;max-width:720px;display:block;margin:0 auto" loading="lazy" />
@@ -236,18 +237,34 @@
     </figure>
   </section>
 
-  <section class="card" id="highlights">
+  <section class="card notes" id="highlights">
     <h2>Key results</h2>
-    <div class="stat-grid"><div class="stat"><div class="num">74/75</div><div class="lbl">REINFORCE runs converged</div></div><div class="stat"><div class="num">25/25</div><div class="lbl">PPO runs converged</div></div><div class="stat"><div class="num">19/25</div><div class="lbl">PPO runs converged after 100 episodes</div></div><div class="stat"><div class="num">5/5</div><div class="lbl">walking-game seeds at the corners (A2C)</div></div></div>
+    <p class="sub">
+      A summary of the whole project, newest work first. &ldquo;Derived&rdquo; means a written argument, in the
+      <a href="INERTIA_PROOFS.pdf" target="_blank" rel="noopener">inertia proofs (PDF)</a>, plus numerical checks; none of it
+      has been refereed or checked independently.
+    </p>
+    <h3>The averaging game with inertia</h3>
     <ul class="highlights">
-      <li><b>Self-play policy gradient converges on the dog game.</b> It does so for every algorithm tried, though how many episodes it needs depends on the algorithm and the setup. <a href="#findings">Training results</a></li>
-      <li><b>PPO is fast because it reuses each episode.</b> With one epoch it is no faster than REINFORCE. <a href="#experiments">More experiments</a></li>
-      <li><b>The walking game reverses the ranking.</b> A2C is the most reliable there, and PPO is fast but swings away from the corners again; a gentler PPO settles with more training. <a href="#trajectories">Walking game</a> &middot; <a href="#walking-report">Report</a></li>
-      <li><b>With dog inertia, a closed form says when the one-shot actions stay a feedback equilibrium, and an explicit piecewise-affine policy is one when they do not; the game is not a Markov potential game.</b> <a href="#experiments">More experiments</a></li>
-      <li><b>Persistence changes which voting rule is better.</b> With inertia the strategy-proof median rule is no longer strategy-proof, but it moves the outcome as fast as any mechanism could, so it loses less than the mean rule at high inertia; when shocks come with the new aggregate, some inertia is welfare-maximizing. <a href="#questions">Q40, Q41</a></li>
-      <li><b>A fix for learning feedback equilibria.</b> Whether a table or a network learns by gradient play depends on the equilibrium's shape; fitting the network to per-state best responses reaches the equilibrium in the dog game, a sticky-price duopoly and soccer, five of five seeds each. <a href="#questions">Q42</a></li>
+      <li><b>When influencers can keep their one-shot reports.</b> Holding BIG&rsquo;s one-shot reports at every dog position is an equilibrium exactly when every influencer at an edge has a target far enough from the one-shot outcome, measured against the inertia, and, when there is inertia, no influencer reports strictly inside the square (Proposition 1, derived, for any number of influencers and any weights).</li>
+      <li><b>A closed-form equilibrium for two influencers.</b> When the two targets lie on either side of the one-shot outcome, each influencer aims the next position past its own target, and its report is a clipped linear function of where the dog is (Proposition 2, derived). In these equilibria inertia changes the dog&rsquo;s path and speed, not where it ends.</li>
+      <li><b>Whether the dog arrives depends on who decides the rest point.</b> If an influencer&rsquo;s target decides it, the dog lands on it in finitely many rounds; if a phantom decides it, the dog only gets closer (Proposition 19, derived for equal weights with influencers playing one round at a time; it held in 3,000 random cases). With a pivot the number of rounds has a closed form, and the simple policy is an equilibrium under a sufficient condition (Proposition 18, derived), which held in 52 of 115 pivot games with three influencers at inertia 0.5.</li>
+      <li><b>What is not new.</b> The rest point is the median of the targets and the phantoms k/N, the form Renault and Trannoy (2005) give for the one-shot game; Munie and Shoham (2010) find the same form in a persistent game with a running average. As far as the searches went, which was not a systematic review, the feedback equilibrium of this persistent game with bounded reports, and the split in arrival, have not been written down before.</li>
+      <li><b>Open.</b> The general pivot case: target form was an equilibrium in 10 of 12 checked games, and in the other 2 an influencer gains up to 0.005.</li>
+    </ul>
+    <h3>Comparisons</h3>
+    <ul class="highlights">
+      <li><b>The median receiver (known material).</b> The median is strategy-proof without inertia (Moulin, 1980). With inertia, reporting your target is no longer always an equilibrium; counterexamples need at least three distinct targets. Reporting the point that would put the dog on your target next round is one for an odd number of influencers (Proposition 20, derived), and its one-round step is a known result (Walsh, 2021).</li>
+      <li><b>Cartesian and polar moves</b> (numerical). Nash-Q reached the corners with (v<sub>x</sub>, v<sub>y</sub>) moves and not with (r, &theta;) moves mainly because the search for a move always started at &theta; = 0. The disk or square region accounts for about 3% of the difference; trying 8 directions first brings polar moves to the corners in 10 of 10 seeds (<a href="https://github.com/Charith-Reddy-Pareddy/dog-game/blob/main/docs/ENCODING_NOTES.md" target="_blank" rel="noopener">notes</a>).</li>
+    </ul>
+    <h3>Earlier two-player work</h3>
+    <ul class="highlights">
+      <li><b>Self-play policy gradient converges in the one-round game.</b> 74 of 75 REINFORCE runs and 25 of 25 PPO runs reached exploitability below 0.004 (one round, no inertia); how many episodes it takes depends on the algorithm and the setup. <a href="#findings">Training results</a></li>
+      <li><b>PPO is fast because it reuses each episode.</b> 19 of 25 PPO runs had converged after 100 episodes; with one epoch PPO is no faster than REINFORCE. <a href="#experiments">More experiments</a></li>
+      <li><b>The walking game reverses the ranking.</b> A2C is the most reliable there (5 of 5 seeds at the corners), while PPO is fast but swings away from the corners again; a gentler PPO settles with more training. <a href="#trajectories">Walking game</a> &middot; <a href="#walking-report">Report</a></li>
+      <li><b>Learning feedback equilibria.</b> Whether a table or a network learns by gradient play depends on the equilibrium&rsquo;s shape; fitting the network to per-state best responses reaches the equilibrium in the dog game, a sticky-price duopoly and soccer, five of five seeds each. <a href="#questions">Q42</a></li>
+      <li><b>Polar actions did not improve the main policy-gradient comparison.</b> In the first setup their expected one-shot gain was higher than Cartesian Beta in all 30 paired seeds; the four-house REINFORCE follow-up was mixed. <a href="#polar-actions">See the study</a></li>
       <li><b>34 of 43 research questions are answered, 8 partly, 1 open.</b> <a href="#questions">Research questions</a></li>
-      <li><b>Polar actions did not improve the primary policy-gradient comparison.</b> In the first setup, their expected one-shot gain was higher than Cartesian Beta in all 30 paired seeds; the four-house REINFORCE follow-up was mixed. <a href="#polar-actions">See the study</a></li>
     </ul>
   </section>
 
@@ -299,7 +316,8 @@
           Lines show the dog (black) and each player's pick, round by round, from the hollow circles. Press
           "Keep paths to compare" to hold a run on the board, then change a slider and run again; up to four
           kept runs stay, labelled with their settings.
-          Drag the solid house markers anywhere in the square to re-pose the game.
+          Drag anything on the board: a house re-poses the game, and its player comes with it; a player sets where
+          that player starts; the dog sets where the dog starts. Each drag restarts the round count.
           Set a max step &delta; and each player walks toward their pick by an angle and a distance of at most &delta; per round instead of jumping there. Raise w&#8320; to give the dog inertia &mdash; it then only partially closes
           the gap to each round's target instead of teleporting there, so
           "Run to equilibrium" takes more rounds but still settles on the same
@@ -1412,10 +1430,7 @@
     render();
   }
 
-  function reset() {
-    state.actionRed = { ...state.houseRed };
-    state.actionBlue = { ...state.houseBlue };
-    state.dog = blend(state.actionRed, state.actionBlue, w());
+  function restart() {
     state.round = 0;
     state.exploitHistory = [];
     state.trail = [];
@@ -1423,6 +1438,14 @@
     render();
   }
 
+  function reset() {
+    state.actionRed = { ...state.houseRed };
+    state.actionBlue = { ...state.houseBlue };
+    state.dog = blend(state.actionRed, state.actionBlue, w());
+    restart();
+  }
+
+  let runTimer = null;
   function runToEquilibrium() {
     // the actions themselves settle within ~2 rounds regardless of
     // inertia, but a laggy dog (high w0) needs more rounds before its
@@ -1432,48 +1455,54 @@
     const maxSteps = Math.min(250, Math.max(30 + Math.round(inertia() * 120), crossing));
     const intervalMs = Math.max(15, Math.round(3600 / maxSteps));
     let i = 0;
-    const id = setInterval(() => {
+    clearInterval(runTimer);
+    runTimer = setInterval(() => {
       step();
       i += 1;
-      if (i >= maxSteps) clearInterval(id);
+      if (i >= maxSteps) clearInterval(runTimer);
     }, intervalMs);
   }
 
+  // Every piece on the board can be dragged. Houses come first so that a player standing on its
+  // house is picked up with it; a house drag re-poses the game, any other drag restarts from there.
+  const PIECES = ["houseRed", "houseBlue", "actionRed", "actionBlue", "dog"];
   let dragging = null;
   function fromCanvas(cx, cy) { return { x: clip((cx - PAD) / SIZE), y: clip(1 - (cy - PAD) / SIZE) }; }
   function pointerPos(evt) {
     const rect = canvas.getBoundingClientRect();
-    const clientX = evt.touches ? evt.touches[0].clientX : evt.clientX;
-    const clientY = evt.touches ? evt.touches[0].clientY : evt.clientY;
-    return { x: ((clientX - rect.left) / rect.width) * CSS_SIZE, y: ((clientY - rect.top) / rect.height) * CSS_SIZE };
+    return { x: ((evt.clientX - rect.left) / rect.width) * CSS_SIZE, y: ((evt.clientY - rect.top) / rect.height) * CSS_SIZE };
   }
   function nearest(p) {
-    const rC = toCanvas(state.houseRed);
-    const bC = toCanvas(state.houseBlue);
-    const dr = Math.hypot(p.x - rC.x, p.y - rC.y);
-    const db = Math.hypot(p.x - bC.x, p.y - bC.y);
-    if (dr < 22 && dr < db) return "red";
-    if (db < 22) return "blue";
-    return null;
+    // at least 22 screen pixels, so pieces stay easy to grab on a small screen
+    let best = null;
+    let bestDist = Math.max(24, (22 * CSS_SIZE) / canvas.getBoundingClientRect().width);
+    for (const key of PIECES) {
+      const c = toCanvas(state[key]);
+      const d = Math.hypot(p.x - c.x, p.y - c.y);
+      if (d < bestDist) { best = key; bestDist = d; }
+    }
+    return best;
+  }
+  function moveTo(evt) {
+    state[dragging] = fromCanvas(pointerPos(evt).x, pointerPos(evt).y);
+    if (dragging.startsWith("house")) reset(); else restart();
   }
 
-  canvas.addEventListener("mousedown", (e) => { dragging = nearest(pointerPos(e)); });
-  canvas.addEventListener("touchstart", (e) => { dragging = nearest(pointerPos(e)); });
-  canvas.addEventListener("mousemove", (e) => {
+  canvas.addEventListener("pointerdown", (e) => {
+    dragging = nearest(pointerPos(e));
     if (!dragging) return;
-    const p = fromCanvas(pointerPos(e).x, pointerPos(e).y);
-    if (dragging === "red") state.houseRed = p; else state.houseBlue = p;
-    reset();
+    clearInterval(runTimer);
+    canvas.setPointerCapture(e.pointerId);
+    canvas.style.cursor = "grabbing";
+    moveTo(e);
   });
-  canvas.addEventListener("touchmove", (e) => {
-    if (!dragging) return;
-    e.preventDefault();
-    const p = fromCanvas(pointerPos(e).x, pointerPos(e).y);
-    if (dragging === "red") state.houseRed = p; else state.houseBlue = p;
-    reset();
-  }, { passive: false });
-  window.addEventListener("mouseup", () => (dragging = null));
-  window.addEventListener("touchend", () => (dragging = null));
+  canvas.addEventListener("pointermove", (e) => {
+    if (dragging) moveTo(e);
+    else canvas.style.cursor = nearest(pointerPos(e)) ? "grab" : "default";
+  });
+  function drop() { dragging = null; canvas.style.cursor = "grab"; }
+  canvas.addEventListener("pointerup", drop);
+  canvas.addEventListener("pointercancel", drop);
 
   wSlider.addEventListener("input", () => { wVal.textContent = w().toFixed(2); reset(); });
   inertiaSlider.addEventListener("input", () => { inertiaVal.textContent = inertia().toFixed(2); reset(); });
