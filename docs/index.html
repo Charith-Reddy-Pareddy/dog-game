@@ -2,14 +2,14 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
-<title>Dog Game</title>
-<meta name="description" content="The dog game: a general-sum two-player game with a live Nash-equilibrium simulator, REINFORCE / A2C / PPO and Nash-Q experiments, the walking game, and the research questions they answer." />
+<title>The dog game</title>
+<meta name="description" content="Research notes on the dog game: the Battling Influencers Game with a sticky receiver, played as a dynamic Markov game, with a live simulator and earlier policy-gradient experiments." />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23fbf9f4'/%3E%3Crect x='8' y='38' width='16' height='16' rx='3' fill='%23d8555f'/%3E%3Crect x='40' y='10' width='16' height='16' rx='3' fill='%233f7d9e'/%3E%3Ccircle cx='32' cy='32' r='9' fill='%232a2622'/%3E%3C/svg%3E" />
-<meta name="theme-color" content="#f4f1ec" />
+<meta name="theme-color" content="#fdfcf9" />
 <meta property="og:type" content="website" />
-<meta property="og:title" content="Dog Game" />
-<meta property="og:description" content="A general-sum two-player game with a live simulator, REINFORCE / A2C / PPO and Nash-Q experiments, the walking game, and the research questions they answer." />
+<meta property="og:title" content="The dog game" />
+<meta property="og:description" content="The Battling Influencers Game with a sticky receiver, played as a dynamic Markov game, with a live simulator and earlier policy-gradient experiments." />
 <meta property="og:url" content="https://charith-reddy-pareddy.github.io/dog-game/" />
 <meta property="og:image" content="https://charith-reddy-pareddy.github.io/dog-game/preview.png" />
 <meta property="og:image:width" content="1200" />
@@ -22,150 +22,143 @@
     --red-dark: #b23a44;
     --blue: #3f7d9e;
     --blue-dark: #2c5c76;
-    --bg: #f4f1ec;
-    --card: #fffdf9;
-    --ink: #2a2622;
-    --muted: #7a7369;
-    --line: #e4ddd0;
+    --bg: #fdfcf9;
+    --card: #fdfcf9;
+    --ink: #222020;
+    --text: #33302c;
+    --muted: #6f6a62;
+    --line: #e2ddd3;
     --good: #4a7c59;
     --warn: #b8862e;
+    --link: #1f4e79;
+    --serif: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
   }
   * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
   body {
     margin: 0;
-    min-height: 100vh;
-    background: radial-gradient(circle at 20% 0%, #fbf8f2, var(--bg) 60%);
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
-    color: var(--ink);
-    padding: 32px 16px 60px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 24px;
+    background: var(--bg);
+    font-family: var(--serif);
+    font-size: 17px;
+    line-height: 1.6;
+    color: var(--text);
+    padding: 56px 16px 72px;
   }
-  .wrap { max-width: 980px; width: 100%; display: flex; flex-direction: column; gap: 24px; }
-  .card {
-    background: var(--card);
-    border-radius: 20px;
-    box-shadow: 0 20px 60px rgba(40, 30, 20, 0.10);
-    padding: 28px 32px 26px;
-    width: 100%;
-  }
-  header.card { text-align: left; }
-  h1 { margin: 0 0 4px; font-size: 1.7rem; letter-spacing: -0.01em; }
-  h2 { margin: 0 0 12px; font-size: 1.15rem; letter-spacing: -0.005em; }
-  p.sub { margin: 0; color: var(--muted); font-size: 0.95rem; max-width: 68ch; line-height: 1.5; }
-  a { color: var(--blue-dark); }
+  .wrap { max-width: 780px; margin: 0 auto; }
+  .card { padding: 36px 0 8px; border-top: 1px solid var(--line); margin-top: 36px; }
+  header.card { border-top: none; margin-top: 0; padding-top: 0; }
+  h1 { margin: 0 0 6px; font-size: 2.1rem; font-weight: 600; line-height: 1.2; color: var(--ink); }
+  h2 { margin: 0 0 14px; font-size: 1.45rem; font-weight: 600; line-height: 1.3; color: var(--ink); }
+  h3 { color: var(--ink); }
+  .byline { margin: 0 0 22px; color: var(--muted); font-size: 0.95rem; }
+  p.sub { margin: 0 0 14px; max-width: 70ch; }
+  a { color: var(--link); text-decoration-thickness: 1px; text-underline-offset: 2px; }
+  a:hover { text-decoration-thickness: 2px; }
+  code { font-size: 0.85em; overflow-wrap: anywhere; }
+  figure { margin: 28px 0; }
+  figure img { border: 1px solid var(--line); background: #fff; }
+  figcaption, figcaption.sub { font-family: var(--sans); font-size: 0.82rem; line-height: 1.5; color: var(--muted); margin-top: 8px; max-width: none; }
+
+  .nav { margin: 0 0 6px; font-family: var(--sans); font-size: 0.86rem; line-height: 1.9; }
+  .nav span { color: var(--muted); margin-right: 6px; }
+  .nav a { margin-right: 14px; white-space: nowrap; }
+
   .layout { display: flex; gap: 28px; flex-wrap: wrap; }
   .stage-wrap { position: relative; flex: 1 1 280px; max-width: 440px; min-width: 0; }
-  .trail-legend { display: flex; flex-wrap: wrap; gap: 4px 12px; margin-top: 6px; font-size: 0.78rem; color: var(--muted, #6b6459); }
+  .trail-legend { display: flex; flex-wrap: wrap; gap: 4px 12px; margin-top: 6px; font-family: var(--sans); font-size: 0.78rem; color: var(--muted); }
   .trail-legend span { display: inline-flex; align-items: center; gap: 5px; }
-  .trail-legend i { width: 16px; height: 3px; border-radius: 2px; display: inline-block; }
-  canvas { background: #fbf9f4; border: 1px solid var(--line); border-radius: 14px; touch-action: none; cursor: grab; }
-  .panel { flex: 1 1 240px; min-width: 240px; display: flex; flex-direction: column; gap: 16px; }
+  .trail-legend i { width: 16px; height: 3px; display: inline-block; }
+  canvas { background: #fff; border: 1px solid var(--line); border-radius: 2px; touch-action: none; cursor: grab; }
+  .panel { flex: 1 1 240px; min-width: 240px; display: flex; flex-direction: column; gap: 16px; font-family: var(--sans); }
   .field label { display: flex; justify-content: space-between; font-size: 0.85rem; color: var(--muted); margin-bottom: 6px; }
   .field label span.val { color: var(--ink); font-variant-numeric: tabular-nums; font-weight: 600; }
   input[type="range"] { width: 100%; accent-color: var(--ink); }
-  .btn-row { display: flex; gap: 10px; }
+  .btn-row { display: flex; gap: 8px; }
   button {
-    flex: 1; border: none; border-radius: 10px; padding: 10px 14px;
-    font-size: 0.9rem; font-weight: 600; cursor: pointer;
-    transition: transform 0.08s ease, box-shadow 0.15s ease;
-    font-family: inherit;
+    flex: 1; border: 1px solid var(--ink); border-radius: 3px; padding: 8px 12px;
+    font-family: var(--sans); font-size: 0.86rem; font-weight: 500; cursor: pointer;
+    background: transparent; color: var(--ink);
   }
-  button:active { transform: scale(0.97); }
-  button.primary { background: linear-gradient(135deg, var(--ink), #4a443c); color: #fdfbf7; }
-  button.ghost { background: transparent; border: 1px solid var(--line); color: var(--ink); }
+  button:hover { background: #f1eee8; }
+  button:focus-visible, a:focus-visible, summary:focus-visible { outline: 2px solid var(--link); outline-offset: 2px; }
+  button.primary { background: var(--ink); color: #fdfcf9; }
+  button.primary:hover { background: #3d3934; }
+  button.ghost { border-color: var(--line); }
   .legend { display: flex; flex-direction: column; gap: 8px; font-size: 0.85rem; border-top: 1px solid var(--line); padding-top: 14px; }
   .legend .row { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
   .swatch { width: 10px; height: 10px; border-radius: 50%; display: inline-block; margin-right: 8px; }
   .metric { font-variant-numeric: tabular-nums; font-weight: 600; }
   .metric.good { color: var(--good); }
   .metric.warn { color: var(--warn); }
-  .hint { font-size: 0.78rem; color: var(--muted); line-height: 1.4; }
+  .hint { font-family: var(--sans); font-size: 0.8rem; color: var(--muted); line-height: 1.5; }
   .spark { width: 100%; height: 42px; display: block; margin-top: 4px; }
 
-  .stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 14px; margin-bottom: 18px; }
-  .stat {
-    background: #fbf8f2; border: 1px solid var(--line); border-radius: 14px; padding: 14px 16px;
-  }
-  .stat .num { font-size: 1.5rem; font-weight: 700; font-variant-numeric: tabular-nums; letter-spacing: -0.02em; }
-  .stat .lbl { font-size: 0.78rem; color: var(--muted); margin-top: 2px; }
+  .stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2px 24px; margin: 0 0 16px; font-family: var(--sans); font-size: 0.9rem; }
+  .stat { display: flex; align-items: baseline; gap: 10px; padding: 4px 0; border-bottom: 1px solid var(--line); }
+  .stat .num { font-weight: 600; font-variant-numeric: tabular-nums; color: var(--ink); min-width: 3.5em; }
+  .stat .lbl { color: var(--muted); }
 
-  .table-scroll { overflow-x: auto; }
+  .table-scroll { overflow-x: auto; margin: 10px 0 18px; }
   .scroll-hint { display: none; margin: 0 0 6px; }
-  table { width: 100%; border-collapse: collapse; font-size: 0.83rem; }
-  th, td { text-align: left; padding: 7px 8px; border-bottom: 1px solid var(--line); white-space: nowrap; }
-  th { color: var(--muted); font-weight: 600; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.03em; }
+  table { width: 100%; border-collapse: collapse; font-family: var(--sans); font-size: 0.82rem; }
+  th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+  th { color: var(--ink); font-weight: 600; border-bottom: 1px solid var(--ink); }
   td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
   .bar-cell { display: flex; align-items: center; gap: 8px; justify-content: flex-end; }
-  .bar-track { width: 70px; height: 6px; border-radius: 3px; background: #ece6d8; overflow: hidden; }
-  .bar-fill { height: 100%; border-radius: 3px; }
-  .arch-tag {
-    display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 0.72rem; font-weight: 600;
-  }
-  .arch-separate { background: #ece6d8; color: #6b5f4a; }
-  .arch-shared { background: #dfeae2; color: #3d6b4d; }
-  .arch-partial { background: #e3e6ee; color: #40507a; }
+  .bar-track { width: 70px; height: 6px; background: #ece8e0; overflow: hidden; }
+  .bar-fill { height: 100%; }
+  .arch-tag { display: inline-block; font-size: 0.78rem; font-style: italic; color: var(--muted); }
 
-  .callout {
-    border-left: 3px solid var(--ink); background: #fbf8f2; border-radius: 0 12px 12px 0;
-    padding: 12px 16px; font-size: 0.88rem; line-height: 1.55; margin-top: 16px;
-  }
-  .callout b { display: block; margin-bottom: 3px; }
+  .callout { border-left: 2px solid var(--ink); padding: 2px 0 2px 16px; font-size: 0.95rem; margin: 18px 0; }
+  .callout b { display: block; margin-bottom: 3px; color: var(--ink); }
   .callout.equilibria { border-left-color: var(--blue-dark); }
   .callout.episodes { border-left-color: var(--red-dark); }
 
-  .notes ul, .notes ol { margin: 0 0 14px; padding-left: 20px; font-size: 0.88rem; line-height: 1.6; }
-  .notes li { margin-bottom: 4px; }
-  .notes h3 { margin: 18px 0 6px; font-size: 0.95rem; }
-  footer { text-align: center; color: var(--muted); font-size: 0.82rem; padding: 8px 0 0; }
+  .notes ul, .notes ol, .highlights { margin: 0 0 16px; padding-left: 22px; }
+  .notes li, .highlights li { margin-bottom: 8px; }
+  .highlights li > b:first-child { font-weight: 600; color: var(--ink); }
+  .notes h3 { margin: 26px 0 8px; font-size: 1.08rem; font-weight: 600; }
+  footer { color: var(--muted); font-family: var(--sans); font-size: 0.82rem; margin-top: 48px; padding-top: 16px; border-top: 1px solid var(--line); }
 
-  .traj-controls { display: flex; flex-wrap: wrap; gap: 12px 16px; align-items: center; margin: 14px 0 4px; }
+  .traj-controls { display: flex; flex-wrap: wrap; gap: 12px 16px; align-items: center; margin: 14px 0 4px; font-family: var(--sans); }
   .traj-controls .seg { display: flex; gap: 6px; }
-  .traj-controls .seg button { flex: none; padding: 8px 14px; }
-  .traj-controls .seg button.on { background: var(--ink); color: #fdfbf7; border-color: var(--ink); }
+  .traj-controls .seg button { flex: none; padding: 6px 12px; }
+  .traj-controls .seg button.on { background: var(--ink); color: #fdfcf9; border-color: var(--ink); }
   .traj-controls label { font-size: 0.85rem; color: var(--muted); display: flex; align-items: center; gap: 6px; }
-  .traj-controls select { font: inherit; padding: 6px 8px; border-radius: 8px; border: 1px solid var(--line); background: var(--card); color: var(--ink); }
+  .traj-controls select { font: inherit; padding: 5px 8px; border-radius: 3px; border: 1px solid var(--line); background: #fff; color: var(--ink); }
   .traj-controls button.play { flex: none; min-width: 84px; }
-  .traj-scrub { display: flex; align-items: center; gap: 12px; margin: 6px 0 4px; }
+  .traj-scrub { display: flex; align-items: center; gap: 12px; margin: 6px 0 4px; font-family: var(--sans); }
   .traj-scrub input { flex: 1; min-width: 0; }
   .traj-scrub span { font-size: 0.82rem; color: var(--muted); min-width: 92px; text-align: right; font-variant-numeric: tabular-nums; }
   .traj-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; margin: 10px 0; }
   .traj-grid figure { margin: 0; min-width: 0; }
-  .traj-grid figcaption { font-size: 0.82rem; font-weight: 600; margin-bottom: 4px; }
-  .traj-grid svg { width: 100%; height: auto; display: block; background: #fbf9f4; border: 1px solid var(--line); border-radius: 12px; }
-  .traj-read { margin: 6px 0 0; font-size: 0.8rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+  .traj-grid figcaption { font-weight: 600; color: var(--ink); margin: 0 0 4px; }
+  .traj-grid svg, .traj-chart svg { width: 100%; height: auto; display: block; background: #fff; border: 1px solid var(--line); }
+  .traj-chart svg { margin: 6px 0 10px; }
+  .traj-read { margin: 6px 0 0; font-family: var(--sans); font-size: 0.8rem; color: var(--muted); font-variant-numeric: tabular-nums; }
   .traj-read b { color: var(--ink); }
-  .traj-legend { font-size: 0.78rem; color: var(--muted); line-height: 1.5; }
+  .traj-legend { font-family: var(--sans); font-size: 0.78rem; color: var(--muted); line-height: 1.5; }
 
-  header.card p.sub { overflow-wrap: anywhere; }
-  code { overflow-wrap: anywhere; }
-  .nav { display: flex; flex-wrap: wrap; gap: 6px 16px; margin: 14px 0 0; font-size: 0.85rem; }
-  .nav a { text-decoration: none; font-weight: 600; }
-  .nav a:hover { text-decoration: underline; }
-  html { scroll-behavior: smooth; }
-  @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
-  .highlights { margin: 0; padding-left: 20px; font-size: 0.9rem; line-height: 1.6; }
-  .highlights li { margin-bottom: 6px; }
-  .report-links { display: flex; flex-wrap: wrap; gap: 10px; margin: 12px 0; }
-  .report-link { display: inline-block; padding: 10px 16px; border-radius: 10px; border: 1px solid var(--line); font-weight: 600; font-size: 0.9rem; text-decoration: none; color: var(--ink); }
-  .report-link.primary { background: var(--ink); color: #fdfbf7; border-color: var(--ink); }
-  .traj-chart svg { width: 100%; height: auto; display: block; margin: 6px 0 10px; background: #fbf9f4; border: 1px solid var(--line); border-radius: 12px; }
-  .chip { display: inline-block; font-size: 0.68rem; font-weight: 700; letter-spacing: 0.03em; padding: 2px 8px; border-radius: 999px; margin-left: 8px; vertical-align: middle; text-transform: uppercase; }
-  .chip.answered { background: #e3efe6; color: #2f5d3d; }
-  .chip.partly { background: #f6ecd5; color: #7a5a16; }
-  .chip.open { background: #ece8e0; color: #5f584d; }
+  .report-links { display: flex; flex-wrap: wrap; gap: 8px 18px; margin: 12px 0; font-family: var(--sans); font-size: 0.9rem; }
+  .report-link { color: var(--link); }
+  .report-link.primary { font-weight: 600; }
+  .chip { font-family: var(--sans); font-size: 0.75rem; font-style: italic; margin-left: 6px; }
+  .chip.answered { color: var(--good); }
+  .chip.partly { color: var(--warn); }
+  .chip.open { color: var(--muted); }
   details.q { border-top: 1px solid var(--line); padding: 8px 0; }
-  details.q summary { cursor: pointer; font-size: 0.9rem; line-height: 1.5; }
-  details.q p { margin: 6px 0 2px 22px; font-size: 0.85rem; color: var(--muted); line-height: 1.55; }
+  details.q summary { cursor: pointer; line-height: 1.5; }
+  details.q p { margin: 6px 0 4px 22px; font-size: 0.95rem; }
   details.q p b { color: var(--ink); }
-  .q-num { font-weight: 700; margin-right: 8px; }
+  .q-num { font-family: var(--sans); font-size: 0.85rem; font-weight: 600; color: var(--muted); margin-right: 6px; }
 
   @media (max-width: 640px) {
+    body { font-size: 16px; padding-top: 32px; }
+    h1 { font-size: 1.7rem; }
     .traj-grid { grid-template-columns: 1fr; }
     .scroll-hint { display: block; }
-    .card { padding: 20px; }
     table { font-size: 0.75rem; }
     th, td { padding: 6px 5px; }
   }
@@ -175,26 +168,22 @@
 <div class="wrap">
 
   <header class="card">
-    <h1>Dog Game</h1>
+    <h1>The dog game</h1>
+    <p class="byline">Charith Reddy Pareddy &middot; research notes, November 2026</p>
     <p class="sub">
-      A two-player, general-sum game: a red house and a blue house each want a shared
-      "dog" as close as possible to their own doorstep. Each round both sides pick a
-      point to pull toward; the dog moves to
-      <em>w&#8320;&middot;dog&nbsp;+&nbsp;w&#8321;&middot;pick<sub>red</sub>&nbsp;+&nbsp;w&#8322;&middot;pick<sub>blue</sub></em>,
-      where <em>w&#8321;&nbsp;=&nbsp;(1&minus;w&#8320;)w</em> and
-      <em>w&#8322;&nbsp;=&nbsp;(1&minus;w&#8320;)(1&minus;w)</em> &mdash; with
-      <em>w&#8320;&nbsp;=&nbsp;0</em> the dog fully re-targets every round; above that it
-      only partially closes the gap, giving it some inertia. Because the domain is
-      bounded, players are pushed to exaggerate toward the edge to counteract each
-      other &mdash; the same logic behind two influencers each staking out an
-      exaggerated opinion to drag a shared audience toward them. Source, tests, and
-      training code:
+      Several influencers each want a shared &ldquo;dog&rdquo; as close as possible to their own target in the unit
+      square. Every round each influencer reports a point; the dog keeps a share &lambda; of where it is and moves the
+      rest of the way to the weighted average of the reports. With &lambda; = 0 one round is the Battling Influencers
+      Game (BIG). With &lambda; above 0 the dog has inertia, influencers plan ahead, and the game becomes a dynamic
+      Markov game. Reports are bounded, so influencers exaggerate toward the edges to pull the average their way.
+    </p>
+    <p class="sub">
+      The newest results, on this averaging game, come first. The sections after them are from an earlier two-player
+      version, a red house and a blue house pulling with weights w and 1&minus;w, and are kept as they were. Code and tests:
       <a href="https://github.com/Charith-Reddy-Pareddy/dog-game" target="_blank" rel="noopener">github.com/Charith-Reddy-Pareddy/dog-game</a>.
     </p>
-  
-    <p class="nav">
+    <p class="nav"><span>On this page</span>
       <a href="#latest">Latest results</a>
-      <a href="Dog_Game_Results_and_Updates.pdf" target="_blank" rel="noopener">Results and updates (PDF)</a>
       <a href="#highlights">Key results</a>
       <a href="#simulator">Simulator</a>
       <a href="#findings">Training results</a>
@@ -202,13 +191,16 @@
       <a href="#trajectories">Walking game</a>
       <a href="#walking-report">Walking-game report</a>
       <a href="#polar-actions">Polar-action PG study</a>
-      <a href="PG_RESEARCH_UPDATE.pdf" target="_blank" rel="noopener">Concise research update</a>
       <a href="#questions">Research questions</a>
       <a href="#assumptions">Assumptions</a>
-      <a href="https://github.com/Charith-Reddy-Pareddy/dog-game/blob/main/research_report.pdf" target="_blank" rel="noopener">Research report (PDF)</a>
-      <a href="https://github.com/Charith-Reddy-Pareddy/dog-game/blob/main/dog_game_results.pdf" target="_blank" rel="noopener">Results (PDF)</a>
-      <a href="walking_game_report.pdf" target="_blank" rel="noopener">Walking-game report (PDF)</a>
-      <a href="INERTIA_PROOFS.pdf" target="_blank" rel="noopener">Inertia proofs (PDF)</a>
+    </p>
+    <p class="nav"><span>PDFs</span>
+      <a href="Dog_Game_Results_and_Updates.pdf" target="_blank" rel="noopener">Results and updates</a>
+      <a href="INERTIA_PROOFS.pdf" target="_blank" rel="noopener">Inertia proofs</a>
+      <a href="PG_RESEARCH_UPDATE.pdf" target="_blank" rel="noopener">Concise research update</a>
+      <a href="https://github.com/Charith-Reddy-Pareddy/dog-game/blob/main/research_report.pdf" target="_blank" rel="noopener">Research report</a>
+      <a href="https://github.com/Charith-Reddy-Pareddy/dog-game/blob/main/dog_game_results.pdf" target="_blank" rel="noopener">Results</a>
+      <a href="walking_game_report.pdf" target="_blank" rel="noopener">Walking-game report</a>
     </p>
 </header>
 
